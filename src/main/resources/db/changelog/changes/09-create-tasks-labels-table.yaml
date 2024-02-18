@@ -1,0 +1,22 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-tasks-labels-table
+      author: Unbidden
+      changes:
+        - createTable:
+            tableName: tasks_labels
+            columns: 
+              - column:
+                  name: task_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_tasks_tasks_labels
+                    references: tasks(id)
+              - column:
+                  name: label_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_labels_tasks_labels
+                    references: labels(id)

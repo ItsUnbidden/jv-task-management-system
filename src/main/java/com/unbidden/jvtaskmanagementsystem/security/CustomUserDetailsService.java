@@ -1,0 +1,32 @@
+package com.unbidden.jvtaskmanagementsystem.security;
+
+import com.unbidden.jvtaskmanagementsystem.repository.UserRepository;
+import java.util.regex.Pattern;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Component;
+
+@RequiredArgsConstructor
+@Component
+public class CustomUserDetailsService implements UserDetailsService {
+    private static final String REGEX = "^(?=.{1,64}@)[A-Za-z0-9_-]+(\\.[A-Za-z0-9_-]+)"
+            + "*@[^-][A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*(\\.[A-Za-z]{2,})$";
+    
+    private static final Pattern PATTERN = Pattern.compile(REGEX);
+
+    private final UserRepository repository;
+
+    @Override
+    public UserDetails loadUserByUsername(String input) throws UsernameNotFoundException {
+        return isEmail(input) ? repository.findByEmail(input).orElseThrow(() -> 
+                new UsernameNotFoundException("Can't find user by email."))
+                : repository.findByUsername(input).orElseThrow(() -> 
+                new UsernameNotFoundException("There is no user with such username."));
+    }
+
+    private boolean isEmail(String username) {
+        return username != null && PATTERN.matcher(username).matches();
+    }   
+}

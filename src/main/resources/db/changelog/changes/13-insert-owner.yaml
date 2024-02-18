@@ -1,0 +1,32 @@
+databaseChangeLog:
+  - changeSet:
+      id: insert-owner
+      author: Unbidden
+      changes:
+        - insert:  
+            tableName: users
+            columns:
+              - column:
+                  name: email
+                  value: owner@bookstore.com
+              - column:
+                  name: username
+                  value: owner
+              - column:
+                  name: password        
+                  value: $2a$10$shJt.F/SsFfCgt.ofL7bCeO4v1pxmHt8JulC5XdOAjc/umjoUacH2 #password
+              - column:
+                  name: first_name
+                  value: owner
+              - column:
+                  name: last_name
+                  value: owner
+        - insert:  
+            tableName: users_roles
+            columns:
+              - column:
+                  name: user_id
+                  valueNumeric: 1
+              - column:
+                  name: role_id 
+                  valueNumeric: 3
