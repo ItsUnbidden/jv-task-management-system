@@ -1,7 +1,10 @@
 package com.unbidden.jvtaskmanagementsystem.service.impl;
 
+import com.unbidden.jvtaskmanagementsystem.dto.auth.LoginRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.auth.RegistrationRequest;
 import com.unbidden.jvtaskmanagementsystem.dto.user.UserResponseDto;
+import com.unbidden.jvtaskmanagementsystem.dto.user.UserUpdateDetailsRequestDto;
+import com.unbidden.jvtaskmanagementsystem.exception.EntityNotFoundException;
 import com.unbidden.jvtaskmanagementsystem.exception.RegistrationException;
 import com.unbidden.jvtaskmanagementsystem.mapper.UserMapper;
 import com.unbidden.jvtaskmanagementsystem.model.Role;
@@ -10,8 +13,12 @@ import com.unbidden.jvtaskmanagementsystem.model.User;
 import com.unbidden.jvtaskmanagementsystem.repository.RoleRepository;
 import com.unbidden.jvtaskmanagementsystem.repository.UserRepository;
 import com.unbidden.jvtaskmanagementsystem.service.UserService;
+import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.lang.NonNull;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -26,8 +33,11 @@ public class UserServiceImpl implements UserService {
 
     private final PasswordEncoder passwordEncoder;
 
+    private Role ownerRole;
+
     @Override
-    public UserResponseDto register(RegistrationRequest request) throws RegistrationException {
+    public UserResponseDto register(@NonNull RegistrationRequest request)
+            throws RegistrationException {
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             throw new RegistrationException(
                     "Cannot register user because user with this email is already registred.");
@@ -43,4 +53,69 @@ public class UserServiceImpl implements UserService {
         return userMapper.toDto(user);
     }
 
+    @Override
+    public UserResponseDto findCurrentUser(User user) {
+        return userMapper.toDto(user);
+    }
+
+    @Override
+    public UserResponseDto updateRoles(@NonNull Long id, Set<Role> roles) {
+        User user = getUserById(id);
+        checkUserIsNotOwner(user, "Owner's roles are not allowed to be changed.");
+        user.setRoles(roles);
+        return userMapper.toDto(userRepository.save(user));
+    }
+
+    @Override
+    public UserResponseDto updateUserDetails(User user, 
+            @NonNull UserUpdateDetailsRequestDto requestDto) {
+        user.setUsername(requestDto.getUsername());
+        user.setFirstName(requestDto.getFirstName());
+        user.setLastName(requestDto.getLastName());
+        return userMapper.toDto(userRepository.save(user));
+    }
+
+    @Override
+    public List<UserResponseDto> findAll(@NonNull Pageable pageable) {
+        return userRepository.findAll(pageable).stream()
+                .map(userMapper::toDto)
+                .toList();
+    }
+
+    @Override
+    @SuppressWarnings("null")
+    public void deleteCurrentUser(User user, @NonNull LoginRequestDto requestDto) {
+        checkUserIsNotOwner(user, "Owner cannot be deleted.");
+        if (user.getUsername().equals(requestDto.getUsername()) 
+                && passwordEncoder.matches(requestDto.getPassword(), user.getPassword())) {
+            userRepository.deleteById(user.getId());
+            return;
+        }
+        throw new AccessDeniedException("Provided credentials are invalid. "
+                + "Please provide correct username and password.");
+    }
+
+    @Override
+    public UserResponseDto lockUserById(@NonNull Long id) {
+        User user = getUserById(id);
+
+        checkUserIsNotOwner(user, "Owner cannot be locked.");
+        user.setLocked(user.isLocked() ? false : true);
+        return userMapper.toDto(userRepository.save(user));
+    }
+
+    private void checkUserIsNotOwner(User user, String errorMsg) {
+        if (ownerRole == null) {
+            ownerRole = roleRepository.findByRoleType(RoleType.OWNER).get();
+        }
+
+        if (user.getRoles().contains(ownerRole)) {
+            throw new UnsupportedOperationException(errorMsg);
+        }
+    }
+
+    private User getUserById(@NonNull Long id) {
+        return userRepository.findById(id).orElseThrow(() -> 
+                new EntityNotFoundException("Was not able to find user by id: " + id));
+    }
 }

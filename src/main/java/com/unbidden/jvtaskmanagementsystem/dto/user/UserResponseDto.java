@@ -16,5 +16,7 @@ public class UserResponseDto {
 
     private String lastName;
 
+    private boolean isLocked;
+
     private Set<Role> roles;
 }

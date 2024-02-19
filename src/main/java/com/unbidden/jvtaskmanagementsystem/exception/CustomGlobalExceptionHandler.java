@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.NonNull;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -39,7 +40,8 @@ public class CustomGlobalExceptionHandler extends ResponseEntityExceptionHandler
 
     @ExceptionHandler({EntityNotFoundException.class, 
             RegistrationException.class, 
-            PropertyReferenceException.class})
+            PropertyReferenceException.class,
+            UnsupportedOperationException.class})
     protected ResponseEntity<Object> handleInvalidUserInput(
             @NonNull Exception ex,
             @NonNull WebRequest request
@@ -54,7 +56,7 @@ public class CustomGlobalExceptionHandler extends ResponseEntityExceptionHandler
                 HttpStatus.BAD_REQUEST, request);
     }
 
-    @ExceptionHandler(JwtException.class)
+    @ExceptionHandler({JwtException.class, UsernameNotFoundException.class})
     protected ResponseEntity<Object> handleInvalidJwtToken(
             @NonNull JwtException ex,
             @NonNull WebRequest request
