@@ -1,5 +1,6 @@
 package com.unbidden.jvtaskmanagementsystem.model;
 
+import com.unbidden.jvtaskmanagementsystem.model.Role.RoleType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -10,6 +11,7 @@ import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 import lombok.Data;
 import org.hibernate.annotations.SQLDelete;
@@ -58,9 +60,15 @@ public class User implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return roles.stream()
-                .map(r -> new SimpleGrantedAuthority("ROLE_" + r.getRoleType().toString()))
-                .toList();
+        Set<GrantedAuthority> authorities = new HashSet<>();
+        
+        for (Role role : roles) {
+            if (role.getRoleType().equals(RoleType.OWNER)) {
+                authorities.add(new SimpleGrantedAuthority("ROLE_" + RoleType.MANAGER));
+            }
+            authorities.add(new SimpleGrantedAuthority("ROLE_" + role.getRoleType()));
+        }
+        return authorities;
     }
 
     @Override

@@ -9,6 +9,7 @@ import com.unbidden.jvtaskmanagementsystem.security.AuthenticationService;
 import com.unbidden.jvtaskmanagementsystem.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.lang.NonNull;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,13 +24,13 @@ public class AuthController {
     private final AuthenticationService authService;
 
     @PostMapping("/register")
-    public UserResponseDto register(@Valid @RequestBody RegistrationRequest request) 
+    public UserResponseDto register(@NonNull @Valid @RequestBody RegistrationRequest request) 
             throws RegistrationException {
         return userService.register(request);
     }
 
     @PostMapping("/login")
-    public LoginResponseDto login(@Valid @RequestBody LoginRequestDto request) {
+    public LoginResponseDto login(@NonNull @Valid @RequestBody LoginRequestDto request) {
         return authService.authenticate(request);
     }
 }
