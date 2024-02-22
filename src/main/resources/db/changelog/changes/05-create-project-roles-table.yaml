@@ -21,11 +21,17 @@ databaseChangeLog:
                     foreignKeyName: fk_users_project-roles
                     references: users(id)
               - column:
+                  name: project_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_projects_project-roles
+                    references: projects(id)
+              - column:
                   name: role_type
                   type: tinyint
                   constraints:
                     nullable: false
-                    unique: true
               - column:
                   name: is_deleted
                   type: boolean

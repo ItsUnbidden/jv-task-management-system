@@ -8,7 +8,7 @@ databaseChangeLog:
             columns:
               - column:
                   name: email
-                  value: owner@bookstore.com
+                  value: owner@taskmanagement.com
               - column:
                   name: username
                   value: owner
