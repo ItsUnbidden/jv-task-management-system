@@ -30,6 +30,10 @@ public class ProjectRole {
     @Column(nullable = false)
     private ProjectRoleType roleType;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "project_id", nullable = false)
+    private Project project;
+
     @Column(nullable = false)
     private boolean isDeleted;
 

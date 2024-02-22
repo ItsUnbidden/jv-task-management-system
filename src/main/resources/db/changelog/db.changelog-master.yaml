@@ -10,18 +10,16 @@ databaseChangeLog:
   - include:
       file: /db/changelog/changes/05-create-project-roles-table.yaml
   - include:
-      file: /db/changelog/changes/06-create-projects-project-roles-table.yaml
+      file: /db/changelog/changes/06-create-tasks-table.yaml
   - include:
-      file: /db/changelog/changes/07-create-tasks-table.yaml
+      file: /db/changelog/changes/07-create-lables-table.yaml
   - include:
-      file: /db/changelog/changes/08-create-lables-table.yaml
+      file: /db/changelog/changes/08-create-tasks-labels-table.yaml
   - include:
-      file: /db/changelog/changes/09-create-tasks-labels-table.yaml
+      file: /db/changelog/changes/09-create-attachments-table.yaml
   - include:
-      file: /db/changelog/changes/10-create-attachments-table.yaml
+      file: /db/changelog/changes/10-insert-roles.yaml
   - include:
-      file: /db/changelog/changes/11-create-comments-table.yaml
+      file: /db/changelog/changes/11-insert-owner.yaml
   - include:
-      file: /db/changelog/changes/12-insert-roles.yaml
-  - include:
-      file: /db/changelog/changes/13-insert-owner.yaml
+      file: /db/changelog/changes/12-create-comments-table.yaml
