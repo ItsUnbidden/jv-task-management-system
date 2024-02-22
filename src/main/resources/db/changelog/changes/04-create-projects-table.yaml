@@ -36,7 +36,6 @@ databaseChangeLog:
                   type: tinyint
                   constraints:
                     nullable: false
-                    unique: true
               - column:
                   name: is_private
                   type: boolean

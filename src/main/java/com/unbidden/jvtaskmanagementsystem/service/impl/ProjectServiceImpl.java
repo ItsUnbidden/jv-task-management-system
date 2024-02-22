@@ -3,26 +3,23 @@ package com.unbidden.jvtaskmanagementsystem.service.impl;
 import com.unbidden.jvtaskmanagementsystem.dto.project.CreateProjectRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.project.ProjectResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.project.UpdateProjectRoleRequestDto;
-import com.unbidden.jvtaskmanagementsystem.exception.EntityNotFoundException;
 import com.unbidden.jvtaskmanagementsystem.mapper.ProjectMapper;
 import com.unbidden.jvtaskmanagementsystem.model.Project;
 import com.unbidden.jvtaskmanagementsystem.model.Project.ProjectStatus;
 import com.unbidden.jvtaskmanagementsystem.model.ProjectRole;
 import com.unbidden.jvtaskmanagementsystem.model.ProjectRole.ProjectRoleType;
-import com.unbidden.jvtaskmanagementsystem.model.Role.RoleType;
 import com.unbidden.jvtaskmanagementsystem.model.User;
 import com.unbidden.jvtaskmanagementsystem.repository.ProjectRepository;
 import com.unbidden.jvtaskmanagementsystem.repository.ProjectRoleRepository;
-import com.unbidden.jvtaskmanagementsystem.repository.UserRepository;
+import com.unbidden.jvtaskmanagementsystem.security.ProjectSecurity;
 import com.unbidden.jvtaskmanagementsystem.service.ProjectService;
+import com.unbidden.jvtaskmanagementsystem.service.util.EntityUtil;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.lang.NonNull;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -35,23 +32,19 @@ public class ProjectServiceImpl implements ProjectService {
 
     private final ProjectMapper projectMapper;
 
-    private final UserRepository userRepository;
+    private final EntityUtil entityUtil;
 
     @Override
+    @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, projectIdParamName = "id")
     public ProjectResponseDto findProjectById(User user, @NonNull Long id) {
-        final Project project = getProject(id);
-
-        if (project.isPrivate() && !isManager(user)) {
-            checkUserAccessInProject(user.getId(), project.getId(), ProjectRoleType.CONTRIBUTOR);
-        }
+        final Project project = entityUtil.getProjectById(id);
         
         updateProjectStatus(project, true);
         return projectMapper.toProjectDto(project);
     }
 
     @Override
-    public List<ProjectResponseDto> findAllProjectsForUser(User user,
-            @NonNull Pageable pageable) {
+    public List<ProjectResponseDto> findAllProjectsForUser(User user) {
         List<ProjectRole> projectRoles = projectRoleRepository.findByUserId(user.getId());
         List<Project> projects = projectRoles.stream().map(ProjectRole::getProject).toList();
 
@@ -66,7 +59,7 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     public List<ProjectResponseDto> searchProjectsByName(User user, String name,
             @NonNull Pageable pageable) {
-        final boolean isManager = isManager(user);
+        final boolean isManager = entityUtil.isManager(user);
         List<Project> projects = (isManager) ? projectRepository
                 .findByNameContainsAllIgnoreCase(name, pageable) 
                 : projectRepository.findPublicByNameContainsAllIgnoreCase(user.getId(),
@@ -99,13 +92,10 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
+    @ProjectSecurity(securityLevel = ProjectRoleType.ADMIN, projectIdParamName = "id")
     public ProjectResponseDto updateProject(User user, @NonNull Long id,
             @NonNull CreateProjectRequestDto requestDto) {
-        final Project project = getProject(id);
-
-        if (!isManager(user)) {
-            checkUserAccessInProject(user.getId(), project.getId(), ProjectRoleType.ADMIN);
-        }
+        final Project project = entityUtil.getProjectById(id);
         
         project.setName(requestDto.getName());
         project.setDescription(requestDto.getDescription());
@@ -117,24 +107,23 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
+    @ProjectSecurity(securityLevel = ProjectRoleType.CREATOR, projectIdParamName = "id")
     public void deleteProject(User user, @NonNull Long id) {
-        final Project project = getProject(id);
-
-        if (!isManager(user)) {
-            checkUserAccessInProject(user.getId(), project.getId(), ProjectRoleType.CREATOR);
-        }
-
         projectRepository.deleteById(id);
     }
 
     @Override
+    @ProjectSecurity(securityLevel = ProjectRoleType.ADMIN)
     public ProjectResponseDto addUserToProject(User user, @NonNull Long projectId,
             @NonNull Long userId) {
-        final Project project = getProject(projectId);
-        final User newProjectMember = getUser(userId);
-        
-        if (!isManager(user)) {
-            checkUserAccessInProject(user.getId(), project.getId(), ProjectRoleType.ADMIN);
+        final Project project = entityUtil.getProjectById(projectId);
+        final User newProjectMember = entityUtil.getUserById(userId);
+
+        if (!project.getProjectRoles().stream()
+                .filter(pr -> pr.getUser().getId() == userId)
+                .toList().isEmpty()) {
+            throw new UnsupportedOperationException("User with id " + userId 
+                    + " is already a member of project with id " + projectId);
         }
         
         ProjectRole projectRole = new ProjectRole();
@@ -147,13 +136,11 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
+    @ProjectSecurity(securityLevel = ProjectRoleType.ADMIN)
     public ProjectResponseDto removeUserFromProject(User user, @NonNull Long projectId,
             @NonNull Long userId) {
-        final ProjectRole projectRole = getProjectRole(projectId, userId);
-
-        if (!isManager(user)) {
-            checkUserAccessInProject(user.getId(), projectId, ProjectRoleType.ADMIN);
-        }
+        final ProjectRole projectRole = entityUtil
+                .getProjectRoleByProjectIdAndUserId(projectId, userId);
 
         if (projectRole.getRoleType().equals(ProjectRoleType.CREATOR)) {
             throw new UnsupportedOperationException(
@@ -161,27 +148,24 @@ public class ProjectServiceImpl implements ProjectService {
         }
 
         projectRoleRepository.delete(projectRole);
-        return projectMapper.toProjectDto(getProject(projectId));
+        return projectMapper.toProjectDto(entityUtil.getProjectById(projectId));
     }
 
     @Override
+    @ProjectSecurity(securityLevel = ProjectRoleType.CREATOR)
     public ProjectResponseDto changeProjectMemberRole(User user, @NonNull Long projectId,
             @NonNull Long userId, @NonNull UpdateProjectRoleRequestDto requestDto) {
-        final Project project = getProject(projectId);
+        final Project project = entityUtil.getProjectById(projectId);
 
         updateProjectStatus(project, true);
 
-        ProjectRole creatorRole = (isManager(user)) ? project.getProjectRoles().stream()
+        ProjectRole creatorRole = project.getProjectRoles().stream()
                 .filter(pr -> pr.getRoleType().equals(ProjectRoleType.CREATOR))
                 .toList()
-                .get(0) 
-                : checkUserAccessInProject(user.getId(), project.getId(),
-                ProjectRoleType.CREATOR);       
+                .get(0);
 
-        ProjectRole targetUserProjectRole = projectRoleRepository
-                .findByProjectIdWithUserId(projectId, userId).orElseThrow(() -> 
-                new EntityNotFoundException("User with id " + userId + " does not exist or " 
-                + "they are not a member of project with id " + projectId));
+        ProjectRole targetUserProjectRole = 
+                entityUtil.getProjectRoleByProjectIdAndUserId(projectId, userId);
 
         if (requestDto.getNewRole().equals(ProjectRoleType.CREATOR)) {
             creatorRole.setRoleType(ProjectRoleType.ADMIN);
@@ -189,27 +173,7 @@ public class ProjectServiceImpl implements ProjectService {
         }
         targetUserProjectRole.setRoleType(requestDto.getNewRole());
         projectRoleRepository.save(targetUserProjectRole);
-        return projectMapper.toProjectDto(getProject(projectId));
-    }
-
-    private ProjectRole checkUserAccessInProject(Long userId, Long projectId,
-            ProjectRoleType roleRequiredForAccess) {
-        ProjectRole projectRole = getProjectRole(projectId, userId);
-        
-        if (projectRole.getRoleType().compareTo(roleRequiredForAccess) > 0) {
-            throw new AccessDeniedException("User does not have required project role <"
-                    + roleRequiredForAccess + "> to access this resource.");
-        }
-        return projectRole;
-    }
-    
-    private boolean isManager(@NonNull User user) {
-        for (GrantedAuthority grantedAuthority : user.getAuthorities()) {
-            if (grantedAuthority.getAuthority().equals("ROLE_" + RoleType.MANAGER)) {
-                return true;
-            }      
-        }
-        return false;
+        return projectMapper.toProjectDto(entityUtil.getProjectById(projectId));
     }
 
     private void updateProjectStatus(Project project, boolean save) {
@@ -235,23 +199,5 @@ public class ProjectServiceImpl implements ProjectService {
         if (save && !initialStatus.equals(project.getStatus())) {
             projectRepository.save(project);
         }
-    }
-
-    private Project getProject(@NonNull Long projectId) {
-        return projectRepository.findById(projectId).orElseThrow(() ->
-                new EntityNotFoundException("Was not able to find a project with id "
-                + projectId));
-    }
-
-    private User getUser(@NonNull Long userId) {
-        return userRepository.findById(userId).orElseThrow(() ->
-                new EntityNotFoundException("Was not able to find a user with id " 
-                + userId));
-    }
-
-    private ProjectRole getProjectRole(Long projectId, Long userId) {
-        return projectRoleRepository.findByProjectIdWithUserId(
-            projectId, userId).orElseThrow(() -> new AccessDeniedException(
-            "User is not a member of this project."));
     }
 }

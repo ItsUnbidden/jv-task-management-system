@@ -4,7 +4,6 @@ import com.unbidden.jvtaskmanagementsystem.dto.auth.LoginRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.auth.RegistrationRequest;
 import com.unbidden.jvtaskmanagementsystem.dto.user.UserResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.user.UserUpdateDetailsRequestDto;
-import com.unbidden.jvtaskmanagementsystem.exception.EntityNotFoundException;
 import com.unbidden.jvtaskmanagementsystem.exception.RegistrationException;
 import com.unbidden.jvtaskmanagementsystem.mapper.UserMapper;
 import com.unbidden.jvtaskmanagementsystem.model.Role;
@@ -13,6 +12,7 @@ import com.unbidden.jvtaskmanagementsystem.model.User;
 import com.unbidden.jvtaskmanagementsystem.repository.RoleRepository;
 import com.unbidden.jvtaskmanagementsystem.repository.UserRepository;
 import com.unbidden.jvtaskmanagementsystem.service.UserService;
+import com.unbidden.jvtaskmanagementsystem.service.util.EntityUtil;
 import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +32,8 @@ public class UserServiceImpl implements UserService {
     private final UserMapper userMapper;
 
     private final PasswordEncoder passwordEncoder;
+
+    private final EntityUtil entityUtil;
 
     private Role ownerRole;
 
@@ -60,7 +62,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponseDto updateRoles(@NonNull Long id, Set<Role> roles) {
-        User user = getUserById(id);
+        User user = entityUtil.getUserById(id);
         checkUserIsNotOwner(user, "Owner's roles are not allowed to be changed.");
         user.setRoles(roles);
         return userMapper.toDto(userRepository.save(user));
@@ -97,7 +99,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponseDto lockUserById(@NonNull Long id) {
-        User user = getUserById(id);
+        User user = entityUtil.getUserById(id);
 
         checkUserIsNotOwner(user, "Owner cannot be locked.");
         user.setLocked(user.isLocked() ? false : true);
@@ -112,10 +114,5 @@ public class UserServiceImpl implements UserService {
         if (user.getRoles().contains(ownerRole)) {
             throw new UnsupportedOperationException(errorMsg);
         }
-    }
-
-    private User getUserById(@NonNull Long id) {
-        return userRepository.findById(id).orElseThrow(() -> 
-                new EntityNotFoundException("Was not able to find user by id: " + id));
     }
 }

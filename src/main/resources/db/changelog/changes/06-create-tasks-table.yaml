@@ -26,13 +26,11 @@ databaseChangeLog:
                   type: tinyint
                   constraints:
                     nullable: false
-                    unique: true
               - column:
                   name: status
                   type: tinyint
                   constraints:
                     nullable: false
-                    unique: true
               - column:
                   name: due_date
                   type: date

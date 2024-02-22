@@ -37,10 +37,8 @@ public class ProjectController {
     }
     
     @GetMapping("/me")
-    public List<ProjectResponseDto> getAllProjectsForUser(Authentication authentication, 
-            @NonNull Pageable pageable) {
-        return projectService.findAllProjectsForUser((User)authentication.getPrincipal(),
-                pageable);
+    public List<ProjectResponseDto> getAllProjectsForUser(Authentication authentication) {
+        return projectService.findAllProjectsForUser((User)authentication.getPrincipal());
     }
 
     @GetMapping("/search")
