@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 public interface ProjectService {
     public ProjectResponseDto findProjectById(User user, @NonNull Long id);
     
-    public List<ProjectResponseDto> findAllProjectsForUser(User user, @NonNull Pageable pageable);
+    public List<ProjectResponseDto> findAllProjectsForUser(User user);
 
     public List<ProjectResponseDto> searchProjectsByName(User user, 
             @RequestParam String name, @NonNull Pageable pageable);
