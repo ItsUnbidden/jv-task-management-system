@@ -1,4 +1,4 @@
-package com.unbidden.jvtaskmanagementsystem.security;
+package com.unbidden.jvtaskmanagementsystem.security.project;
 
 import com.unbidden.jvtaskmanagementsystem.exception.ProjectSecurityDataParsingException;
 import com.unbidden.jvtaskmanagementsystem.model.Project;
@@ -21,28 +21,17 @@ import org.springframework.stereotype.Component;
 public class ProjectSecurityAspect {
     private final EntityUtil entityUtil;
 
-    @Before("execution(public * com.unbidden.jvtaskmanagementsystem."
-            + "service.impl.ProjectServiceImpl.findProjectById(..))")
-    public void getProjectByIdAccessAdvice(JoinPoint joinPoint) {
+    private final ProjectProviderManager projectProviderManager;
+
+    @Before("execution(public * com.unbidden.jvtaskmanagementsystem.service.impl..*(..)) && "
+            + "@annotation(com.unbidden.jvtaskmanagementsystem.security.project.ProjectSecurity)")
+    public void projectAccessAdvice(JoinPoint joinPoint) {
         ProjectSecurityDto dataFromJoinPoint = parseDataFromJoinPoint(joinPoint);
 
-        System.out.println("Get project id aspect is running...");
-        if (entityUtil.isManager(dataFromJoinPoint.user) 
-                || !dataFromJoinPoint.project.isPrivate()) {
+        if (dataFromJoinPoint.includePrivacyCheck 
+                && !dataFromJoinPoint.project.isPrivate()) {
             return;
         }
-
-        checkUserAccess(dataFromJoinPoint);
-    }
-
-    @Before("execution(public * com.unbidden.jvtaskmanagementsystem.service.impl..*(..)) "
-            + "&& @annotation(com.unbidden.jvtaskmanagementsystem.security.ProjectSecurity) "
-            + "&& ! execution(public * com.unbidden.jvtaskmanagementsystem."
-            + "service.impl.ProjectServiceImpl.findProjectById(..))")
-    public void userAccessInProjectAdvice(JoinPoint joinPoint) {
-        ProjectSecurityDto dataFromJoinPoint = parseDataFromJoinPoint(joinPoint);
-
-        System.out.println("General project security aspect is running...");
         if (entityUtil.isManager(dataFromJoinPoint.user)) {
             return;
         }
@@ -51,7 +40,7 @@ public class ProjectSecurityAspect {
     }
 
     private void checkUserAccess(ProjectSecurityDto dto) {
-        ProjectRole projectRole = entityUtil
+        final ProjectRole projectRole = entityUtil
                 .getProjectRoleByProjectIdAndUserId(dto.project.getId(),
                 dto.user.getId());
 
@@ -65,22 +54,22 @@ public class ProjectSecurityAspect {
         MethodSignature signature = (MethodSignature)joinPoint.getSignature();
         ProjectSecurity annotation = signature.getMethod().getAnnotation(ProjectSecurity.class);
         String[] parameterNames = signature.getParameterNames();
-        int projectIdIndex = -1;
+        int entityIdIndex = -1;
         int userIndex = -1;
 
         for (int i = 0; i < parameterNames.length; i++) {
-            if (parameterNames[i].equals(annotation.projectIdParamName())) {
-                projectIdIndex = i;
+            if (parameterNames[i].equals(annotation.entityIdParamName())) {
+                entityIdIndex = i;
             }
             if (parameterNames[i].equals(annotation.userParamName())) {
                 userIndex = i;
             }
         }
 
-        if (projectIdIndex == -1) {
+        if (entityIdIndex == -1) {
             throw new ProjectSecurityDataParsingException("Method " + signature.getName() 
                     + "does not have a parameter with name " 
-                    + annotation.projectIdParamName() + '.');
+                    + annotation.entityIdParamName() + '.');
         }
         if (userIndex == -1) {
             throw new ProjectSecurityDataParsingException("Method " + signature.getName() 
@@ -88,13 +77,14 @@ public class ProjectSecurityAspect {
                     + annotation.userParamName() + '.');
         }
 
-        Long projectId = null;
-        if (joinPoint.getArgs()[projectIdIndex] instanceof Long) {
-            projectId = (Long)joinPoint.getArgs()[projectIdIndex];
+        Project project = null;
+        if (joinPoint.getArgs()[entityIdIndex] instanceof Long) {
+            project = projectProviderManager.getProvider(annotation.entityIdClass())
+                    .getProject((Long)joinPoint.getArgs()[entityIdIndex]);
         } else {
             throw new ProjectSecurityDataParsingException(
-                    "Project id class type must be " + Long.class.getName()
-                    + " but currently is " + joinPoint.getArgs()[projectIdIndex]
+                    "Entity id class type must be " + Long.class.getName()
+                    + " but currently is " + joinPoint.getArgs()[entityIdIndex]
                     .getClass().getName());
         }
 
@@ -107,8 +97,8 @@ public class ProjectSecurityAspect {
                     + " but currently is " + joinPoint.getArgs()[userIndex].getClass().getName());
         }
 
-        Project project = entityUtil.getProjectById(projectId);
-        return new ProjectSecurityDto(project, user, annotation.securityLevel());
+        return new ProjectSecurityDto(project, user, annotation.securityLevel(),
+                annotation.includePrivacyCheck());
     }
 
     private static class ProjectSecurityDto {
@@ -118,10 +108,14 @@ public class ProjectSecurityAspect {
 
         private ProjectRoleType roleRequired;
 
-        public ProjectSecurityDto(Project project, User user, ProjectRoleType roleRequired) {
+        private boolean includePrivacyCheck;
+
+        public ProjectSecurityDto(Project project, User user,
+                ProjectRoleType roleRequired, boolean includePrivacyCheck) {
             this.project = project;
             this.user = user;
             this.roleRequired = roleRequired;
+            this.includePrivacyCheck = includePrivacyCheck;
         }
     }
 }

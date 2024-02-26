@@ -56,6 +56,7 @@ public class Project {
     public static enum ProjectStatus {
         INITIATED,
         IN_PROGRESS, 
-        COMPLETED
+        COMPLETED,
+        OVERDUE
     }
 }

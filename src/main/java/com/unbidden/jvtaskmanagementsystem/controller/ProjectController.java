@@ -2,6 +2,7 @@ package com.unbidden.jvtaskmanagementsystem.controller;
 
 import com.unbidden.jvtaskmanagementsystem.dto.project.CreateProjectRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.project.ProjectResponseDto;
+import com.unbidden.jvtaskmanagementsystem.dto.project.UpdateProjectRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.project.UpdateProjectRoleRequestDto;
 import com.unbidden.jvtaskmanagementsystem.model.User;
 import com.unbidden.jvtaskmanagementsystem.service.ProjectService;
@@ -57,7 +58,7 @@ public class ProjectController {
     @PutMapping("/{id}")
     public ProjectResponseDto updateProject(Authentication authentication, 
             @NonNull @PathVariable Long id,
-            @NonNull @RequestBody @Valid CreateProjectRequestDto requestDto) {
+            @NonNull @RequestBody @Valid UpdateProjectRequestDto requestDto) {
         return projectService.updateProject((User)authentication.getPrincipal(), id, requestDto);
     }
 
