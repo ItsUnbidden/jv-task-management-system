@@ -20,7 +20,7 @@ import org.hibernate.annotations.SQLRestriction;
 @Entity
 @Data
 @Table(name = "tasks")
-@SQLDelete(sql = "UPDATE projects SET is_deleted = true WHERE id = ?")
+@SQLDelete(sql = "UPDATE tasks SET is_deleted = true WHERE id = ?")
 @SQLRestriction("is_deleted <> true")
 public class Task {
     @Id
@@ -46,7 +46,7 @@ public class Task {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assignee_id", nullable = false)
-    private User user;
+    private User assignee;
 
     @ManyToMany()
     @JoinTable(name = "tasks_labels",
@@ -60,7 +60,8 @@ public class Task {
     public static enum TaskStatus {
         NOT_STARTED,
         IN_PROGRESS,
-        COMPLETED
+        COMPLETED,
+        OVERDUE
     }
 
     public static enum TaskPriority {

@@ -2,6 +2,7 @@ package com.unbidden.jvtaskmanagementsystem.service.impl;
 
 import com.unbidden.jvtaskmanagementsystem.dto.project.CreateProjectRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.project.ProjectResponseDto;
+import com.unbidden.jvtaskmanagementsystem.dto.project.UpdateProjectRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.project.UpdateProjectRoleRequestDto;
 import com.unbidden.jvtaskmanagementsystem.mapper.ProjectMapper;
 import com.unbidden.jvtaskmanagementsystem.model.Project;
@@ -11,7 +12,7 @@ import com.unbidden.jvtaskmanagementsystem.model.ProjectRole.ProjectRoleType;
 import com.unbidden.jvtaskmanagementsystem.model.User;
 import com.unbidden.jvtaskmanagementsystem.repository.ProjectRepository;
 import com.unbidden.jvtaskmanagementsystem.repository.ProjectRoleRepository;
-import com.unbidden.jvtaskmanagementsystem.security.ProjectSecurity;
+import com.unbidden.jvtaskmanagementsystem.security.project.ProjectSecurity;
 import com.unbidden.jvtaskmanagementsystem.service.ProjectService;
 import com.unbidden.jvtaskmanagementsystem.service.util.EntityUtil;
 import java.time.LocalDate;
@@ -35,11 +36,12 @@ public class ProjectServiceImpl implements ProjectService {
     private final EntityUtil entityUtil;
 
     @Override
-    @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, projectIdParamName = "id")
+    @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, entityIdParamName = "id",
+            includePrivacyCheck = true)
     public ProjectResponseDto findProjectById(User user, @NonNull Long id) {
         final Project project = entityUtil.getProjectById(id);
         
-        updateProjectStatus(project, true);
+        updateProjectStatusAccordingToDate(project, true);
         return projectMapper.toProjectDto(project);
     }
 
@@ -48,9 +50,7 @@ public class ProjectServiceImpl implements ProjectService {
         List<ProjectRole> projectRoles = projectRoleRepository.findByUserId(user.getId());
         List<Project> projects = projectRoles.stream().map(ProjectRole::getProject).toList();
 
-        for (Project project : projects) {
-            updateProjectStatus(project, true);
-        }
+        projects.stream().forEach(p -> updateProjectStatusAccordingToDate(p, true));
         return projects.stream()
                 .map(projectMapper::toProjectDto)
                 .toList();
@@ -66,7 +66,7 @@ public class ProjectServiceImpl implements ProjectService {
                 name, pageable);
 
         for (Project project : projects) {
-            updateProjectStatus(project, true);
+            updateProjectStatusAccordingToDate(project, true);
             if (!isManager) {
                 project.setProjectRoles(projectRoleRepository.findByProjectId(project.getId()));
             }
@@ -87,27 +87,40 @@ public class ProjectServiceImpl implements ProjectService {
         creatorRole.setUser(user);
         project.setProjectRoles(Set.of(creatorRole));
         project.setStatus(ProjectStatus.INITIATED);
-        updateProjectStatus(project, false);
+        if (requestDto.getStartDate() == null) {
+            project.setStartDate(LocalDate.now());
+        }
+        updateProjectStatusAccordingToDate(project, false);
         return projectMapper.toProjectDto(projectRepository.save(project));
     }
 
     @Override
-    @ProjectSecurity(securityLevel = ProjectRoleType.ADMIN, projectIdParamName = "id")
+    @ProjectSecurity(securityLevel = ProjectRoleType.ADMIN, entityIdParamName = "id")
     public ProjectResponseDto updateProject(User user, @NonNull Long id,
-            @NonNull CreateProjectRequestDto requestDto) {
+            @NonNull UpdateProjectRequestDto requestDto) {
         final Project project = entityUtil.getProjectById(id);
         
-        project.setName(requestDto.getName());
-        project.setDescription(requestDto.getDescription());
-        project.setStartDate(requestDto.getStartDate());
-        project.setEndDate(requestDto.getEndDate());
-        project.setPrivate(requestDto.getIsPrivate());
-        updateProjectStatus(project, false);
+        if (requestDto.getName() != null) {
+            project.setName(requestDto.getName());
+        }
+        if (requestDto.getDescription() != null) {
+            project.setDescription(requestDto.getDescription());
+        }
+        if (requestDto.getStartDate() != null) {
+            project.setStartDate(requestDto.getStartDate());
+        }
+        if (requestDto.getEndDate() != null) {
+            project.setEndDate(requestDto.getEndDate());
+        }
+        if (requestDto.getIsPrivate() != null) {
+            project.setPrivate(requestDto.getIsPrivate());
+        }
+        updateProjectStatusAccordingToDate(project, false);
         return projectMapper.toProjectDto(projectRepository.save(project));
     }
 
     @Override
-    @ProjectSecurity(securityLevel = ProjectRoleType.CREATOR, projectIdParamName = "id")
+    @ProjectSecurity(securityLevel = ProjectRoleType.CREATOR, entityIdParamName = "id")
     public void deleteProject(User user, @NonNull Long id) {
         projectRepository.deleteById(id);
     }
@@ -131,7 +144,7 @@ public class ProjectServiceImpl implements ProjectService {
         projectRole.setRoleType(ProjectRoleType.CONTRIBUTOR);
         projectRole.setUser(newProjectMember);
         project.getProjectRoles().add(projectRole);
-        updateProjectStatus(project, false);
+        updateProjectStatusAccordingToDate(project, false);
         return projectMapper.toProjectDto(projectRepository.save(project));
     }
 
@@ -141,12 +154,14 @@ public class ProjectServiceImpl implements ProjectService {
             @NonNull Long userId) {
         final ProjectRole projectRole = entityUtil
                 .getProjectRoleByProjectIdAndUserId(projectId, userId);
+        final Project project = entityUtil.getProjectById(projectId);
 
         if (projectRole.getRoleType().equals(ProjectRoleType.CREATOR)) {
             throw new UnsupportedOperationException(
                     "Project creator cannot be removed from the project.");
         }
 
+        project.getProjectRoles().removeIf(pr -> pr.getId() == projectRole.getId());
         projectRoleRepository.delete(projectRole);
         return projectMapper.toProjectDto(entityUtil.getProjectById(projectId));
     }
@@ -157,7 +172,7 @@ public class ProjectServiceImpl implements ProjectService {
             @NonNull Long userId, @NonNull UpdateProjectRoleRequestDto requestDto) {
         final Project project = entityUtil.getProjectById(projectId);
 
-        updateProjectStatus(project, true);
+        updateProjectStatusAccordingToDate(project, true);
 
         ProjectRole creatorRole = project.getProjectRoles().stream()
                 .filter(pr -> pr.getRoleType().equals(ProjectRoleType.CREATOR))
@@ -176,7 +191,7 @@ public class ProjectServiceImpl implements ProjectService {
         return projectMapper.toProjectDto(entityUtil.getProjectById(projectId));
     }
 
-    private void updateProjectStatus(Project project, boolean save) {
+    private void updateProjectStatusAccordingToDate(Project project, boolean doSave) {
         final LocalDate currentDate = LocalDate.now();
         final ProjectStatus initialStatus = project.getStatus();
 
@@ -186,17 +201,18 @@ public class ProjectServiceImpl implements ProjectService {
         }
 
         if (project.getStartDate().isBefore(currentDate) 
-                && project.getEndDate().isAfter(currentDate)
                 && !project.getStatus().equals(ProjectStatus.IN_PROGRESS)) {
             project.setStatus(ProjectStatus.IN_PROGRESS);
         }
 
-        if (project.getEndDate().isBefore(currentDate)
-                && !project.getStatus().equals(ProjectStatus.COMPLETED)) {
-            project.setStatus(ProjectStatus.COMPLETED);
+        if (project.getEndDate() != null 
+                && project.getEndDate().isBefore(currentDate)
+                && !project.getStatus().equals(ProjectStatus.COMPLETED)
+                && !project.getStatus().equals(ProjectStatus.OVERDUE)) {
+            project.setStatus(ProjectStatus.OVERDUE);
         }
 
-        if (save && !initialStatus.equals(project.getStatus())) {
+        if (doSave && !initialStatus.equals(project.getStatus())) {
             projectRepository.save(project);
         }
     }
