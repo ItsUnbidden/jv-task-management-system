@@ -5,7 +5,6 @@ import com.unbidden.jvtaskmanagementsystem.dto.task.TaskResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.task.UpdateTaskRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.task.UpdateTaskStatusRequestDto;
 import com.unbidden.jvtaskmanagementsystem.model.User;
-import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.data.domain.Pageable;
 import org.springframework.lang.NonNull;
@@ -23,13 +22,15 @@ public interface TaskService {
 
     TaskResponseDto createTaskInProject(User user,
             @NonNull Long projectId,
-            @NonNull @Valid CreateTaskRequestDto requestDto);
+            @NonNull CreateTaskRequestDto requestDto);
 
     TaskResponseDto updateTask(User user, @NonNull Long taskId,
-            @NonNull @Valid UpdateTaskRequestDto requestDto);
+            @NonNull UpdateTaskRequestDto requestDto);
 
     void deleteTask(User user, @NonNull Long taskId);
 
     TaskResponseDto changeStatus(User user, @NonNull Long taskId,
             @NonNull UpdateTaskStatusRequestDto requestDto);
+
+    List<TaskResponseDto> getTasksByLabelId(User user, @NonNull Long labelId, Pageable pageable);
 }

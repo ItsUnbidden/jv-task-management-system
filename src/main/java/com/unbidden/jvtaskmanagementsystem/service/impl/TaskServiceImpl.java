@@ -5,6 +5,7 @@ import com.unbidden.jvtaskmanagementsystem.dto.task.TaskResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.task.UpdateTaskRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.task.UpdateTaskStatusRequestDto;
 import com.unbidden.jvtaskmanagementsystem.mapper.TaskMapper;
+import com.unbidden.jvtaskmanagementsystem.model.Label;
 import com.unbidden.jvtaskmanagementsystem.model.Project;
 import com.unbidden.jvtaskmanagementsystem.model.ProjectRole.ProjectRoleType;
 import com.unbidden.jvtaskmanagementsystem.model.Task;
@@ -75,6 +76,19 @@ public class TaskServiceImpl implements TaskService {
 
         updateTaskStatusAccordingToDate(task, true);
         return taskMapper.toDto(task);
+    }
+
+    @Override
+    @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, includePrivacyCheck = true,
+            entityIdParamName = "labelId", entityIdClass = Label.class)
+    public List<TaskResponseDto> getTasksByLabelId(User user, @NonNull Long labelId,
+            Pageable pageable) {
+        List<Task> tasks = taskRepository.findByLabelId(labelId, pageable);
+
+        tasks.stream().forEach(t -> updateTaskStatusAccordingToDate(t, true));
+        return tasks.stream()
+                .map(taskMapper::toDto)
+                .toList();
     }
 
     @Override

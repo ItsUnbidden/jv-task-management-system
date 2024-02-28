@@ -1,11 +1,13 @@
 package com.unbidden.jvtaskmanagementsystem.service.util;
 
 import com.unbidden.jvtaskmanagementsystem.exception.EntityNotFoundException;
+import com.unbidden.jvtaskmanagementsystem.model.Label;
 import com.unbidden.jvtaskmanagementsystem.model.Project;
 import com.unbidden.jvtaskmanagementsystem.model.ProjectRole;
 import com.unbidden.jvtaskmanagementsystem.model.Role.RoleType;
 import com.unbidden.jvtaskmanagementsystem.model.Task;
 import com.unbidden.jvtaskmanagementsystem.model.User;
+import com.unbidden.jvtaskmanagementsystem.repository.LabelRepository;
 import com.unbidden.jvtaskmanagementsystem.repository.ProjectRepository;
 import com.unbidden.jvtaskmanagementsystem.repository.ProjectRoleRepository;
 import com.unbidden.jvtaskmanagementsystem.repository.TaskRepository;
@@ -28,6 +30,8 @@ public class EntityUtil {
 
     private final TaskRepository taskRepository;
 
+    private final LabelRepository labelRepository;
+
     @NonNull
     public Project getProjectById(@NonNull Long projectId) {
         return projectRepository.findById(projectId).orElseThrow(() ->
@@ -47,6 +51,13 @@ public class EntityUtil {
         return taskRepository.findById(taskId).orElseThrow(() ->
                 new EntityNotFoundException("Was not able to find a task with id " 
                 + taskId));
+    }
+
+    @NonNull
+    public Label getLabelById(@NonNull Long labelId) {
+        return labelRepository.findById(labelId).orElseThrow(() ->
+                new EntityNotFoundException("Was not able to find a label with id " 
+                + labelId));
     }
 
     @NonNull

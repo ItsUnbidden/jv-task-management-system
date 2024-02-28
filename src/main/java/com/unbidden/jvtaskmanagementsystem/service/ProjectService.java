@@ -35,4 +35,6 @@ public interface ProjectService {
 
     public ProjectResponseDto removeUserFromProject(User user,
             @NonNull Long projectId, @NonNull Long userId);
+
+    public void quitProject(User user, @NonNull Long projectId);
 }

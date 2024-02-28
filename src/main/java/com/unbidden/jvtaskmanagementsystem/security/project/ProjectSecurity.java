@@ -27,6 +27,7 @@ import java.lang.annotation.Target;
  * @param userParamName — name of the user parameter. By default equals {@code user}
  * @param includePrivacyCheck — whether check for project privacy matters. 
  * Mainly required when getting entity by id. By default is {@code false}.
+ * @author Unbidden
  */
 
 @Target(ElementType.METHOD)
