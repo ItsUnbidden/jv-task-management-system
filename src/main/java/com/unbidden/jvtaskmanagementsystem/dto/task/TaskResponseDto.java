@@ -3,6 +3,7 @@ package com.unbidden.jvtaskmanagementsystem.dto.task;
 import com.unbidden.jvtaskmanagementsystem.model.Task.TaskPriority;
 import com.unbidden.jvtaskmanagementsystem.model.Task.TaskStatus;
 import java.time.LocalDate;
+import java.util.Set;
 import lombok.Data;
 
 @Data
@@ -26,4 +27,6 @@ public class TaskResponseDto {
     private Long assigneeId;
 
     private String assigneeUsername;
+
+    private Set<Long> labelIds;
 }

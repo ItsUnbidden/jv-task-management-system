@@ -84,6 +84,13 @@ public class ProjectController {
                 projectId, userId);
     }
 
+    @DeleteMapping("/{projectId}/quit")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void quitProject(Authentication authentication,
+            @NonNull @PathVariable Long projectId) {
+        projectService.quitProject((User)authentication.getPrincipal(), projectId);
+    }
+
     @PatchMapping("/{projectId}/users/{userId}/roles")
     public ProjectResponseDto changeProjectMemberRole(Authentication authentication,
             @NonNull @PathVariable Long projectId,

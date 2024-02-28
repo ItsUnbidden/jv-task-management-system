@@ -59,6 +59,13 @@ public class TaskController {
                 taskId);
     }
 
+    @GetMapping("/labels/{labelId}")
+    public List<TaskResponseDto> getTasksByLabelId(Authentication authentication,
+            @NonNull @PathVariable Long labelId, Pageable pageable) {
+        return taskService.getTasksByLabelId((User)authentication.getPrincipal(),
+                labelId, pageable);
+    }
+    
     @PostMapping()
     public TaskResponseDto createTaskInProject(Authentication authentication,
             @NonNull @Valid @RequestBody CreateTaskRequestDto requestDto) {

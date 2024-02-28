@@ -12,7 +12,7 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
-import java.util.List;
+import java.util.Set;
 import lombok.Data;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
@@ -52,7 +52,7 @@ public class Task {
     @JoinTable(name = "tasks_labels",
             joinColumns = @JoinColumn(name = "task_id"),
             inverseJoinColumns = @JoinColumn(name = "label_id"))
-    private List<Label> labels;
+    private Set<Label> labels;
 
     @Column(nullable = false)
     private boolean isDeleted;

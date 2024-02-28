@@ -152,18 +152,13 @@ public class ProjectServiceImpl implements ProjectService {
     @ProjectSecurity(securityLevel = ProjectRoleType.ADMIN)
     public ProjectResponseDto removeUserFromProject(User user, @NonNull Long projectId,
             @NonNull Long userId) {
-        final ProjectRole projectRole = entityUtil
-                .getProjectRoleByProjectIdAndUserId(projectId, userId);
-        final Project project = entityUtil.getProjectById(projectId);
-
-        if (projectRole.getRoleType().equals(ProjectRoleType.CREATOR)) {
-            throw new UnsupportedOperationException(
-                    "Project creator cannot be removed from the project.");
-        }
-
-        project.getProjectRoles().removeIf(pr -> pr.getId() == projectRole.getId());
-        projectRoleRepository.delete(projectRole);
+        removeUserFromProject0(userId, projectId);
         return projectMapper.toProjectDto(entityUtil.getProjectById(projectId));
+    }
+
+    @Override
+    public void quitProject(User user, @NonNull Long projectId) {
+        removeUserFromProject0(user.getId(), projectId);
     }
 
     @Override
@@ -215,5 +210,19 @@ public class ProjectServiceImpl implements ProjectService {
         if (doSave && !initialStatus.equals(project.getStatus())) {
             projectRepository.save(project);
         }
+    }
+
+    private void removeUserFromProject0(Long userId, Long projectId) {
+        final ProjectRole projectRole = entityUtil
+                .getProjectRoleByProjectIdAndUserId(projectId, userId);
+        final Project project = entityUtil.getProjectById(projectId);
+
+        if (projectRole.getRoleType().equals(ProjectRoleType.CREATOR)) {
+            throw new UnsupportedOperationException(
+                    "Project creator cannot be removed from the project.");
+        }
+
+        project.getProjectRoles().removeIf(pr -> pr.getId() == projectRole.getId());
+        projectRoleRepository.delete(projectRole);
     }
 }
