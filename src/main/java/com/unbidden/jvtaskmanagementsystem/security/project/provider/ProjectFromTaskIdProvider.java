@@ -14,7 +14,7 @@ public class ProjectFromTaskIdProvider implements ProjectProvider {
 
     @Override
     public Project getProject(@NonNull Long id) {
-        Task taskById = entityUtil.getTaskById(id);
+        final Task taskById = entityUtil.getTaskById(id);
         return taskById.getProject();
     }
 }

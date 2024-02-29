@@ -34,7 +34,7 @@ public class LabelServiceImpl implements LabelService {
     private final TaskRepository taskRepository;
 
     @Override
-    @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, includePrivacyCheck = true)
+    @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true)
     public List<LabelResponseDto> getLablesForProject(User user, @NonNull Long projectId,
             Pageable pageable) {
         return labelRepository.findByProjectId(projectId).stream()
@@ -43,7 +43,7 @@ public class LabelServiceImpl implements LabelService {
     }
 
     @Override
-    @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, includePrivacyCheck = true,
+    @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true,
             entityIdClass = Label.class, entityIdParamName = "labelId")
     public LabelResponseDto getLabelById(User user, @NonNull Long labelId) {
         return labelMapper.toDto(entityUtil.getLabelById(labelId));

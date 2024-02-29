@@ -98,7 +98,7 @@ public class ProjectSecurityAspect {
         }
 
         return new ProjectSecurityDto(project, user, annotation.securityLevel(),
-                annotation.includePrivacyCheck());
+                annotation.bypassIfPublic());
     }
 
     private static class ProjectSecurityDto {
