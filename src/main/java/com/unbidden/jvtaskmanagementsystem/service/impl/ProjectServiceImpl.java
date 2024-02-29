@@ -37,7 +37,7 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, entityIdParamName = "id",
-            includePrivacyCheck = true)
+            bypassIfPublic = true)
     public ProjectResponseDto findProjectById(User user, @NonNull Long id) {
         final Project project = entityUtil.getProjectById(id);
         
