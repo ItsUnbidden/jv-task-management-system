@@ -1,7 +1,9 @@
 package com.unbidden.jvtaskmanagementsystem.security.project;
 
 import com.unbidden.jvtaskmanagementsystem.model.Project;
+import com.unbidden.jvtaskmanagementsystem.model.ProjectRole;
 import com.unbidden.jvtaskmanagementsystem.model.ProjectRole.ProjectRoleType;
+import com.unbidden.jvtaskmanagementsystem.model.User;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -10,8 +12,8 @@ import java.lang.annotation.Target;
 /**
  * This annotation applies project security to a service method. That includes:
  * <ul>
- *  <li>Testing whether user is a member of a project</li>
- *  <li>What project role is required to access a method</li>
+ *  <li>Testing whether {@link User} is a member of a {@link Project}</li>
+ *  <li>What {@link ProjectRole} is required to access a method</li>
  *  <li>Does privacy of a project matter for method access</li>
  * </ul>
  * <p>The method in question must have several specific parameters 
@@ -25,8 +27,8 @@ import java.lang.annotation.Target;
  * @param entityIdClass — class of the entity from which project can be fetched.
  * By default equals {@code Project.class}
  * @param userParamName — name of the user parameter. By default equals {@code user}
- * @param includePrivacyCheck — whether check for project privacy matters. 
- * Mainly required when getting entity by id. By default is {@code false}.
+ * @param bypassIfPublic — whether check for project privacy matters. 
+ * Mainly required when retrieving entities from the database. By default is {@code false}.
  * @author Unbidden
  */
 
@@ -41,5 +43,5 @@ public @interface ProjectSecurity {
 
     String userParamName() default "user";
 
-    boolean includePrivacyCheck() default false;
+    boolean bypassIfPublic() default false;
 }

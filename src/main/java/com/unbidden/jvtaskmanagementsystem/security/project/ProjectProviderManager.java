@@ -1,10 +1,12 @@
 package com.unbidden.jvtaskmanagementsystem.security.project;
 
 import com.unbidden.jvtaskmanagementsystem.model.Label;
+import com.unbidden.jvtaskmanagementsystem.model.Message;
 import com.unbidden.jvtaskmanagementsystem.model.Project;
 import com.unbidden.jvtaskmanagementsystem.model.Task;
 import com.unbidden.jvtaskmanagementsystem.security.project.provider.ProjectFromIdProvider;
 import com.unbidden.jvtaskmanagementsystem.security.project.provider.ProjectFromLabelIdProvider;
+import com.unbidden.jvtaskmanagementsystem.security.project.provider.ProjectFromMessageIdProvider;
 import com.unbidden.jvtaskmanagementsystem.security.project.provider.ProjectFromTaskIdProvider;
 import com.unbidden.jvtaskmanagementsystem.security.project.provider.ProjectProvider;
 import java.util.HashMap;
@@ -27,6 +29,9 @@ public class ProjectProviderManager {
             }
             if (projectProvider.getClass().equals(ProjectFromLabelIdProvider.class)) {
                 PROVIDERS_MAP.put(Label.class, projectProvider);
+            }
+            if (projectProvider.getClass().equals(ProjectFromMessageIdProvider.class)) {
+                PROVIDERS_MAP.put(Message.class, projectProvider);
             }
         }
     }

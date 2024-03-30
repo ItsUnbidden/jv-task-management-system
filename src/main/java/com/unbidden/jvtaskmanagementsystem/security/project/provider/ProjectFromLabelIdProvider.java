@@ -14,7 +14,7 @@ public class ProjectFromLabelIdProvider implements ProjectProvider {
 
     @Override
     public Project getProject(@NonNull Long id) {
-        Label label = entityUtil.getLabelById(id);
+        final Label label = entityUtil.getLabelById(id);
         return label.getProject();
     }
 }

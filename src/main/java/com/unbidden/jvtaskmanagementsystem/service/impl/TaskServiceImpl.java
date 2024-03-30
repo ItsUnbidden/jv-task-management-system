@@ -44,7 +44,7 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, includePrivacyCheck = true)
+    @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true)
     public List<TaskResponseDto> getProjectTasks(User user, @NonNull Long projectId,
             Pageable pageable) {
         List<Task> tasks = taskRepository.findByProjectId(projectId, pageable);
@@ -56,7 +56,7 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, includePrivacyCheck = true)
+    @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true)
     public List<TaskResponseDto> getTasksForUserInProjectById(User user, @NonNull Long projectId,
             @NonNull Long userId, Pageable pageable) {
         List<Task> tasks = taskRepository
@@ -69,7 +69,7 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, includePrivacyCheck = true,
+    @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true,
             entityIdParamName = "taskId", entityIdClass = Task.class)
     public TaskResponseDto getTaskById(User user, @NonNull Long taskId) {
         Task task = entityUtil.getTaskById(taskId);
@@ -79,7 +79,7 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, includePrivacyCheck = true,
+    @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true,
             entityIdParamName = "labelId", entityIdClass = Label.class)
     public List<TaskResponseDto> getTasksByLabelId(User user, @NonNull Long labelId,
             Pageable pageable) {

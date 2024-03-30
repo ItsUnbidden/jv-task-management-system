@@ -1,11 +1,16 @@
 databaseChangeLog:
   - changeSet:
-      id: create-comments-table
+      id: create-messages-table
       author: Unbidden
       changes:
         - createTable:
-            tableName: comments
+            tableName: messages
             columns: 
+              - column:
+                  name: DTYPE
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
               - column:
                   name: id
                   type: bigint
@@ -17,16 +22,24 @@ databaseChangeLog:
                   name: task_id
                   type: bigint
                   constraints:
-                    nullable: false
                     foreignKeyName: fk_tasks_comments
                     references: tasks(id)
+              - column:
+                  name: amount_of_replies
+                  type: int
               - column:
                   name: user_id
                   type: bigint
                   constraints:
                     nullable: false
-                    foreignKeyName: fk_users_comments
+                    foreignKeyName: fk_users_messages
                     references: users(id)
+              - column:
+                  name: parent_id
+                  type: bigint
+                  constraints:
+                    foreignKeyName: fk_messages_replies
+                    references: messages(id)
               - column:
                   name: text
                   type: varchar(255)
