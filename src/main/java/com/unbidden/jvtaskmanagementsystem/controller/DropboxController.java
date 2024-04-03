@@ -1,6 +1,7 @@
 package com.unbidden.jvtaskmanagementsystem.controller;
 
-import com.unbidden.jvtaskmanagementsystem.dto.internal.DropboxTestResponseDto;
+import com.unbidden.jvtaskmanagementsystem.dto.internal.dropbox.DropboxResponse;
+import com.unbidden.jvtaskmanagementsystem.exception.OAuth2LogoutException;
 import com.unbidden.jvtaskmanagementsystem.model.ClientRegistration;
 import com.unbidden.jvtaskmanagementsystem.model.OAuth2AuthorizedClient;
 import com.unbidden.jvtaskmanagementsystem.repository.oauth2.ClientRegistrationRepository;
@@ -26,7 +27,7 @@ public class DropboxController {
     private final ClientRegistrationRepository clientRegistrationRepository;
 
     @GetMapping("/test")
-    public DropboxTestResponseDto test(Authentication authentication,
+    public DropboxResponse test(Authentication authentication,
             HttpServletRequest request, HttpServletResponse response) {
         ClientRegistration clientRegistration = 
                 clientRegistrationRepository.findByClientName("dropbox").get();
@@ -34,5 +35,18 @@ public class DropboxController {
                 authentication, request, response, clientRegistration);
 
         return (authorizedClient != null) ? dropboxClient.test(authorizedClient) : null;
+    }
+
+    @GetMapping("/logout")
+    public DropboxResponse logout(Authentication authentication,
+            HttpServletRequest request, HttpServletResponse response) {
+        ClientRegistration clientRegistration = 
+                clientRegistrationRepository.findByClientName("dropbox").get();
+        OAuth2AuthorizedClient authorizedClient = oauthService.loadAuthorizedClient(
+                authentication, request, response, clientRegistration);
+        if (authorizedClient == null) {
+            throw new OAuth2LogoutException("Unable to logout since user is not authorized.");
+        }
+        return dropboxClient.logout(authorizedClient);
     }
 }

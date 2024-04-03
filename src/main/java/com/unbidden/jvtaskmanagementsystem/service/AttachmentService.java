@@ -18,5 +18,6 @@ public interface AttachmentService {
 
     @NonNull
     AttachmentDto upload(@NonNull User user, @NonNull Long taskId, 
-            @NonNull OAuth2AuthorizedClient authorizedClient, byte[] data);
+            @NonNull String filename, @NonNull OAuth2AuthorizedClient authorizedClient,
+            byte[] data);
 }
