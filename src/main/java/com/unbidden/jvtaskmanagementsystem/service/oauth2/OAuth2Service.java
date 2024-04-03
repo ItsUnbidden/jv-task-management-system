@@ -52,4 +52,12 @@ public interface OAuth2Service {
     OAuth2AuthorizedClient loadAuthorizedClient(@NonNull Authentication authentication, 
             @NonNull HttpServletRequest request, @NonNull HttpServletResponse response, 
             @NonNull ClientRegistration clientRegistration);
+
+    /**
+     * Permanently deletes this {@link OAuth2AuthorizedClient}. This method should be called when
+     * user manualy logs out of service or is removed. It should not be called when
+     * token expires or in any other case.
+     * @param authorizedClient which needs to be deleted
+     */
+    void deleteAuthorizedClient(OAuth2AuthorizedClient authorizedClient);
 }

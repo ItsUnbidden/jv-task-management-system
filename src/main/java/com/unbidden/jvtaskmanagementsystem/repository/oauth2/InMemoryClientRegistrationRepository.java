@@ -1,5 +1,6 @@
 package com.unbidden.jvtaskmanagementsystem.repository.oauth2;
 
+import com.unbidden.jvtaskmanagementsystem.exception.OAuth2PropertiesParsingException;
 import com.unbidden.jvtaskmanagementsystem.model.ClientRegistration;
 import java.util.HashMap;
 import java.util.Map;
@@ -24,25 +25,66 @@ public class InMemoryClientRegistrationRepository implements ClientRegistrationR
         return Optional.ofNullable(registrations.get(name));
     }
 
-    //TODO: pretty this up
     private void initializeClientRegistrations(Environment environment) {
-        String[] providers = environment.getProperty("oauth2.providers").split(",");
-        for (String provider : providers) {
-            final String basePath = "oauth2." + provider + ".";
+        String providersStr = environment.getProperty("oauth2.providers");
+        if (providersStr != null && !providersStr.isEmpty()) {
+            String[] providers = providersStr.split(",");
 
-            ClientRegistration clientRegistration = new ClientRegistration();
-            clientRegistration.setClientName(provider);
-            clientRegistration.setClientId(environment.getProperty(basePath + "client-id"));
-            clientRegistration.setClientSecret(environment.getProperty(basePath + "client-secret"));
-            clientRegistration.setRedirectUri(environment.getProperty(basePath + "redirect-uri"));
-            clientRegistration.setTokenUri(environment.getProperty(basePath + "token-uri"));
-            clientRegistration.setAuthorizationUri(environment.getProperty(basePath 
-                    + "authorization-uri"));
-            clientRegistration.setUseRefreshTokens(Boolean.valueOf(environment.getProperty(
-                    basePath + "use-refresh-tokens")));
-            clientRegistration.setDefaultRedirectAfterCallback(environment.getProperty(basePath 
-                    + "default-redirect-after-callback"));
-            registrations.put(clientRegistration.getClientName(), clientRegistration);
+            for (String provider : providers) {
+                ClientRegistration clientRegistration = mapPropertiesForProvider(environment,
+                        provider);
+                registrations.put(clientRegistration.getClientName(), clientRegistration);
+            }
         }
+    }
+
+    private ClientRegistration mapPropertiesForProvider(Environment environment,
+            String provider) {
+        final String basePath = "oauth2." + provider + ".";
+
+        ClientRegistration clientRegistration = new ClientRegistration();
+        clientRegistration.setClientName(provider);
+
+        String clientId = environment.getProperty(basePath + "client-id");
+        if (clientId == null) {
+            throw new OAuth2PropertiesParsingException("Client id cannot be null.");
+        }
+        clientRegistration.setClientId(clientId);
+        
+        String clientSecret = environment.getProperty(basePath + "client-secret");
+        if (clientSecret == null) {
+            throw new OAuth2PropertiesParsingException("Client secret cannot be null.");
+        }
+        clientRegistration.setClientSecret(clientSecret);
+
+        String redirectUri = environment.getProperty(basePath + "redirect-uri");
+        if (redirectUri == null) {
+            throw new OAuth2PropertiesParsingException("Redirect URI cannot be null.");
+        }
+        clientRegistration.setRedirectUri(redirectUri);
+
+        String tokenUri = environment.getProperty(basePath + "token-uri");
+        if (tokenUri == null) {
+            throw new OAuth2PropertiesParsingException("Token URI cannot be null.");
+        }
+        clientRegistration.setTokenUri(tokenUri);
+
+        String authorizationUri = environment.getProperty(basePath + "authorization-uri");
+        if (authorizationUri == null) {
+            throw new OAuth2PropertiesParsingException("Authorization URI " 
+                    + "cannot be null.");
+        }
+        clientRegistration.setAuthorizationUri(authorizationUri);
+        
+        clientRegistration.setUseRefreshTokens(Boolean.valueOf(environment.getProperty(
+                basePath + "use-refresh-tokens")));
+
+        String defaultRedirectAfterCallback = environment.getProperty(basePath 
+                + "default-redirect-after-callback");
+        if (defaultRedirectAfterCallback == null) {
+            defaultRedirectAfterCallback = "/users/me";
+        }
+        clientRegistration.setDefaultRedirectAfterCallback(defaultRedirectAfterCallback);
+        return clientRegistration;
     }
 }

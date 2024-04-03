@@ -7,6 +7,7 @@ import com.unbidden.jvtaskmanagementsystem.exception.OAuth2CodeExchangeException
 import com.unbidden.jvtaskmanagementsystem.model.ClientRegistration;
 import com.unbidden.jvtaskmanagementsystem.model.OAuth2AuthorizedClient;
 import com.unbidden.jvtaskmanagementsystem.service.util.HttpClientUtil;
+import com.unbidden.jvtaskmanagementsystem.service.util.HttpClientUtil.HeaderNames;
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -41,8 +42,9 @@ public class OAuth2Client {
                 .uri(URI.create(AUTHORIZATION_CODE_TOKEN_URI_BASE.formatted(
                     clientRegistration.getTokenUri(), code, clientRegistration.getRedirectUri())))
                 .POST(BodyPublishers.noBody())
-                .setHeader(HttpClientUtil.AUTHORIZATION, httpUtil.getBasicAuthorizationHeader(
-                    clientRegistration.getClientId(), clientRegistration.getClientSecret()))
+                .setHeader(HeaderNames.AUTHORIZATION,
+                    httpUtil.getBasicAuthorizationHeader(clientRegistration.getClientId(),
+                    clientRegistration.getClientSecret()))
                 .build();
         
         return executeExchange(request);
@@ -55,8 +57,9 @@ public class OAuth2Client {
                 .uri(URI.create(REFRESH_TOKEN_URI_BASE.formatted(clientRegistration.getTokenUri(),
                     authorizedClient.getRefreshToken())))
                 .POST(BodyPublishers.noBody())
-                .setHeader(HttpClientUtil.AUTHORIZATION, httpUtil.getBasicAuthorizationHeader(
-                    clientRegistration.getClientId(), clientRegistration.getClientSecret()))
+                .setHeader(HeaderNames.AUTHORIZATION,
+                    httpUtil.getBasicAuthorizationHeader(clientRegistration.getClientId(),
+                    clientRegistration.getClientSecret()))
                 .build();
 
         return executeExchange(request);

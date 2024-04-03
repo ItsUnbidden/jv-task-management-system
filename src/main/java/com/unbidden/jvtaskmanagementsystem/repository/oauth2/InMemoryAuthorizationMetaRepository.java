@@ -15,19 +15,19 @@ public class InMemoryAuthorizationMetaRepository implements AuthorizationMetaRep
     private Map<String, AuthorizationMeta> metas = new HashMap<>();
 
     @Override
-    public AuthorizationMeta save(AuthorizationMeta meta) {
+    public synchronized AuthorizationMeta save(AuthorizationMeta meta) {
         removeOverdue();
         metas.put(meta.getId().toString(), meta);
         return meta;
     }
 
     @Override
-    public Optional<AuthorizationMeta> load(String id) {
+    public synchronized Optional<AuthorizationMeta> load(String id) {
         removeOverdue();
         return Optional.ofNullable(metas.get(id));
     }
 
-    private void removeOverdue() {
+    private synchronized void removeOverdue() {
         for (Entry<String, AuthorizationMeta> entry : metas.entrySet()) {
             if (entry.getValue().getCreatedAt().plusSeconds(EXPIRATION_SECONDS)
                     .isBefore(LocalDateTime.now())) {

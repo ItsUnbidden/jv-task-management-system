@@ -10,6 +10,7 @@ import com.unbidden.jvtaskmanagementsystem.model.User;
 import com.unbidden.jvtaskmanagementsystem.repository.oauth2.AuthorizationMetaRepository;
 import com.unbidden.jvtaskmanagementsystem.repository.oauth2.AuthorizedClientRepository;
 import com.unbidden.jvtaskmanagementsystem.service.util.HttpClientUtil;
+import com.unbidden.jvtaskmanagementsystem.service.util.HttpClientUtil.HeaderNames;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
@@ -53,7 +54,7 @@ public class OAuth2ServiceImpl implements OAuth2Service {
                 clientRegistration.getRedirectUri(),
                 uuid.toString(),
                 (clientRegistration.getUseRefreshTokens()) ? "offline" : "online");
-        response.setHeader(HttpClientUtil.LOCATION, authUri);
+        response.setHeader(HeaderNames.LOCATION, authUri);
         response.setStatus(302);
     }
     
@@ -79,12 +80,12 @@ public class OAuth2ServiceImpl implements OAuth2Service {
                 meta.getUser(),
                 oauthClient.exchange(code, meta.getClientRegistration()),
                 authorizedClientRepository.findByUserIdAndRegistrationName(meta.getUser().getId(),
-                    meta.getClientRegistration().getClientName()).get());
+                    meta.getClientRegistration().getClientName()).orElse(null));
 
         String redirectTo = (meta.getOrigin() == null || meta.getOrigin().isBlank()) 
                 ? root + meta.getClientRegistration().getDefaultRedirectAfterCallback()
                 : root + meta.getOrigin();
-        response.setHeader(HttpClientUtil.LOCATION, redirectTo);
+        response.setHeader(HeaderNames.LOCATION, redirectTo);
         response.setStatus(302);
     }
 
@@ -116,11 +117,11 @@ public class OAuth2ServiceImpl implements OAuth2Service {
                 return authorizedClient;
             }         
         }
-        response.setHeader(HttpClientUtil.LOCATION, CONNECT_ENDPOINT_BASE.formatted(root,
-                clientRegistration.getClientName(), request.getRequestURI()));
+        response.setHeader(HeaderNames.LOCATION, CONNECT_ENDPOINT_BASE.formatted(
+                root, clientRegistration.getClientName(), request.getRequestURI()));
         response.setStatus(302);
-        response.setHeader(HttpClientUtil.AUTHORIZATION, httpUtil.getBearerAuthorizationHeader(
-                (String)authentication.getCredentials()));
+        response.setHeader(HeaderNames.AUTHORIZATION,
+                httpUtil.getBearerAuthorizationHeader((String)authentication.getCredentials()));
         return null;
     }
 
@@ -145,5 +146,10 @@ public class OAuth2ServiceImpl implements OAuth2Service {
         }
 
         authorizedClientRepository.save(authorizedClient);
+    }
+
+    @Override
+    public void deleteAuthorizedClient(OAuth2AuthorizedClient authorizedClient) {
+        authorizedClientRepository.delete(authorizedClient);
     }
 }
