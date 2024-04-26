@@ -11,11 +11,14 @@ import com.unbidden.jvtaskmanagementsystem.model.ProjectRole.ProjectRoleType;
 import com.unbidden.jvtaskmanagementsystem.model.Task;
 import com.unbidden.jvtaskmanagementsystem.model.Task.TaskStatus;
 import com.unbidden.jvtaskmanagementsystem.model.User;
+import com.unbidden.jvtaskmanagementsystem.repository.ProjectRepository;
 import com.unbidden.jvtaskmanagementsystem.repository.TaskRepository;
 import com.unbidden.jvtaskmanagementsystem.security.project.ProjectSecurity;
+import com.unbidden.jvtaskmanagementsystem.service.DropboxService;
 import com.unbidden.jvtaskmanagementsystem.service.TaskService;
 import com.unbidden.jvtaskmanagementsystem.service.util.EntityUtil;
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -27,11 +30,15 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 @SuppressWarnings("null")
 public class TaskServiceImpl implements TaskService {
+    private final ProjectRepository projectRepository;
+
     private final TaskRepository taskRepository;
 
     private final TaskMapper taskMapper;
 
     private final EntityUtil entityUtil;
+
+    private final DropboxService dropboxService;
 
     @Override
     public List<TaskResponseDto> getTasksForUser(User user, Pageable pageable) {
@@ -70,7 +77,7 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true,
-            entityIdParamName = "taskId", entityIdClass = Task.class)
+            entityIdClass = Task.class)
     public TaskResponseDto getTaskById(User user, @NonNull Long taskId) {
         Task task = entityUtil.getTaskById(taskId);
 
@@ -80,7 +87,7 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true,
-            entityIdParamName = "labelId", entityIdClass = Label.class)
+            entityIdClass = Label.class)
     public List<TaskResponseDto> getTasksByLabelId(User user, @NonNull Long labelId,
             Pageable pageable) {
         List<Task> tasks = taskRepository.findByLabelId(labelId, pageable);
@@ -93,22 +100,26 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.ADMIN)
-    public TaskResponseDto createTaskInProject(User user, 
-            @NonNull Long projectId,
+    public TaskResponseDto createTaskInProject(User user, @NonNull Long projectId,
             @NonNull CreateTaskRequestDto requestDto) {
-        Project project = entityUtil.getProjectById(projectId);
-
+        final Project project = entityUtil.getProjectById(projectId);
+        
         Task task = taskMapper.toModel(requestDto);
+        project.getTasks().add(task);
         task.setProject(project);
         task.setAssignee(user);
         task.setStatus(TaskStatus.NOT_STARTED);
+        task.setLabels(new HashSet<>());
+
+        dropboxService.createTaskFolder(user, task);
         updateTaskStatusAccordingToDate(task, false);
+        projectRepository.save(project);
         return taskMapper.toDto(taskRepository.save(task));
     }
 
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.ADMIN,
-            entityIdParamName = "taskId", entityIdClass = Task.class)
+            entityIdClass = Task.class)
     public TaskResponseDto updateTask(User user, @NonNull Long taskId,
             @NonNull UpdateTaskRequestDto requestDto) {
         final Task taskFromDb = entityUtil.getTaskById(taskId);
@@ -133,15 +144,16 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    @ProjectSecurity(securityLevel = ProjectRoleType.ADMIN, entityIdClass = Task.class,
-            entityIdParamName = "taskId")
+    @ProjectSecurity(securityLevel = ProjectRoleType.ADMIN, entityIdClass = Task.class)
     public void deleteTask(User user, @NonNull Long taskId) {
-        taskRepository.deleteById(taskId);
+        final Task task = entityUtil.getTaskById(taskId);
+
+        dropboxService.deleteTaskFolder(user, task);
+        taskRepository.delete(task);
     }
 
     @Override
-    @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, entityIdClass = Task.class,
-            entityIdParamName = "taskId")
+    @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, entityIdClass = Task.class)
     public TaskResponseDto changeStatus(User user, @NonNull Long taskId,
             @NonNull UpdateTaskStatusRequestDto requestDto) {
         final Task task = entityUtil.getTaskById(taskId);

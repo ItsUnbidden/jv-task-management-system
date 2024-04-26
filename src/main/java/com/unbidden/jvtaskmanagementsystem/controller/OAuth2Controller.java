@@ -1,10 +1,10 @@
 package com.unbidden.jvtaskmanagementsystem.controller;
 
-import com.unbidden.jvtaskmanagementsystem.exception.EntityNotFoundException;
+import com.unbidden.jvtaskmanagementsystem.dto.oauth2.OAuth2SuccessResponse;
 import com.unbidden.jvtaskmanagementsystem.model.ClientRegistration;
 import com.unbidden.jvtaskmanagementsystem.model.User;
-import com.unbidden.jvtaskmanagementsystem.repository.oauth2.ClientRegistrationRepository;
 import com.unbidden.jvtaskmanagementsystem.service.oauth2.OAuth2Service;
+import com.unbidden.jvtaskmanagementsystem.service.util.EntityUtil;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -18,27 +18,22 @@ import org.springframework.web.bind.annotation.RestController;
 @SuppressWarnings("null")
 @RequestMapping("/oauth2/connect")
 public class OAuth2Controller {
-    private static final String DROPBOX_CLIENT_NAME = "dropbox";
-
-    private final ClientRegistrationRepository clientRegistrationRepository;
+    private final EntityUtil entityUtil;
 
     private final OAuth2Service oauth2Service;
 
     @GetMapping("/dropbox")
     public void initiateDropboxAuthorization(Authentication authentication, 
-            HttpServletResponse response, String origin) {
-        ClientRegistration clientRegistration = clientRegistrationRepository
-                .findByClientName(DROPBOX_CLIENT_NAME)
-                .orElseThrow(() -> new EntityNotFoundException(
-                "There is no client registered with name " + DROPBOX_CLIENT_NAME));
+            HttpServletResponse response) {
+        ClientRegistration clientRegistration = entityUtil.getClientRegistrationByName("dropbox");
         oauth2Service.authorize((User)authentication.getPrincipal(), response, 
-                clientRegistration, origin);
+                clientRegistration);
     }
     
     @GetMapping("/code")
-    public void callback(HttpServletResponse response,
+    public OAuth2SuccessResponse callback(HttpServletResponse response,
             @RequestParam String code, @RequestParam String state,
             String error, String errorDescription) {
-        oauth2Service.callback(response, code, state, error, errorDescription);
+        return oauth2Service.callback(response, code, state, error, errorDescription);
     }
 }

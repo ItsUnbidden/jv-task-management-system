@@ -1,13 +1,12 @@
 package com.unbidden.jvtaskmanagementsystem.dto.internal;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.unbidden.jvtaskmanagementsystem.dto.internal.dropbox.DropboxResponse;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 @Data
 @EqualsAndHashCode(callSuper = false)
-public class OAuth2TokenResponseDto extends DropboxResponse {
+public class OAuth2TokenResponseDto {
     @JsonProperty("access_token")
     private String accessToken;
     
@@ -20,5 +19,6 @@ public class OAuth2TokenResponseDto extends DropboxResponse {
     @JsonProperty("refresh_token")
     private String refreshToken;
 
+    @JsonProperty("scope")
     private String scope;
 }

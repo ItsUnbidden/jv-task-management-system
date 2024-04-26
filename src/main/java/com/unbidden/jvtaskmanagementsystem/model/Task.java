@@ -40,6 +40,8 @@ public class Task {
 
     private LocalDate dueDate;
 
+    private String dropboxTaskFolderId;
+
     //TODO: implement comment counter like the one with replies
 
     @ManyToOne(fetch = FetchType.LAZY)

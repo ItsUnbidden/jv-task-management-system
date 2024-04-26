@@ -40,7 +40,7 @@ public class MessageServiceImpl implements MessageService {
 
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true,
-            entityIdClass = Task.class, entityIdParamName = "taskId")
+            entityIdClass = Task.class)
     public List<CommentResponseDto> getCommentsForTask(User user, @NonNull Long taskId,
             Pageable pageable) {
         return commentRepository.findByTaskId(taskId, pageable).stream()
@@ -86,7 +86,7 @@ public class MessageServiceImpl implements MessageService {
 
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true,
-            entityIdClass = Task.class, entityIdParamName = "taskId")
+            entityIdClass = Task.class)
     public CommentResponseDto leaveComment(User user, @NonNull Long taskId,
             @NonNull CreateMessageRequestDto requestDto) {
         final Task task = entityUtil.getTaskById(taskId);
@@ -103,7 +103,7 @@ public class MessageServiceImpl implements MessageService {
 
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true,
-            entityIdClass = Message.class, entityIdParamName = "messageId")
+            entityIdClass = Message.class)
     public ReplyResponseDto replyToMessage(User user, @NonNull Long messageId,
             @NonNull CreateMessageRequestDto requestDto) {
         final Message message = entityUtil.getMessageById(messageId);
@@ -139,7 +139,7 @@ public class MessageServiceImpl implements MessageService {
 
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true,
-            entityIdClass = Message.class, entityIdParamName = "messageId")
+            entityIdClass = Message.class)
     public MessageResponseDto updateMessage(User user, @NonNull Long messageId,
             @NonNull CreateMessageRequestDto requestDto) {
         final Message message = entityUtil.getMessageById(messageId);
@@ -157,7 +157,7 @@ public class MessageServiceImpl implements MessageService {
 
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true,
-            entityIdClass = Message.class, entityIdParamName = "messageId")
+            entityIdClass = Message.class)
     public void deleteMessage(User user, @NonNull Long messageId) {
         final Message message = entityUtil.getMessageById(messageId);
 

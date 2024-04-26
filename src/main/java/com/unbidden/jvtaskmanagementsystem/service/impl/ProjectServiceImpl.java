@@ -13,12 +13,15 @@ import com.unbidden.jvtaskmanagementsystem.model.User;
 import com.unbidden.jvtaskmanagementsystem.repository.ProjectRepository;
 import com.unbidden.jvtaskmanagementsystem.repository.ProjectRoleRepository;
 import com.unbidden.jvtaskmanagementsystem.security.project.ProjectSecurity;
+import com.unbidden.jvtaskmanagementsystem.service.DropboxService;
 import com.unbidden.jvtaskmanagementsystem.service.ProjectService;
 import com.unbidden.jvtaskmanagementsystem.service.util.EntityUtil;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
@@ -35,11 +38,15 @@ public class ProjectServiceImpl implements ProjectService {
 
     private final EntityUtil entityUtil;
 
+    private final DropboxService dropboxService;
+
+    @Value("${dropbox.root.path}")
+    private String dropboxRootPath;
+
     @Override
-    @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, entityIdParamName = "id",
-            bypassIfPublic = true)
-    public ProjectResponseDto findProjectById(User user, @NonNull Long id) {
-        final Project project = entityUtil.getProjectById(id);
+    @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true)
+    public ProjectResponseDto findProjectById(User user, @NonNull Long projectId) {
+        final Project project = entityUtil.getProjectById(projectId);
         
         updateProjectStatusAccordingToDate(project, true);
         return projectMapper.toProjectDto(project);
@@ -81,24 +88,27 @@ public class ProjectServiceImpl implements ProjectService {
             @NonNull CreateProjectRequestDto requestDto) {
         final Project project = projectMapper.toProject(requestDto);
         
+        dropboxService.createSharedProjectFolder(user, project);
         ProjectRole creatorRole = new ProjectRole();
         creatorRole.setProject(project);
         creatorRole.setRoleType(ProjectRoleType.CREATOR);
         creatorRole.setUser(user);
         project.setProjectRoles(Set.of(creatorRole));
         project.setStatus(ProjectStatus.INITIATED);
+        project.setTasks(new ArrayList<>());
         if (requestDto.getStartDate() == null) {
             project.setStartDate(LocalDate.now());
         }
+
         updateProjectStatusAccordingToDate(project, false);
         return projectMapper.toProjectDto(projectRepository.save(project));
     }
 
     @Override
-    @ProjectSecurity(securityLevel = ProjectRoleType.ADMIN, entityIdParamName = "id")
-    public ProjectResponseDto updateProject(User user, @NonNull Long id,
+    @ProjectSecurity(securityLevel = ProjectRoleType.ADMIN)
+    public ProjectResponseDto updateProject(User user, @NonNull Long projectId,
             @NonNull UpdateProjectRequestDto requestDto) {
-        final Project project = entityUtil.getProjectById(id);
+        final Project project = entityUtil.getProjectById(projectId);
         
         if (requestDto.getName() != null) {
             project.setName(requestDto.getName());
@@ -120,9 +130,12 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    @ProjectSecurity(securityLevel = ProjectRoleType.CREATOR, entityIdParamName = "id")
-    public void deleteProject(User user, @NonNull Long id) {
-        projectRepository.deleteById(id);
+    @ProjectSecurity(securityLevel = ProjectRoleType.CREATOR)
+    public void deleteProject(User user, @NonNull Long projectId) {
+        final Project project = entityUtil.getProjectById(projectId);
+        
+        dropboxService.deleteProjectFolder(user, project);
+        projectRepository.delete(project);
     }
 
     @Override
@@ -138,7 +151,8 @@ public class ProjectServiceImpl implements ProjectService {
             throw new UnsupportedOperationException("User with id " + userId 
                     + " is already a member of project with id " + projectId);
         }
-        
+
+        dropboxService.addProjectMemberToSharedFolder(user, newProjectMember, project);
         ProjectRole projectRole = new ProjectRole();
         projectRole.setProject(project);
         projectRole.setRoleType(ProjectRoleType.CONTRIBUTOR);
@@ -152,13 +166,21 @@ public class ProjectServiceImpl implements ProjectService {
     @ProjectSecurity(securityLevel = ProjectRoleType.ADMIN)
     public ProjectResponseDto removeUserFromProject(User user, @NonNull Long projectId,
             @NonNull Long userId) {
-        removeUserFromProject0(userId, projectId);
-        return projectMapper.toProjectDto(entityUtil.getProjectById(projectId));
-    }
+        final ProjectRole projectRole = entityUtil
+                .getProjectRoleByProjectIdAndUserId(projectId, userId);
+        final Project project = entityUtil.getProjectById(projectId);
+        final User userToRemove = (user.getId() != userId) 
+                ? entityUtil.getUserById(userId) : user;
 
-    @Override
-    public void quitProject(User user, @NonNull Long projectId) {
-        removeUserFromProject0(user.getId(), projectId);
+        if (projectRole.getRoleType().equals(ProjectRoleType.CREATOR)) {
+            throw new UnsupportedOperationException(
+                    "Project creator cannot be removed from the project.");
+        }
+
+        dropboxService.removeMemberFromSharedFolder(user, userToRemove, project);
+        project.getProjectRoles().removeIf(pr -> pr.getId() == projectRole.getId());
+        projectRoleRepository.delete(projectRole);
+        return projectMapper.toProjectDto(projectRepository.save(project));
     }
 
     @Override
@@ -178,12 +200,24 @@ public class ProjectServiceImpl implements ProjectService {
                 entityUtil.getProjectRoleByProjectIdAndUserId(projectId, userId);
 
         if (requestDto.getNewRole().equals(ProjectRoleType.CREATOR)) {
+            final User userToTrasferTo = entityUtil.getUserById(userId);
+
+            dropboxService.transferOwnership(user, userToTrasferTo, project);
             creatorRole.setRoleType(ProjectRoleType.ADMIN);
             projectRoleRepository.save(creatorRole);
         }
         targetUserProjectRole.setRoleType(requestDto.getNewRole());
         projectRoleRepository.save(targetUserProjectRole);
         return projectMapper.toProjectDto(entityUtil.getProjectById(projectId));
+    }
+
+    @Override
+    @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR)
+    public ProjectResponseDto connectProjectToDropbox(User user, Long projectId) {
+        final Project project = entityUtil.getProjectById(projectId);
+        
+        dropboxService.connectProjectToDropbox(user, project);
+        return projectMapper.toProjectDto(projectRepository.save(project));
     }
 
     private void updateProjectStatusAccordingToDate(Project project, boolean doSave) {
@@ -210,19 +244,5 @@ public class ProjectServiceImpl implements ProjectService {
         if (doSave && !initialStatus.equals(project.getStatus())) {
             projectRepository.save(project);
         }
-    }
-
-    private void removeUserFromProject0(Long userId, Long projectId) {
-        final ProjectRole projectRole = entityUtil
-                .getProjectRoleByProjectIdAndUserId(projectId, userId);
-        final Project project = entityUtil.getProjectById(projectId);
-
-        if (projectRole.getRoleType().equals(ProjectRoleType.CREATOR)) {
-            throw new UnsupportedOperationException(
-                    "Project creator cannot be removed from the project.");
-        }
-
-        project.getProjectRoles().removeIf(pr -> pr.getId() == projectRole.getId());
-        projectRoleRepository.delete(projectRole);
     }
 }

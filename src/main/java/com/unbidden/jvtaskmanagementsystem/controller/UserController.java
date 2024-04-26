@@ -3,9 +3,11 @@ package com.unbidden.jvtaskmanagementsystem.controller;
 import com.unbidden.jvtaskmanagementsystem.dto.auth.LoginRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.user.UserResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.user.UserUpdateDetailsRequestDto;
+import com.unbidden.jvtaskmanagementsystem.model.Attachment;
 import com.unbidden.jvtaskmanagementsystem.model.Role;
 import com.unbidden.jvtaskmanagementsystem.model.User;
 import com.unbidden.jvtaskmanagementsystem.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Set;
@@ -66,5 +68,12 @@ public class UserController {
     @PreAuthorize("hasRole('MANAGER')")
     public UserResponseDto changeLockedStatus(@NonNull @PathVariable Long id) {
         return userService.lockUserById(id);
+    }
+
+    //TODO: This is a test endpoint. It needs to be removed
+    @GetMapping("/test")
+    public String testMethod(HttpServletRequest request) {
+        Class<Attachment> clazz = Attachment.class;
+        return clazz.getName() + " " + clazz.getSimpleName() + " " + clazz.getCanonicalName();
     }
 }

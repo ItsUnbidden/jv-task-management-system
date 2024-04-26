@@ -22,10 +22,12 @@ public interface ProjectMapper {
     ProjectRoleDto toProjectRoleDto(ProjectRole role);
 
     @AfterMapping
-    default void mapProjectRoles(@MappingTarget ProjectResponseDto dto, Project project) {
+    default void mapProjectRolesAndSetDropboxConnected(@MappingTarget ProjectResponseDto dto,
+            Project project) {
         dto.setProjectRoles(new HashSet<>(project.getProjectRoles().stream()
                 .map(this::toProjectRoleDto)
                 .toList()));
+        dto.setDropboxConnected(project.getDropboxProjectFolderId() != null);
     }
 
     @AfterMapping

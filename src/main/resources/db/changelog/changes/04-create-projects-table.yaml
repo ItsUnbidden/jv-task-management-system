@@ -35,6 +35,12 @@ databaseChangeLog:
                   constraints:
                     nullable: false
               - column:
+                  name: dropbox_project_folder_id
+                  type: varchar(255)
+              - column:
+                  name: dropbox_project_shared_folder_id
+                  type: varchar(255)
+              - column:
                   name: is_private
                   type: boolean
                   defaultValueBoolean: false

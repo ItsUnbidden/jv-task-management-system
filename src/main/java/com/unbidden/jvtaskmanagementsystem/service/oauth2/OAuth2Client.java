@@ -27,7 +27,7 @@ public class OAuth2Client {
             "%s?code=%s&redirect_uri=%s&grant_type=authorization_code";
 
     private static final String REFRESH_TOKEN_URI_BASE = 
-            "%s?refresh_token=%s&grant_type=refresh_token";
+            "%s?grant_type=refresh_token&refresh_token=%s";
 
     private final HttpClient http;
 

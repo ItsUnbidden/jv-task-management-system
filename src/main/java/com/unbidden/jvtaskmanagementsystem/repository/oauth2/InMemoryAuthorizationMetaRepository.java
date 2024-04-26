@@ -2,7 +2,9 @@ package com.unbidden.jvtaskmanagementsystem.repository.oauth2;
 
 import com.unbidden.jvtaskmanagementsystem.model.AuthorizationMeta;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -15,24 +17,29 @@ public class InMemoryAuthorizationMetaRepository implements AuthorizationMetaRep
     private Map<String, AuthorizationMeta> metas = new HashMap<>();
 
     @Override
-    public synchronized AuthorizationMeta save(AuthorizationMeta meta) {
+    public AuthorizationMeta save(AuthorizationMeta meta) {
         removeOverdue();
         metas.put(meta.getId().toString(), meta);
         return meta;
     }
 
     @Override
-    public synchronized Optional<AuthorizationMeta> load(String id) {
+    public Optional<AuthorizationMeta> load(String id) {
         removeOverdue();
         return Optional.ofNullable(metas.get(id));
     }
 
-    private synchronized void removeOverdue() {
+    private void removeOverdue() {
+        List<String> keysForRemoval = new ArrayList<>();
+
         for (Entry<String, AuthorizationMeta> entry : metas.entrySet()) {
             if (entry.getValue().getCreatedAt().plusSeconds(EXPIRATION_SECONDS)
                     .isBefore(LocalDateTime.now())) {
-                metas.remove(entry.getKey());
+                keysForRemoval.add(entry.getKey());
             }
+        }
+        for (String key : keysForRemoval) {
+            metas.remove(key);
         }
     }
 }

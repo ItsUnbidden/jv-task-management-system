@@ -22,13 +22,13 @@ public class OAuth2AuthorizedClient {
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
-
+    
     @Column(nullable = false)
     private String clientRegistrationName;
 
     @Column(nullable = false)
     private String token;
-
+    
     @Column(nullable = false)
     private LocalDateTime aquiredAt;
     
@@ -36,4 +36,6 @@ public class OAuth2AuthorizedClient {
     private Integer expiresIn;
     
     private String refreshToken;
+
+    private String externalAccountId;
 }

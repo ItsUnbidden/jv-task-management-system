@@ -1,12 +1,12 @@
 package com.unbidden.jvtaskmanagementsystem.service.oauth2;
 
+import com.unbidden.jvtaskmanagementsystem.dto.oauth2.OAuth2SuccessResponse;
+import com.unbidden.jvtaskmanagementsystem.exception.OAuth2AuthorizedClientLoadingException;
 import com.unbidden.jvtaskmanagementsystem.model.ClientRegistration;
 import com.unbidden.jvtaskmanagementsystem.model.OAuth2AuthorizedClient;
 import com.unbidden.jvtaskmanagementsystem.model.User;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.lang.NonNull;
-import org.springframework.security.core.Authentication;
 
 public interface OAuth2Service {
     /**
@@ -21,37 +21,32 @@ public interface OAuth2Service {
      * @param origin of the initial request if any
      */
     void authorize(@NonNull User user, @NonNull HttpServletResponse response,
-            @NonNull ClientRegistration clientRegistration,
-            String origin);
+            @NonNull ClientRegistration clientRegistration);
 
     /**
      * This method proccesses OAuth2 response from authorization server after
-     * the user has granted of rejected required permissions.
+     * the user has granted or rejected required permissions.
      * @param response for redirecting
      * @param code returned by the server if permissions granted
      * @param state contains meta data
      * @param error if any
      * @param errorDescription if any
      */
-    void callback(@NonNull HttpServletResponse response, @NonNull String code,
+    OAuth2SuccessResponse callback(@NonNull HttpServletResponse response, @NonNull String code,
             @NonNull String state, String error, String errorDescription);
 
     /**
-     * Tries to load authorized client from db. If that attempt fails, will 
-     * try to resolve the issue by either updating the access token using 
-     * appropriate refresh token if that option is enabled in {@link ClientRegistration}
-     * or redirect to {@link #authorize} and begin authorization proccess.
-     *
-     * @param authentication contains user data
-     * @param request for establishing origin
-     * @param response for redirecting
+     * Tries to load {@link OAuth2AuthorizedClient}. If an instance exists
+     * but is expired, will try to use refresh token. If it does not exist or
+     * refresh tokens are not available will throw {@link OAuth2AuthorizedClientLoadingException}.
+     * @param user for which to load client
      * @param clientRegistration contains required provider data
-     * @return instance of {@code OAuth2AuthorizedClient} or {@code null} 
-     * if redirect was initiated
+     * @return instance of {@link OAuth2AuthorizedClient}
+     * @throws OAuth2AuthorizedClientLoadingException if loading attempt failed
      */
-    OAuth2AuthorizedClient loadAuthorizedClient(@NonNull Authentication authentication, 
-            @NonNull HttpServletRequest request, @NonNull HttpServletResponse response, 
-            @NonNull ClientRegistration clientRegistration);
+    OAuth2AuthorizedClient loadAuthorizedClient(@NonNull User user,
+            @NonNull ClientRegistration clientRegistration)
+            throws OAuth2AuthorizedClientLoadingException;
 
     /**
      * Permanently deletes this {@link OAuth2AuthorizedClient}. This method should be called when

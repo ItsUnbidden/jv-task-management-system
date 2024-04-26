@@ -9,6 +9,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Set;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -46,6 +47,15 @@ public class Project {
     @EqualsAndHashCode.Exclude
     @ToString.Exclude
     private Set<ProjectRole> projectRoles;
+
+    @OneToMany(mappedBy = "project", cascade = CascadeType.REMOVE)
+    @EqualsAndHashCode.Exclude
+    @ToString.Exclude
+    private List<Task> tasks;
+
+    private String dropboxProjectFolderId;
+
+    private String dropboxProjectSharedFolderId;
 
     @Column(nullable = false)
     private boolean isPrivate;

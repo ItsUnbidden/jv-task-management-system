@@ -88,7 +88,9 @@ public class ProjectController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void quitProject(Authentication authentication,
             @NonNull @PathVariable Long projectId) {
-        projectService.quitProject((User)authentication.getPrincipal(), projectId);
+        final User user = (User)authentication.getPrincipal();
+
+        projectService.removeUserFromProject(user, projectId, user.getId());
     }
 
     @PatchMapping("/{projectId}/users/{userId}/roles")
@@ -98,5 +100,12 @@ public class ProjectController {
             @NonNull @RequestBody @Valid UpdateProjectRoleRequestDto requestDto) {
         return projectService.changeProjectMemberRole((User)authentication.getPrincipal(),
                 projectId, userId, requestDto);
+    }
+
+    @PatchMapping("/{projectId}/dropbox/connect")
+    public ProjectResponseDto connectProjectToDropbox(Authentication authentication,
+            @NonNull @PathVariable Long projectId) {
+        return projectService.connectProjectToDropbox((User)authentication.getPrincipal(),
+                projectId);
     }
 }

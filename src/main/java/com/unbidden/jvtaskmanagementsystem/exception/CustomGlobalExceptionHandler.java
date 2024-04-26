@@ -41,7 +41,9 @@ public class CustomGlobalExceptionHandler extends ResponseEntityExceptionHandler
     @ExceptionHandler({EntityNotFoundException.class, 
             RegistrationException.class, 
             PropertyReferenceException.class,
-            UnsupportedOperationException.class})
+            UnsupportedOperationException.class,
+            OAuth2AuthorizationException.class,
+            ThirdPartyApiException.class})
     protected ResponseEntity<Object> handleInvalidUserInput(
             @NonNull Exception ex,
             @NonNull WebRequest request
@@ -56,7 +58,7 @@ public class CustomGlobalExceptionHandler extends ResponseEntityExceptionHandler
                 HttpStatus.BAD_REQUEST, request);
     }
 
-    @ExceptionHandler({JwtException.class, UsernameNotFoundException.class})
+    @ExceptionHandler({UsernameNotFoundException.class})
     protected ResponseEntity<Object> handleInvalidJwtToken(
             @NonNull JwtException ex,
             @NonNull WebRequest request

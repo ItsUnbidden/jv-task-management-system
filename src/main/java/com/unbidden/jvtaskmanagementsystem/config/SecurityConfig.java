@@ -1,5 +1,6 @@
 package com.unbidden.jvtaskmanagementsystem.config;
 
+import com.dropbox.core.DbxRequestConfig;
 import com.unbidden.jvtaskmanagementsystem.exception.CustomAccessDeniedHandler;
 import com.unbidden.jvtaskmanagementsystem.exception.CustomAuthenticationEntryPoint;
 import com.unbidden.jvtaskmanagementsystem.security.JwtAuthenticationFilter;
@@ -65,5 +66,10 @@ public class SecurityConfig {
     @Bean
     public HttpClient httpClient() {
         return HttpClient.newHttpClient();
+    }
+
+    @Bean
+    public DbxRequestConfig getDropboxRequestConfig() {
+        return DbxRequestConfig.newBuilder("TaskManagementSystemServer/1.0").build();
     }
 }

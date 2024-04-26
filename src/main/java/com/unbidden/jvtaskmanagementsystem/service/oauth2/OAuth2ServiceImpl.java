@@ -1,26 +1,25 @@
 package com.unbidden.jvtaskmanagementsystem.service.oauth2;
 
 import com.unbidden.jvtaskmanagementsystem.dto.internal.OAuth2TokenResponseDto;
+import com.unbidden.jvtaskmanagementsystem.dto.oauth2.OAuth2SuccessResponse;
 import com.unbidden.jvtaskmanagementsystem.exception.EntityNotFoundException;
 import com.unbidden.jvtaskmanagementsystem.exception.OAuth2AuthorizationException;
+import com.unbidden.jvtaskmanagementsystem.exception.OAuth2AuthorizedClientLoadingException;
 import com.unbidden.jvtaskmanagementsystem.model.AuthorizationMeta;
 import com.unbidden.jvtaskmanagementsystem.model.ClientRegistration;
 import com.unbidden.jvtaskmanagementsystem.model.OAuth2AuthorizedClient;
 import com.unbidden.jvtaskmanagementsystem.model.User;
 import com.unbidden.jvtaskmanagementsystem.repository.oauth2.AuthorizationMetaRepository;
 import com.unbidden.jvtaskmanagementsystem.repository.oauth2.AuthorizedClientRepository;
-import com.unbidden.jvtaskmanagementsystem.service.util.HttpClientUtil;
 import com.unbidden.jvtaskmanagementsystem.service.util.HttpClientUtil.HeaderNames;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.lang.NonNull;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @Service
 @RequiredArgsConstructor
@@ -29,7 +28,7 @@ public class OAuth2ServiceImpl implements OAuth2Service {
             "%s?client_id=%s&redirect_uri=%s&state=%s"
             + "&token_access_type=%s&response_type=code";
 
-    private static final String CONNECT_ENDPOINT_BASE = "%s/oauth2/connect/%s?origin=%s";
+    private final OAuth2AuthorizedClientResolverManager authorizedClientResolverManager;
     
     private final AuthorizationMetaRepository authorizationMetaRepository;
 
@@ -37,34 +36,38 @@ public class OAuth2ServiceImpl implements OAuth2Service {
 
     private final AuthorizedClientRepository authorizedClientRepository;
 
-    private final HttpClientUtil httpUtil;
-
     @Override
     public void authorize(@NonNull User user, @NonNull HttpServletResponse response,
-            @NonNull ClientRegistration clientRegistration, String origin) {
-        final UUID uuid = UUID.randomUUID();
-        final AuthorizationMeta authorizationMeta = 
-                new AuthorizationMeta(uuid, user, clientRegistration, 
-                LocalDateTime.now(), origin);
-
-        authorizationMetaRepository.save(authorizationMeta);
+            @NonNull ClientRegistration clientRegistration) {
+        try {
+            loadAuthorizedClient(user, clientRegistration);
+            throw new OAuth2AuthorizationException("No need to continue authorization"
+                    + " because user " + user.getId() + " is already authorized by "
+                    + clientRegistration.getClientName() + ".");
+        } catch (OAuth2AuthorizedClientLoadingException e) {
+            //TODO: Add logging
+        }
+        final AuthorizationMeta meta = getAuthorizationMeta(user, clientRegistration);
+        
         final String authUri = AUTHORIZATION_URI_PATTERN.formatted(
                 clientRegistration.getAuthorizationUri(),
                 clientRegistration.getClientId(),
                 clientRegistration.getRedirectUri(),
-                uuid.toString(),
+                meta.getId().toString(),
                 (clientRegistration.getUseRefreshTokens()) ? "offline" : "online");
-        response.setHeader(HeaderNames.LOCATION, authUri);
-        response.setStatus(302);
+        try {
+            response.setStatus(302);
+            response.addHeader(HeaderNames.LOCATION, authUri);
+            response.flushBuffer();
+        } catch (IOException e) {
+            throw new OAuth2AuthorizationException("IOException occured during "
+                    + "redirect commit.", e);
+        }
     }
     
     @Override
-    public void callback(@NonNull HttpServletResponse response, @NonNull String code,
-            @NonNull String state, String error, String errorDescription) {
-        final String root = ServletUriComponentsBuilder.fromCurrentContextPath()
-                .build()
-                .toUriString();
-
+    public OAuth2SuccessResponse callback(@NonNull HttpServletResponse response,
+            @NonNull String code, @NonNull String state, String error, String errorDescription) {
         AuthorizationMeta meta = authorizationMetaRepository.load(state)
                 .orElseThrow(() -> new EntityNotFoundException("There is no authorization meta "
                 + "associated with provided state: <" + state + ">. This may indicate that the "
@@ -76,80 +79,53 @@ public class OAuth2ServiceImpl implements OAuth2Service {
                     + " authorization. Error: " + error + "; description: " + errorDescription);
         }
 
-        resolveAuthorizedClient(meta.getClientRegistration(),
-                meta.getUser(),
-                oauthClient.exchange(code, meta.getClientRegistration()),
-                authorizedClientRepository.findByUserIdAndRegistrationName(meta.getUser().getId(),
-                    meta.getClientRegistration().getClientName()).orElse(null));
+        OAuth2TokenResponseDto tokenData = oauthClient.exchange(code,
+                meta.getClientRegistration());
+        Optional<OAuth2AuthorizedClient> authorizedClientOpt = authorizedClientRepository
+                .findByUserIdAndRegistrationName(meta.getUser().getId(),
+                meta.getClientRegistration().getClientName());
+        authorizedClientResolverManager.getResolver(meta.getClientRegistration())
+                .resolveAuthorizedClient(meta.getUser(), tokenData, authorizedClientOpt);
 
-        String redirectTo = (meta.getOrigin() == null || meta.getOrigin().isBlank()) 
-                ? root + meta.getClientRegistration().getDefaultRedirectAfterCallback()
-                : root + meta.getOrigin();
-        response.setHeader(HeaderNames.LOCATION, redirectTo);
-        response.setStatus(302);
+        return new OAuth2SuccessResponse("OAuth2 Authorization Flow has been "
+                + "concluded. Service " + meta.getClientRegistration().getClientName()
+                + " has been connected successfuly for user " + meta.getUser().getId() + ".");
     }
 
     @Override
-    public OAuth2AuthorizedClient loadAuthorizedClient(@NonNull Authentication authentication,
-            @NonNull HttpServletRequest request, @NonNull HttpServletResponse response,
-            @NonNull ClientRegistration clientRegistration) {
-        final String root = ServletUriComponentsBuilder.fromCurrentContextPath()
-                .build()
-                .toUriString();
-        final User user = (User)authentication.getPrincipal();
-
-        Optional<OAuth2AuthorizedClient> optional = authorizedClientRepository
-                .findByUserIdAndRegistrationName(user.getId(),
-                clientRegistration.getClientName());
-        if (optional.isPresent()) {
-            OAuth2AuthorizedClient authorizedClient = optional.get();
+    public OAuth2AuthorizedClient loadAuthorizedClient(User user,
+            ClientRegistration clientRegistration) throws OAuth2AuthorizedClientLoadingException {
+        Optional<OAuth2AuthorizedClient> authorizedClientOpt = authorizedClientRepository
+                .findByUserIdAndRegistrationName(user.getId(),clientRegistration.getClientName());
+        if (authorizedClientOpt.isPresent()) {
+            OAuth2AuthorizedClient authorizedClient = authorizedClientOpt.get();
 
             if (authorizedClient.getAquiredAt()
                     .plusSeconds(authorizedClient.getExpiresIn())
                     .isAfter(LocalDateTime.now())) {
                 return authorizedClient;
-            }  
+            }
             if (clientRegistration.getUseRefreshTokens()) {
-                resolveAuthorizedClient(clientRegistration,
-                        user, 
-                        oauthClient.refresh(authorizedClient, clientRegistration),
-                        authorizedClient);
-                return authorizedClient;
-            }         
+                return authorizedClientResolverManager.getResolver(clientRegistration)
+                    .resolveAuthorizedClient(user, oauthClient.refresh(authorizedClient,
+                    clientRegistration), authorizedClientOpt);
+            }     
         }
-        response.setHeader(HeaderNames.LOCATION, CONNECT_ENDPOINT_BASE.formatted(
-                root, clientRegistration.getClientName(), request.getRequestURI()));
-        response.setStatus(302);
-        response.setHeader(HeaderNames.AUTHORIZATION,
-                httpUtil.getBearerAuthorizationHeader((String)authentication.getCredentials()));
-        return null;
-    }
-
-    private void resolveAuthorizedClient(ClientRegistration clientRegistration,
-            User user,
-            OAuth2TokenResponseDto tokenData,
-            OAuth2AuthorizedClient authorizedClient) {
-
-        if (authorizedClient == null) {
-            authorizedClient = new OAuth2AuthorizedClient();
-        }
-
-        authorizedClient.setAquiredAt(LocalDateTime.now());
-        authorizedClient.setClientRegistrationName(clientRegistration.getClientName());
-        authorizedClient.setUser(user);
-
-        authorizedClient.setToken(tokenData.getAccessToken());
-        authorizedClient.setExpiresIn(tokenData.getExpiresIn());
-        
-        if (tokenData.getRefreshToken() != null) {
-            authorizedClient.setRefreshToken(tokenData.getRefreshToken());
-        }
-
-        authorizedClientRepository.save(authorizedClient);
+        throw new OAuth2AuthorizedClientLoadingException("Unable to load authorized client. "
+                + "It is either expired and refresh tokens are not available "
+                + "or user has never been logged in.");
     }
 
     @Override
     public void deleteAuthorizedClient(OAuth2AuthorizedClient authorizedClient) {
         authorizedClientRepository.delete(authorizedClient);
+    }
+
+    private AuthorizationMeta getAuthorizationMeta(User user,
+            ClientRegistration clientRegistration) {
+        final UUID uuid = UUID.randomUUID();
+
+        return authorizationMetaRepository.save(new AuthorizationMeta(uuid, user,
+                clientRegistration, LocalDateTime.now()));
     }
 }

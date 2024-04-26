@@ -19,13 +19,14 @@ import java.lang.annotation.Target;
  * <p>The method in question must have several specific parameters 
  * in order for the aspect to fetch the necessary data for access checking:
  * <ul>
- *  <li>{@code Long id} — id of an entity from which project can be fetched</li>
- *  <li>{@code User user} — user that is trying to access the method</li>
+ *  <li>{@code Long id} of an entity from which project can be fetched</li>
+ *  <li>{@code User user} that is trying to access the method</li>
  * </ul>
  * @param securityLevel — required role for method access
- * @param entityIdParamName — name of the entity id parameter. By default equals {@code projectId}
+ * @param entityIdParamName — name of the entity id parameter. If not specified,
+ * it will try to guess the name.
  * @param entityIdClass — class of the entity from which project can be fetched.
- * By default equals {@code Project.class}
+ * By default is {@code Project.class}
  * @param userParamName — name of the user parameter. By default equals {@code user}
  * @param bypassIfPublic — whether check for project privacy matters. 
  * Mainly required when retrieving entities from the database. By default is {@code false}.
@@ -37,11 +38,11 @@ import java.lang.annotation.Target;
 public @interface ProjectSecurity {
     ProjectRoleType securityLevel();
 
-    String entityIdParamName() default "projectId";
+    String entityIdParamName() default "";
 
     Class<?> entityIdClass() default Project.class;
 
-    String userParamName() default "user";
+    String userParamName() default "";
 
     boolean bypassIfPublic() default false;
 }

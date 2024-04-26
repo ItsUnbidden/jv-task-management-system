@@ -1,14 +1,10 @@
 package com.unbidden.jvtaskmanagementsystem.controller;
 
 import com.unbidden.jvtaskmanagementsystem.dto.attachment.AttachmentDto;
-import com.unbidden.jvtaskmanagementsystem.model.ClientRegistration;
-import com.unbidden.jvtaskmanagementsystem.model.OAuth2AuthorizedClient;
 import com.unbidden.jvtaskmanagementsystem.model.User;
-import com.unbidden.jvtaskmanagementsystem.repository.oauth2.ClientRegistrationRepository;
 import com.unbidden.jvtaskmanagementsystem.service.AttachmentService;
-import com.unbidden.jvtaskmanagementsystem.service.oauth2.OAuth2Service;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -16,10 +12,10 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/attachments")
@@ -27,10 +23,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class AttachmentController {
     private final AttachmentService attachmentService;
-
-    private final ClientRegistrationRepository clientRegistrationRepository;
-
-    private final OAuth2Service oauthService;
 
     @GetMapping("/tasks/{taskId}")
     public List<AttachmentDto> getAvailableAttachmentsForTask(Authentication authentication,
@@ -40,16 +32,14 @@ public class AttachmentController {
     }
     
     @PostMapping("/tasks/{taskId}")
-    public AttachmentDto upload(Authentication authentication, HttpServletRequest request,
-            HttpServletResponse response, @PathVariable Long taskId,
-            @RequestParam String filename, @RequestBody byte[] data) {
-        ClientRegistration clientRegistration = 
-                clientRegistrationRepository.findByClientName("dropbox").get();
-        OAuth2AuthorizedClient authorizedClient = oauthService.loadAuthorizedClient(
-                authentication, request, response, clientRegistration);
-        return (authorizedClient != null) ? attachmentService.upload(
-                (User)authentication.getPrincipal(), taskId, filename,
-                authorizedClient, data) : null;
+    public AttachmentDto upload(Authentication authentication, @PathVariable Long taskId, 
+            @RequestParam("file") MultipartFile file) throws IOException {
+        return attachmentService.upload((User)authentication.getPrincipal(), taskId, file);
     }
     
+    @GetMapping("/{attachmentId}")
+    public void download(Authentication authentication, HttpServletResponse response,
+            @PathVariable Long attachmentId) {
+        attachmentService.download((User)authentication.getPrincipal(), response, attachmentId);
+    }
 }

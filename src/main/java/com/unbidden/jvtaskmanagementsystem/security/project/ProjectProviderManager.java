@@ -1,13 +1,5 @@
 package com.unbidden.jvtaskmanagementsystem.security.project;
 
-import com.unbidden.jvtaskmanagementsystem.model.Label;
-import com.unbidden.jvtaskmanagementsystem.model.Message;
-import com.unbidden.jvtaskmanagementsystem.model.Project;
-import com.unbidden.jvtaskmanagementsystem.model.Task;
-import com.unbidden.jvtaskmanagementsystem.security.project.provider.ProjectFromIdProvider;
-import com.unbidden.jvtaskmanagementsystem.security.project.provider.ProjectFromLabelIdProvider;
-import com.unbidden.jvtaskmanagementsystem.security.project.provider.ProjectFromMessageIdProvider;
-import com.unbidden.jvtaskmanagementsystem.security.project.provider.ProjectFromTaskIdProvider;
 import com.unbidden.jvtaskmanagementsystem.security.project.provider.ProjectProvider;
 import java.util.HashMap;
 import java.util.List;
@@ -21,18 +13,7 @@ public class ProjectProviderManager {
 
     public ProjectProviderManager(@Autowired List<ProjectProvider> providers) {
         for (ProjectProvider projectProvider : providers) {
-            if (projectProvider.getClass().equals(ProjectFromIdProvider.class)) {
-                PROVIDERS_MAP.put(Project.class, projectProvider);
-            }
-            if (projectProvider.getClass().equals(ProjectFromTaskIdProvider.class)) {
-                PROVIDERS_MAP.put(Task.class, projectProvider);
-            }
-            if (projectProvider.getClass().equals(ProjectFromLabelIdProvider.class)) {
-                PROVIDERS_MAP.put(Label.class, projectProvider);
-            }
-            if (projectProvider.getClass().equals(ProjectFromMessageIdProvider.class)) {
-                PROVIDERS_MAP.put(Message.class, projectProvider);
-            }
+            PROVIDERS_MAP.put(projectProvider.getProviderClass(), projectProvider);
         }
     }
 

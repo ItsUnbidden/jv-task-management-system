@@ -25,6 +25,11 @@ public class ProjectFromMessageIdProvider implements ProjectProvider {
         return getFromReply((Reply)message);
     }
 
+    @Override
+    public Class<?> getProviderClass() {
+        return Message.class;
+    }
+
     private Project getFromComment(Comment comment) {
         return comment.getTask().getProject();
     }

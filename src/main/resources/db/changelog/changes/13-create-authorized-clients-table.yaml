@@ -21,6 +21,9 @@ databaseChangeLog:
                     foreignKeyName: fk_users_authorized_clients
                     references: users(id)
               - column:
+                  name: external_account_id
+                  type: varchar(255)
+              - column:
                   name: client_registration_name
                   type: varchar(255)
                   constraints:
