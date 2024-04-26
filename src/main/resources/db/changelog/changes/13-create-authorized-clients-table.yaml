@@ -1,0 +1,49 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-authorized-clients-table
+      author: Unbidden
+      changes:
+        - createTable:
+            tableName: authorized_clients
+            columns: 
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+              - column:
+                  name: user_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_users_authorized_clients
+                    references: users(id)
+              - column:
+                  name: external_account_id
+                  type: varchar(255)
+              - column:
+                  name: client_registration_name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: token
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: aquired_at
+                  type: datetime
+                  constraints:
+                    nullable: false
+              - column:
+                  name: expires_in
+                  type: int
+                  constraints:
+                    nullable: false
+              - column:
+                  name: refresh_token
+                  type: varchar(255)
+    

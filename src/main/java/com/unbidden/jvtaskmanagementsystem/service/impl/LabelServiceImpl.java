@@ -44,7 +44,7 @@ public class LabelServiceImpl implements LabelService {
 
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true,
-            entityIdClass = Label.class, entityIdParamName = "labelId")
+            entityIdClass = Label.class)
     public LabelResponseDto getLabelById(User user, @NonNull Long labelId) {
         return labelMapper.toDto(entityUtil.getLabelById(labelId));
     }
@@ -65,7 +65,7 @@ public class LabelServiceImpl implements LabelService {
 
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.ADMIN,
-            entityIdClass = Label.class, entityIdParamName = "labelId")
+            entityIdClass = Label.class)
     public LabelResponseDto updateLabel(User user, @NonNull Long labelId,
             @NonNull UpdateLabelRequestDto requestDto) {
         final Label label = entityUtil.getLabelById(labelId);
@@ -92,7 +92,7 @@ public class LabelServiceImpl implements LabelService {
 
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.ADMIN,
-            entityIdClass = Label.class, entityIdParamName = "labelId")
+            entityIdClass = Label.class)
     public void deleteLabel(User user, @NonNull Long labelId) {
         labelRepository.deleteById(labelId);
     }

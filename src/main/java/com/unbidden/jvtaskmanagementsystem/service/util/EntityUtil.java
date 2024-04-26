@@ -1,6 +1,8 @@
 package com.unbidden.jvtaskmanagementsystem.service.util;
 
 import com.unbidden.jvtaskmanagementsystem.exception.EntityNotFoundException;
+import com.unbidden.jvtaskmanagementsystem.model.Attachment;
+import com.unbidden.jvtaskmanagementsystem.model.ClientRegistration;
 import com.unbidden.jvtaskmanagementsystem.model.Comment;
 import com.unbidden.jvtaskmanagementsystem.model.Label;
 import com.unbidden.jvtaskmanagementsystem.model.Message;
@@ -10,6 +12,7 @@ import com.unbidden.jvtaskmanagementsystem.model.Reply;
 import com.unbidden.jvtaskmanagementsystem.model.Role.RoleType;
 import com.unbidden.jvtaskmanagementsystem.model.Task;
 import com.unbidden.jvtaskmanagementsystem.model.User;
+import com.unbidden.jvtaskmanagementsystem.repository.AttachmentRepository;
 import com.unbidden.jvtaskmanagementsystem.repository.CommentRepository;
 import com.unbidden.jvtaskmanagementsystem.repository.LabelRepository;
 import com.unbidden.jvtaskmanagementsystem.repository.ProjectRepository;
@@ -17,6 +20,7 @@ import com.unbidden.jvtaskmanagementsystem.repository.ProjectRoleRepository;
 import com.unbidden.jvtaskmanagementsystem.repository.ReplyRepository;
 import com.unbidden.jvtaskmanagementsystem.repository.TaskRepository;
 import com.unbidden.jvtaskmanagementsystem.repository.UserRepository;
+import com.unbidden.jvtaskmanagementsystem.repository.oauth2.ClientRegistrationRepository;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.lang.NonNull;
@@ -41,6 +45,10 @@ public class EntityUtil {
     private final CommentRepository commentRepository;
 
     private final ReplyRepository replyRepository;
+
+    private final AttachmentRepository attachmentRepository;
+
+    private final ClientRegistrationRepository clientRegistrationRepository;
 
     @NonNull
     public Project getProjectById(@NonNull Long projectId) {
@@ -68,6 +76,13 @@ public class EntityUtil {
         return labelRepository.findById(labelId).orElseThrow(() ->
                 new EntityNotFoundException("Was not able to find a label with id " 
                 + labelId));
+    }
+
+    @NonNull
+    public Attachment getAttachmentById(@NonNull Long attachmentId) {
+        return attachmentRepository.findById(attachmentId).orElseThrow(() ->
+                new EntityNotFoundException("Was not able to find an attachment with id "
+                + attachmentId));
     }
 
     /**
@@ -119,6 +134,14 @@ public class EntityUtil {
                 "User is not a member of this project."));
     }
 
+    @NonNull
+    public ClientRegistration getClientRegistrationByName(
+            @NonNull String clientRegistrationName) {
+        return clientRegistrationRepository.findByClientName(clientRegistrationName)
+                .orElseThrow(() -> new EntityNotFoundException("There is no client registration "
+                + "with name " + clientRegistrationName));
+    }
+
     public boolean isManager(@NonNull User user) {
         for (GrantedAuthority grantedAuthority : user.getAuthorities()) {
             if (grantedAuthority.getAuthority().equals("ROLE_" + RoleType.MANAGER)) {
@@ -130,8 +153,8 @@ public class EntityUtil {
 
     /**
      * This method returns the {@link Comment} this {@link Reply} ultimately belongs to.
-     * @param reply - the {@link Reply}
-     * @return the {@link Comment}
+     * @param reply for which is needed to find comment
+     * @return {@link Comment}
      */
     @NonNull
     public Comment getSuperParent(@NonNull Reply reply) {

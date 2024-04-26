@@ -11,7 +11,7 @@ import org.springframework.lang.NonNull;
 import org.springframework.web.bind.annotation.RequestParam;
 
 public interface ProjectService {
-    public ProjectResponseDto findProjectById(User user, @NonNull Long id);
+    public ProjectResponseDto findProjectById(User user, @NonNull Long projectId);
     
     public List<ProjectResponseDto> findAllProjectsForUser(User user);
 
@@ -21,20 +21,19 @@ public interface ProjectService {
     public ProjectResponseDto createProject(User user,
             @NonNull CreateProjectRequestDto requestDto);
     
-    public ProjectResponseDto updateProject(User user, @NonNull Long id,
+    public ProjectResponseDto updateProject(User user, @NonNull Long projectId,
             @NonNull UpdateProjectRequestDto requestDto);
 
-    public void deleteProject(User user, @NonNull Long id);
+    public void deleteProject(User user, @NonNull Long projectId);
 
     public ProjectResponseDto addUserToProject(User user, @NonNull Long projectId,
             @NonNull Long userId);
 
     public ProjectResponseDto changeProjectMemberRole(User user, @NonNull Long projectId,
-            @NonNull Long userId,
-            @NonNull UpdateProjectRoleRequestDto requestDto);
+            @NonNull Long userId, @NonNull UpdateProjectRoleRequestDto requestDto);
 
     public ProjectResponseDto removeUserFromProject(User user,
             @NonNull Long projectId, @NonNull Long userId);
 
-    public void quitProject(User user, @NonNull Long projectId);
+    public ProjectResponseDto connectProjectToDropbox(User user, @NonNull Long projectId);
 }

@@ -15,4 +15,9 @@ public class ProjectFromIdProvider implements ProjectProvider {
     public Project getProject(@NonNull Long id) {
         return entityUtil.getProjectById(id);
     }
+
+    @Override
+    public Class<?> getProviderClass() {
+        return Project.class;
+    }
 }

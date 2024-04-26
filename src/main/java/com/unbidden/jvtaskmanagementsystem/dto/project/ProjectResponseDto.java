@@ -23,4 +23,6 @@ public class ProjectResponseDto {
     private Set<ProjectRoleDto> projectRoles;
 
     private boolean isPrivate;
+
+    private boolean isDropboxConnected;
 }

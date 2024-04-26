@@ -23,3 +23,5 @@ databaseChangeLog:
       file: /db/changelog/changes/11-insert-owner.yaml
   - include:
       file: /db/changelog/changes/12-create-messages-table.yaml
+  - include:
+      file: /db/changelog/changes/13-create-authorized-clients-table.yaml

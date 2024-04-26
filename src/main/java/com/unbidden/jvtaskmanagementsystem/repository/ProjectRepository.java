@@ -11,7 +11,7 @@ import org.springframework.lang.NonNull;
 
 public interface ProjectRepository extends JpaRepository<Project, Long> {
     @NonNull
-    @EntityGraph(attributePaths = "projectRoles")
+    @EntityGraph(attributePaths = {"projectRoles", "tasks"})
     Optional<Project> findById(@NonNull Long id);
 
     @NonNull

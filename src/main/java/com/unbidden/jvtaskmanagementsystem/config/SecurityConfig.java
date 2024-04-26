@@ -1,8 +1,10 @@
 package com.unbidden.jvtaskmanagementsystem.config;
 
+import com.dropbox.core.DbxRequestConfig;
 import com.unbidden.jvtaskmanagementsystem.exception.CustomAccessDeniedHandler;
 import com.unbidden.jvtaskmanagementsystem.exception.CustomAuthenticationEntryPoint;
 import com.unbidden.jvtaskmanagementsystem.security.JwtAuthenticationFilter;
+import java.net.http.HttpClient;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -43,7 +45,7 @@ public class SecurityConfig {
                     .authenticationEntryPoint(authEntryPoint)
                 )
                 .authorizeHttpRequests(auth -> auth
-                    .requestMatchers("/auth/**")
+                    .requestMatchers("/auth/**", "/oauth2/connect/code")
                     .permitAll()
                     .anyRequest()
                     .authenticated()
@@ -59,5 +61,15 @@ public class SecurityConfig {
     public AuthenticationManager authenticationManager(
             AuthenticationConfiguration authConfiguration) throws Exception {
         return authConfiguration.getAuthenticationManager();
+    }
+
+    @Bean
+    public HttpClient httpClient() {
+        return HttpClient.newHttpClient();
+    }
+
+    @Bean
+    public DbxRequestConfig getDropboxRequestConfig() {
+        return DbxRequestConfig.newBuilder("TaskManagementSystemServer/1.0").build();
     }
 }
