@@ -1,7 +1,6 @@
 package com.unbidden.jvtaskmanagementsystem.dto.project;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 import lombok.Data;
@@ -18,6 +17,5 @@ public class CreateProjectRequestDto {
     
     private LocalDate endDate;
 
-    @NotNull
-    private Boolean isPrivate;
+    private boolean isPrivate;
 }
