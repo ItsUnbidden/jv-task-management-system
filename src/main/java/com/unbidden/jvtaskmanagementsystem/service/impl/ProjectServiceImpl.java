@@ -2,7 +2,6 @@ package com.unbidden.jvtaskmanagementsystem.service.impl;
 
 import com.unbidden.jvtaskmanagementsystem.dto.project.CreateProjectRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.project.ProjectResponseDto;
-import com.unbidden.jvtaskmanagementsystem.dto.project.UpdateProjectRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.project.UpdateProjectRoleRequestDto;
 import com.unbidden.jvtaskmanagementsystem.mapper.ProjectMapper;
 import com.unbidden.jvtaskmanagementsystem.model.Project;
@@ -107,24 +106,14 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.ADMIN)
     public ProjectResponseDto updateProject(User user, @NonNull Long projectId,
-            @NonNull UpdateProjectRequestDto requestDto) {
+            @NonNull CreateProjectRequestDto requestDto) {
         final Project project = entityUtil.getProjectById(projectId);
         
-        if (requestDto.getName() != null) {
-            project.setName(requestDto.getName());
-        }
-        if (requestDto.getDescription() != null) {
-            project.setDescription(requestDto.getDescription());
-        }
-        if (requestDto.getStartDate() != null) {
-            project.setStartDate(requestDto.getStartDate());
-        }
-        if (requestDto.getEndDate() != null) {
-            project.setEndDate(requestDto.getEndDate());
-        }
-        if (requestDto.getIsPrivate() != null) {
-            project.setPrivate(requestDto.getIsPrivate());
-        }
+        project.setName(requestDto.getName());
+        project.setDescription(requestDto.getDescription());
+        project.setStartDate(requestDto.getStartDate());
+        project.setEndDate(requestDto.getEndDate());
+        project.setPrivate(requestDto.isPrivate());
         updateProjectStatusAccordingToDate(project, false);
         return projectMapper.toProjectDto(projectRepository.save(project));
     }
@@ -212,7 +201,7 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR)
+    @ProjectSecurity(securityLevel = ProjectRoleType.CREATOR)
     public ProjectResponseDto connectProjectToDropbox(User user, Long projectId) {
         final Project project = entityUtil.getProjectById(projectId);
         
