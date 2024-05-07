@@ -9,11 +9,16 @@ import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.function.Function;
 import javax.crypto.SecretKey;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Component;
 
 @Component
 public class JwtUtil {
+    private static final Logger LOGGER = LogManager.getLogger(JwtUtil.class);
+
     private SecretKey secret;
 
     @Value("${jwt.expiration}")
@@ -24,6 +29,7 @@ public class JwtUtil {
     }
 
     public String generateToken(String username) {
+        LOGGER.info("Generating JWT for user " + username);
         return Jwts.builder()
                 .subject(username)
                 .issuedAt(new Date(System.currentTimeMillis()))
@@ -33,6 +39,7 @@ public class JwtUtil {
     }
 
     public boolean isValidToken(String token) {
+        LOGGER.info("Verifying token...");
         try {
             Jws<Claims> claimsJws = Jwts.parser()
                     .verifyWith(secret)
@@ -40,7 +47,7 @@ public class JwtUtil {
                     .parseSignedClaims(token);
             return !claimsJws.getPayload().getExpiration().before(new Date());
         } catch (JwtException | IllegalArgumentException e) {
-            throw new JwtException("Expired or invalid JWT token");
+            throw new BadCredentialsException("Expired or invalid JWT token", e);
         }
     }
 

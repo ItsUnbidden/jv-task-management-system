@@ -1,6 +1,6 @@
-package com.unbidden.jvtaskmanagementsystem.exception;
+package com.unbidden.jvtaskmanagementsystem.exception.oauth2;
 
-public class OAuth2Exception extends RuntimeException {
+public abstract class OAuth2Exception extends RuntimeException {
     public OAuth2Exception(String msg) {
         super(msg);
     }

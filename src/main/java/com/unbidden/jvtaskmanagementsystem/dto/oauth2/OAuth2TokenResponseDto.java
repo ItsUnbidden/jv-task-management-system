@@ -1,4 +1,4 @@
-package com.unbidden.jvtaskmanagementsystem.dto.internal;
+package com.unbidden.jvtaskmanagementsystem.dto.oauth2;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;

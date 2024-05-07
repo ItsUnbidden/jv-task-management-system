@@ -1,7 +1,7 @@
 package com.unbidden.jvtaskmanagementsystem.service.oauth2;
 
 import com.unbidden.jvtaskmanagementsystem.dto.oauth2.OAuth2SuccessResponse;
-import com.unbidden.jvtaskmanagementsystem.exception.OAuth2AuthorizedClientLoadingException;
+import com.unbidden.jvtaskmanagementsystem.exception.oauth2.OAuth2AuthorizedClientLoadingException;
 import com.unbidden.jvtaskmanagementsystem.model.ClientRegistration;
 import com.unbidden.jvtaskmanagementsystem.model.OAuth2AuthorizedClient;
 import com.unbidden.jvtaskmanagementsystem.model.User;

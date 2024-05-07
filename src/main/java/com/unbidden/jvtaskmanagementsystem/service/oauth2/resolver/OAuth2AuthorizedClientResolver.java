@@ -1,6 +1,6 @@
 package com.unbidden.jvtaskmanagementsystem.service.oauth2.resolver;
 
-import com.unbidden.jvtaskmanagementsystem.dto.internal.OAuth2TokenResponseDto;
+import com.unbidden.jvtaskmanagementsystem.dto.oauth2.OAuth2TokenResponseDto;
 import com.unbidden.jvtaskmanagementsystem.model.ClientRegistration;
 import com.unbidden.jvtaskmanagementsystem.model.OAuth2AuthorizedClient;
 import com.unbidden.jvtaskmanagementsystem.model.User;

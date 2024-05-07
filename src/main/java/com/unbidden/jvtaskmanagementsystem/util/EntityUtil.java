@@ -1,4 +1,4 @@
-package com.unbidden.jvtaskmanagementsystem.service.util;
+package com.unbidden.jvtaskmanagementsystem.util;
 
 import com.unbidden.jvtaskmanagementsystem.exception.EntityNotFoundException;
 import com.unbidden.jvtaskmanagementsystem.model.Attachment;

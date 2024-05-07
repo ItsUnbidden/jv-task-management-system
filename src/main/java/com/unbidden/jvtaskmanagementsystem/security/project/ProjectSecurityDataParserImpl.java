@@ -4,6 +4,8 @@ import com.unbidden.jvtaskmanagementsystem.exception.ProjectSecurityDataParsingE
 import com.unbidden.jvtaskmanagementsystem.model.Project;
 import com.unbidden.jvtaskmanagementsystem.model.User;
 import lombok.RequiredArgsConstructor;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.security.core.Authentication;
@@ -13,6 +15,9 @@ import org.springframework.util.StringUtils;
 @Component
 @RequiredArgsConstructor
 public class ProjectSecurityDataParserImpl implements ProjectSecurityDataParser {
+    private static final Logger LOGGER =
+            LogManager.getLogger(ProjectSecurityDataParserImpl.class);
+
     private final ProjectProviderManager projectProviderManager;
 
     @Override
@@ -23,6 +28,7 @@ public class ProjectSecurityDataParserImpl implements ProjectSecurityDataParser 
         int entityIdIndex = -1;
         int userIndex = -1;
 
+        LOGGER.info("Parsing of join point from security aspect is commencing.");
         final Class<?> entityIdClass = annotation.entityIdClass();
         final String entityParamName = (annotation.entityIdParamName().isBlank())
                 ? StringUtils.uncapitalize(annotation.entityIdClass().getSimpleName()) + "Id"
@@ -61,6 +67,7 @@ public class ProjectSecurityDataParserImpl implements ProjectSecurityDataParser 
         if (entityArg instanceof Long) {
             project = projectProviderManager.getProvider(entityIdClass)
                     .getProject((Long)entityArg);
+            LOGGER.info("Project " + project.getId() + " has been aquired.");
         } else {
             throw new ProjectSecurityDataParsingException(
                     "Entity id class type must be " + Long.class.getName()
@@ -71,8 +78,10 @@ public class ProjectSecurityDataParserImpl implements ProjectSecurityDataParser 
         Object userArg = data.getArgs()[userIndex];
         if (userArg instanceof User) {
             user = (User)userArg;
+            LOGGER.info("User " + user.getId() + " has been aquired.");
         } else if (userArg instanceof Authentication) {
             user = (User)((Authentication)userArg).getPrincipal();
+            LOGGER.info("User " + user.getId() + " has been aquired from authentication object.");
         } else {
             throw new ProjectSecurityDataParsingException(
                     "User class type must be either " + User.class.getName()
@@ -80,6 +89,8 @@ public class ProjectSecurityDataParserImpl implements ProjectSecurityDataParser 
                     + data.getArgs()[userIndex].getClass().getName());
         }
 
+        LOGGER.info("Data successfuly parsed. User id: " + user.getId()
+                + "; project id " + project.getId());
         return new ProjectSecurityDto(project, user, annotation.securityLevel(),
                 annotation.bypassIfPublic());
     }

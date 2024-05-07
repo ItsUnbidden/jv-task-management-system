@@ -3,7 +3,6 @@ package com.unbidden.jvtaskmanagementsystem.controller;
 import com.unbidden.jvtaskmanagementsystem.dto.auth.LoginRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.user.UserResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.user.UserUpdateDetailsRequestDto;
-import com.unbidden.jvtaskmanagementsystem.model.Attachment;
 import com.unbidden.jvtaskmanagementsystem.model.Role;
 import com.unbidden.jvtaskmanagementsystem.model.User;
 import com.unbidden.jvtaskmanagementsystem.service.UserService;
@@ -12,6 +11,8 @@ import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.lang.NonNull;
@@ -31,6 +32,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/users")
 @RequiredArgsConstructor
 public class UserController {
+    private static final Logger LOGGER = LogManager.getLogger(UserController.class);
+
     private final UserService userService;
 
     @GetMapping("/me")
@@ -73,7 +76,7 @@ public class UserController {
     //TODO: This is a test endpoint. It needs to be removed
     @GetMapping("/test")
     public String testMethod(HttpServletRequest request) {
-        Class<Attachment> clazz = Attachment.class;
-        return clazz.getName() + " " + clazz.getSimpleName() + " " + clazz.getCanonicalName();
+        LOGGER.info("This is an INFO message.");
+        return "This is a test method.";
     }
 }

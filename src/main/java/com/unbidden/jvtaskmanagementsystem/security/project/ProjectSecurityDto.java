@@ -13,13 +13,13 @@ public class ProjectSecurityDto {
 
     private ProjectRoleType roleRequired;
 
-    private boolean includePrivacyCheck;
+    private boolean bypassIfPublic;
 
     public ProjectSecurityDto(Project project, User user, ProjectRoleType roleRequired,
-            boolean includePrivacyCheck) {
+            boolean bypassIfPublic) {
         this.project = project;
         this.user = user;
         this.roleRequired = roleRequired;
-        this.includePrivacyCheck = includePrivacyCheck;
+        this.bypassIfPublic = bypassIfPublic;
     }
 }

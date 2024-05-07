@@ -1,6 +1,7 @@
 package com.unbidden.jvtaskmanagementsystem.model;
 
 import lombok.Data;
+import lombok.ToString;
 
 @Data
 public class ClientRegistration {
@@ -8,6 +9,7 @@ public class ClientRegistration {
 
     private String clientId;
 
+    @ToString.Exclude
     private String clientSecret;
 
     private String redirectUri;
@@ -17,6 +19,4 @@ public class ClientRegistration {
     private String tokenUri;
 
     private Boolean useRefreshTokens;
-
-    private String defaultRedirectAfterCallback;
 }

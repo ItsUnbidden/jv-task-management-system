@@ -24,8 +24,10 @@ import com.dropbox.core.v2.sharing.ShareFolderErrorException;
 import com.dropbox.core.v2.sharing.ShareFolderLaunch;
 import com.dropbox.core.v2.sharing.TransferFolderErrorException;
 import com.unbidden.jvtaskmanagementsystem.exception.EntityNotFoundException;
-import com.unbidden.jvtaskmanagementsystem.exception.OAuth2AuthorizedClientLoadingException;
 import com.unbidden.jvtaskmanagementsystem.exception.ThirdPartyApiException;
+import com.unbidden.jvtaskmanagementsystem.exception.dropbox.GeneralDropboxException;
+import com.unbidden.jvtaskmanagementsystem.exception.dropbox.SpecificDropboxException;
+import com.unbidden.jvtaskmanagementsystem.exception.oauth2.OAuth2AuthorizedClientLoadingException;
 import com.unbidden.jvtaskmanagementsystem.model.ClientRegistration;
 import com.unbidden.jvtaskmanagementsystem.model.OAuth2AuthorizedClient;
 import com.unbidden.jvtaskmanagementsystem.model.Project;
@@ -36,11 +38,13 @@ import com.unbidden.jvtaskmanagementsystem.model.User;
 import com.unbidden.jvtaskmanagementsystem.repository.ProjectRoleRepository;
 import com.unbidden.jvtaskmanagementsystem.service.DropboxService;
 import com.unbidden.jvtaskmanagementsystem.service.oauth2.OAuth2Service;
-import com.unbidden.jvtaskmanagementsystem.service.util.EntityUtil;
+import com.unbidden.jvtaskmanagementsystem.util.EntityUtil;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -49,6 +53,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class DropboxServiceImpl implements DropboxService {
+    private static final Logger LOGGER = LogManager.getLogger(DropboxServiceImpl.class);
+
     private final ClientRegistration clientRegistration;
 
     private final OAuth2Service oauthService;
@@ -80,7 +86,8 @@ public class DropboxServiceImpl implements DropboxService {
                     authorizedClient.getToken());
             createSharedProjectFolder0(dbxClient, project);
         } catch (OAuth2AuthorizedClientLoadingException e) {
-            // TODO Add logging
+            LOGGER.warn("Since user " + user.getId() + " hasn't connected their dropbox account,"
+                    + " the project will not have shared folder. It can be connected later.", e);
         }
     }
 
@@ -92,10 +99,10 @@ public class DropboxServiceImpl implements DropboxService {
             try {
                 dbxClient.files().deleteV2(project.getDropboxProjectFolderId());
             } catch (DeleteErrorException e) {
-                throw new ThirdPartyApiException("Uanble to delete project " + project.getId()
+                throw new SpecificDropboxException("Uanble to delete project " + project.getId()
                         + "'s folder on dropbox.", e);
             } catch (DbxException e) {
-                throw new ThirdPartyApiException("General dropbox exception was thrown.", e);
+                throw new GeneralDropboxException("General dropbox exception was thrown.", e);
             }
         }
     }
@@ -117,10 +124,10 @@ public class DropboxServiceImpl implements DropboxService {
             try {
                 dbxClient.files().deleteV2(task.getDropboxTaskFolderId());
             } catch (CreateFolderErrorException e) {
-                throw new ThirdPartyApiException("Unable to delete a folder for task "
+                throw new SpecificDropboxException("Unable to delete a folder for task "
                         + task.getId(), e);
             } catch (DbxException e) {
-                throw new ThirdPartyApiException("General dropbox exception was thrown.", e);
+                throw new GeneralDropboxException("General dropbox exception was thrown.", e);
             }
         }
     }
@@ -154,8 +161,8 @@ public class DropboxServiceImpl implements DropboxService {
                                 project.getDropboxProjectSharedFolderId());
                         return;
                     } catch (RelinquishFolderMembershipErrorException e) {
-                        throw new ThirdPartyApiException("Unable to relinquish folder membership "
-                                + "for user " + user.getId() + " in project "
+                        throw new SpecificDropboxException("Unable to relinquish folder "
+                                + "membership for user " + user.getId() + " in project "
                                 + project.getId(), e);
                     }
                 }
@@ -167,12 +174,12 @@ public class DropboxServiceImpl implements DropboxService {
                             MemberSelector.dropboxId(authorizedClientForUserToRemove
                             .getExternalAccountId()), false);
                 } catch (RemoveFolderMemberErrorException e) {
-                    throw new ThirdPartyApiException("Unable to remove user "
+                    throw new SpecificDropboxException("Unable to remove user "
                             + memberToRemove.getId() + " from project " + project.getId()
                             + "'s folder.", e);
                 }   
             } catch (DbxException e) {
-                throw new ThirdPartyApiException("General dropbox exception was thrown.", e);
+                throw new GeneralDropboxException("General dropbox exception was thrown.", e);
             }
         }
     }
@@ -200,10 +207,10 @@ public class DropboxServiceImpl implements DropboxService {
                 dbxClient.sharing().transferFolder(project.getDropboxProjectSharedFolderId(),
                         authorizedClientForNewUser.getExternalAccountId());
             } catch (TransferFolderErrorException e) {
-                throw new ThirdPartyApiException("Unable to transfer project " 
+                throw new SpecificDropboxException("Unable to transfer project " 
                         + project.getId() + "'s folder to user " + newOwner.getId() + ".", e);
             } catch (DbxException e) {
-                throw new ThirdPartyApiException("General dropbox exception was thrown.", e);
+                throw new GeneralDropboxException("General dropbox exception was thrown.", e);
             }
         }
     }
@@ -254,10 +261,10 @@ public class DropboxServiceImpl implements DropboxService {
                     .withAutorename(true)
                     .uploadAndFinish(file.getInputStream());
         } catch (UploadErrorException e) {
-            throw new ThirdPartyApiException("Unable to upload a file "
+            throw new SpecificDropboxException("Unable to upload a file "
                     + file.getOriginalFilename() + " to dropbox.", e);
         } catch (DbxException e) {
-            throw new ThirdPartyApiException("General dropbox exception was thrown.", e);
+            throw new GeneralDropboxException("General dropbox exception was thrown.", e);
         } catch (IOException e) {
             throw new ThirdPartyApiException("Dropbox client was unable to read the byte array "
                     + "or it is unaccessable.", e);
@@ -272,10 +279,10 @@ public class DropboxServiceImpl implements DropboxService {
         try {
             return dbxClient.files().download(dropboxId).download(os);
         } catch (DownloadErrorException e) {
-            throw new ThirdPartyApiException("Unable to download a file " + dropboxId
+            throw new SpecificDropboxException("Unable to download a file " + dropboxId
                     + " from dropbox.", e);
         } catch (DbxException e) {
-            throw new ThirdPartyApiException("General dropbox exception was thrown.", e);
+            throw new GeneralDropboxException("General dropbox exception was thrown.", e);
         } catch (IOException e) {
             throw new ThirdPartyApiException("Dropbox client was unable to write to "
                     + "the output stream.", e);
@@ -290,9 +297,9 @@ public class DropboxServiceImpl implements DropboxService {
             return dbxClient.check().user("This is a test query. If you see this, that means "
                     + "that dropbox is probably operational.");
         } catch (DbxApiException e) {
-            throw new ThirdPartyApiException("Unable to test dropbox.", e);
+            throw new SpecificDropboxException("Unable to test dropbox.", e);
         } catch (DbxException e) {
-            throw new ThirdPartyApiException("General dropbox exception was thrown.", e);
+            throw new GeneralDropboxException("General dropbox exception was thrown.", e);
         }
     }
 
@@ -311,7 +318,7 @@ public class DropboxServiceImpl implements DropboxService {
                     oauthService.deleteAuthorizedClient(authorizedClient);
                     return;
                 } catch (DbxApiException e) {
-                    throw new ThirdPartyApiException("Unable to logout.", e);
+                    throw new SpecificDropboxException("Unable to logout.", e);
                 } catch (DbxException e) {
                     throw new ThirdPartyApiException("General dropbox exception was thrown.", e);
                 }
@@ -331,6 +338,7 @@ public class DropboxServiceImpl implements DropboxService {
         try {
             authorizedClient = oauthService.loadAuthorizedClient(
                     user, clientRegistration);
+            LOGGER.info("Creating DbxClient object for dropbox access.");
             return new DbxClientV2(dbxRequestConfig, authorizedClient.getToken());
         } catch (OAuth2AuthorizedClientLoadingException e) {
             throw new ThirdPartyApiException("Unable to create DropboxClient because "
@@ -362,14 +370,14 @@ public class DropboxServiceImpl implements DropboxService {
             project.setDropboxProjectSharedFolderId(sharedFolderMeta.getCompleteValue()
                     .getSharedFolderId());
         } catch (ShareFolderErrorException e) {
-            if (project.getId() != null) {
-                throw new ThirdPartyApiException("Unable to create shared folder for new project "
-                        + project.getName() + ".", e);
+            if (project.getId() == null) {
+                throw new SpecificDropboxException("Unable to create shared folder for "
+                        + "new project " + project.getName() + ".", e);
             }
-            throw new ThirdPartyApiException("Unable to create shared folder for project "
+            throw new SpecificDropboxException("Unable to create shared folder for project "
                     + project.getId() + ".", e);
         } catch (DbxException e) {
-            throw new ThirdPartyApiException("General dropbox exception was thrown.", e);
+            throw new GeneralDropboxException("General dropbox exception was thrown.", e);
         }
     }
 
@@ -381,10 +389,10 @@ public class DropboxServiceImpl implements DropboxService {
                     projectFolderMeta.getPathLower() + "/" + task.getName(), true);
             task.setDropboxTaskFolderId(taskFolderMeta.getMetadata().getId());
         } catch (CreateFolderErrorException e) {
-            throw new ThirdPartyApiException("Unable to create a folder for task "
+            throw new SpecificDropboxException("Unable to create a folder for task "
                     + task.getId(), e);
         } catch (DbxException e) {
-            throw new ThirdPartyApiException("General dropbox exception was thrown.", e);
+            throw new GeneralDropboxException("General dropbox exception was thrown.", e);
         }
     }
 
@@ -400,14 +408,14 @@ public class DropboxServiceImpl implements DropboxService {
             dbxClientNewUser.sharing().mountFolder(
                     project.getDropboxProjectSharedFolderId());
         } catch (AddFolderMemberErrorException e) {
-            throw new ThirdPartyApiException("Unable to add user " + authorizedClient.getUser()
+            throw new SpecificDropboxException("Unable to add user " + authorizedClient.getUser()
                     .getId() + " to project " + project.getId() + "'s folder.", e);
         } catch (MountFolderErrorException e) {
-            throw new ThirdPartyApiException("Unable to mount project "
+            throw new SpecificDropboxException("Unable to mount project "
                     + project.getId() + "'s shared folder for newly added user "
                     + authorizedClient.getUser().getId() + ".", e);
         } catch (DbxException e) {
-            throw new ThirdPartyApiException("General dropbox exception was thrown.", e);
+            throw new GeneralDropboxException("General dropbox exception was thrown.", e);
         }    
     }
 
