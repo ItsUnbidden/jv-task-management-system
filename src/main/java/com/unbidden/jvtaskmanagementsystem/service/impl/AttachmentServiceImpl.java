@@ -11,7 +11,7 @@ import com.unbidden.jvtaskmanagementsystem.repository.AttachmentRepository;
 import com.unbidden.jvtaskmanagementsystem.security.project.ProjectSecurity;
 import com.unbidden.jvtaskmanagementsystem.service.AttachmentService;
 import com.unbidden.jvtaskmanagementsystem.service.DropboxService;
-import com.unbidden.jvtaskmanagementsystem.service.util.EntityUtil;
+import com.unbidden.jvtaskmanagementsystem.util.EntityUtil;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDateTime;

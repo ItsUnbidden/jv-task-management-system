@@ -16,7 +16,7 @@ import com.unbidden.jvtaskmanagementsystem.repository.CommentRepository;
 import com.unbidden.jvtaskmanagementsystem.repository.ReplyRepository;
 import com.unbidden.jvtaskmanagementsystem.security.project.ProjectSecurity;
 import com.unbidden.jvtaskmanagementsystem.service.MessageService;
-import com.unbidden.jvtaskmanagementsystem.service.util.EntityUtil;
+import com.unbidden.jvtaskmanagementsystem.util.EntityUtil;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;

@@ -8,10 +8,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Repository;
 
 @Repository
 public class InMemoryAuthorizationMetaRepository implements AuthorizationMetaRepository {
+    private static final Logger LOGGER =
+            LogManager.getLogger(InMemoryAuthorizationMetaRepository.class);
+
     private static final int EXPIRATION_SECONDS = 300;
 
     private Map<String, AuthorizationMeta> metas = new HashMap<>();
@@ -20,6 +25,7 @@ public class InMemoryAuthorizationMetaRepository implements AuthorizationMetaRep
     public AuthorizationMeta save(AuthorizationMeta meta) {
         removeOverdue();
         metas.put(meta.getId().toString(), meta);
+        LOGGER.info("Meta " + meta.getId() + " persisted.");
         return meta;
     }
 
@@ -30,6 +36,7 @@ public class InMemoryAuthorizationMetaRepository implements AuthorizationMetaRep
     }
 
     private void removeOverdue() {
+        LOGGER.info("Checking for outdated metas...");
         List<String> keysForRemoval = new ArrayList<>();
 
         for (Entry<String, AuthorizationMeta> entry : metas.entrySet()) {
@@ -38,8 +45,16 @@ public class InMemoryAuthorizationMetaRepository implements AuthorizationMetaRep
                 keysForRemoval.add(entry.getKey());
             }
         }
+        
+        if (keysForRemoval.isEmpty()) {
+            LOGGER.info("No metas to remove.");
+        } else {
+            LOGGER.info("Some metas are overdue.");
+        }
+
         for (String key : keysForRemoval) {
             metas.remove(key);
+            LOGGER.info("Removed meta " + key);
         }
     }
 }

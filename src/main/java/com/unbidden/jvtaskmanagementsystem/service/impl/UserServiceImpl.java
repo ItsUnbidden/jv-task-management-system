@@ -12,7 +12,7 @@ import com.unbidden.jvtaskmanagementsystem.model.User;
 import com.unbidden.jvtaskmanagementsystem.repository.RoleRepository;
 import com.unbidden.jvtaskmanagementsystem.repository.UserRepository;
 import com.unbidden.jvtaskmanagementsystem.service.UserService;
-import com.unbidden.jvtaskmanagementsystem.service.util.EntityUtil;
+import com.unbidden.jvtaskmanagementsystem.util.EntityUtil;
 import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;

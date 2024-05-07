@@ -1,4 +1,4 @@
-package com.unbidden.jvtaskmanagementsystem.service.util;
+package com.unbidden.jvtaskmanagementsystem.util;
 
 import java.util.Base64;
 import org.springframework.stereotype.Component;
@@ -20,8 +20,6 @@ public class HttpClientUtil {
         public static final String LOCATION = "Location";
 
         public static final String CONTENT_TYPE = "Content-Type";
-
-        public static final String DROPBOX_API_ARG = "Dropbox-API-Arg";
     }
 
     public static class HeaderValues {

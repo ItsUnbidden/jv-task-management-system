@@ -9,6 +9,8 @@ import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
@@ -17,12 +19,16 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint {
+    private static final Logger LOGGER =
+            LogManager.getLogger(CustomAuthenticationEntryPoint.class);
+
     private final ObjectMapper objectMapper;
 
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response,
             AuthenticationException authException) throws IOException, ServletException {
         Map<String, Object> body = new LinkedHashMap<>();
+        LOGGER.info("Authentication entry point was triggered.");
 
         body.put("timestamp", LocalDateTime.now().toString());
         body.put("status", HttpStatus.UNAUTHORIZED);

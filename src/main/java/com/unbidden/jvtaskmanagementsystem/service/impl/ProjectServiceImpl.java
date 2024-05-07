@@ -14,7 +14,7 @@ import com.unbidden.jvtaskmanagementsystem.repository.ProjectRoleRepository;
 import com.unbidden.jvtaskmanagementsystem.security.project.ProjectSecurity;
 import com.unbidden.jvtaskmanagementsystem.service.DropboxService;
 import com.unbidden.jvtaskmanagementsystem.service.ProjectService;
-import com.unbidden.jvtaskmanagementsystem.service.util.EntityUtil;
+import com.unbidden.jvtaskmanagementsystem.util.EntityUtil;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;

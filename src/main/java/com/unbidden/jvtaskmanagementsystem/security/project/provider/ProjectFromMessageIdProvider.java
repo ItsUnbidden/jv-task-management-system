@@ -4,7 +4,7 @@ import com.unbidden.jvtaskmanagementsystem.model.Comment;
 import com.unbidden.jvtaskmanagementsystem.model.Message;
 import com.unbidden.jvtaskmanagementsystem.model.Project;
 import com.unbidden.jvtaskmanagementsystem.model.Reply;
-import com.unbidden.jvtaskmanagementsystem.service.util.EntityUtil;
+import com.unbidden.jvtaskmanagementsystem.util.EntityUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
