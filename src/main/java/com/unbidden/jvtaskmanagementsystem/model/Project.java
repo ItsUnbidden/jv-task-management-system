@@ -63,6 +63,10 @@ public class Project {
     @Column(nullable = false)
     private boolean isDeleted;
 
+    public boolean isDropboxConnected() {
+        return dropboxProjectFolderId != null;
+    }
+
     public static enum ProjectStatus {
         INITIATED,
         IN_PROGRESS, 

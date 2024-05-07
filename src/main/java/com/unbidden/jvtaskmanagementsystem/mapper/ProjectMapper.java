@@ -9,14 +9,12 @@ import com.unbidden.jvtaskmanagementsystem.model.ProjectRole;
 import java.util.HashSet;
 import org.mapstruct.AfterMapping;
 import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 
 @Mapper(config = MapperConfig.class)
 public interface ProjectMapper {
     ProjectResponseDto toProjectDto(Project project);
 
-    @Mapping(target = "private", source = "requestDto.isPrivate")
     Project toProject(CreateProjectRequestDto requestDto);
 
     ProjectRoleDto toProjectRoleDto(ProjectRole role);

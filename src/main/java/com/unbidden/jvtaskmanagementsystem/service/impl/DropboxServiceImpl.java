@@ -93,7 +93,7 @@ public class DropboxServiceImpl implements DropboxService {
 
     @Override
     public void deleteProjectFolder(User user, Project project) {
-        if (project.getDropboxProjectFolderId() != null) {
+        if (project.isDropboxConnected()) {
             final DbxClientV2 dbxClient = getDbxClient(user);
 
             try {
@@ -109,7 +109,7 @@ public class DropboxServiceImpl implements DropboxService {
 
     @Override
     public void createTaskFolder(User user, Task task) {
-        if (task.getProject().getDropboxProjectFolderId() != null) {
+        if (task.getProject().isDropboxConnected()) {
             final DbxClientV2 dbxClient = getDbxClient(user);
 
             createTaskFolder0(dbxClient, task);
@@ -118,7 +118,7 @@ public class DropboxServiceImpl implements DropboxService {
 
     @Override
     public void deleteTaskFolder(User user, Task task) {
-        if (task.getProject().getDropboxProjectFolderId() != null) {
+        if (task.getProject().isDropboxConnected()) {
             final DbxClientV2 dbxClient = getDbxClient(user);
 
             try {
@@ -135,7 +135,7 @@ public class DropboxServiceImpl implements DropboxService {
     @Override
     public void addProjectMemberToSharedFolder(User user, User newMember,
             Project project) {
-        if (project.getDropboxProjectFolderId() != null) {
+        if (project.isDropboxConnected()) {
             if (user.getId() == newMember.getId()) {
                 throw new UnsupportedOperationException("User " + user.getId() 
                         + " cannot add themselfs to project " + project.getId() + ".");
@@ -151,7 +151,7 @@ public class DropboxServiceImpl implements DropboxService {
     @Override
     public void removeMemberFromSharedFolder(User user, User memberToRemove,
             Project project) {
-        if (project.getDropboxProjectFolderId() != null) {
+        if (project.isDropboxConnected()) {
             final DbxClientV2 dbxClient = getDbxClient(user);
 
             try {
@@ -187,7 +187,7 @@ public class DropboxServiceImpl implements DropboxService {
     @Override
     public void transferOwnership(User user, User newOwner,
             Project project) {
-        if (project.getDropboxProjectFolderId() != null) {
+        if (project.isDropboxConnected()) {
             if (user.getId() == newOwner.getId()) {
                 throw new UnsupportedOperationException("User " + user.getId() 
                         + " cannot transfer project " + project.getId() 
@@ -218,7 +218,7 @@ public class DropboxServiceImpl implements DropboxService {
     @Override
     public void connectProjectToDropbox(User user,
             Project project) {
-        if (project.getDropboxProjectFolderId() != null) {
+        if (project.isDropboxConnected()) {
             throw new UnsupportedOperationException("No need to connect project " 
                     + project.getId() + " to dropbox because it is already connected.");
         }
@@ -251,24 +251,29 @@ public class DropboxServiceImpl implements DropboxService {
     @Override
     public FileMetadata uploadFileInTaskFolder(User user, Task task,
             MultipartFile file) {
-        final DbxClientV2 dbxClient = getDbxClient(user);
+        if (task.getProject().isDropboxConnected()) {
+            final DbxClientV2 dbxClient = getDbxClient(user);
 
-        try {
-            Metadata taskFolderMeta = dbxClient.files()
-                    .getMetadata(task.getDropboxTaskFolderId());
-            return dbxClient.files().uploadBuilder(taskFolderMeta.getPathLower()
-                    + "/" + removeDangerousChars(file.getOriginalFilename()))
-                    .withAutorename(true)
-                    .uploadAndFinish(file.getInputStream());
-        } catch (UploadErrorException e) {
-            throw new SpecificDropboxException("Unable to upload a file "
-                    + file.getOriginalFilename() + " to dropbox.", e);
-        } catch (DbxException e) {
-            throw new GeneralDropboxException("General dropbox exception was thrown.", e);
-        } catch (IOException e) {
-            throw new ThirdPartyApiException("Dropbox client was unable to read the byte array "
-                    + "or it is unaccessable.", e);
+            try {
+                Metadata taskFolderMeta = dbxClient.files()
+                        .getMetadata(task.getDropboxTaskFolderId());
+                return dbxClient.files().uploadBuilder(taskFolderMeta.getPathLower()
+                        + "/" + removeDangerousChars(file.getOriginalFilename()))
+                        .withAutorename(true)
+                        .uploadAndFinish(file.getInputStream());
+            } catch (UploadErrorException e) {
+                throw new SpecificDropboxException("Unable to upload a file "
+                        + file.getOriginalFilename() + " to dropbox.", e);
+            } catch (DbxException e) {
+                throw new GeneralDropboxException("General dropbox exception was thrown.", e);
+            } catch (IOException e) {
+                throw new ThirdPartyApiException("Dropbox client was unable to read the byte array "
+                        + "or it is unaccessable.", e);
+            }
         }
+        throw new UnsupportedOperationException("File upload for task " + task.getId()
+                + " is currently unavailable since project " + task.getProject().getId()
+                + " is not connected to dropbox. Project creator can connect the project.");
     }
 
     @Override
@@ -305,32 +310,40 @@ public class DropboxServiceImpl implements DropboxService {
 
     @Override
     public void logout(User user) {
-        List<ProjectRole> projectRoles = projectRoleRepository.findByUserId(user.getId());
-        if (projectRoles.isEmpty()) {
+        checkWhetherUserCanLogout(user);
+        try {
+            final OAuth2AuthorizedClient authorizedClient =
+                    oauthService.loadAuthorizedClient(user, clientRegistration);
+            final DbxClientV2 dbxClient = new DbxClientV2(dbxRequestConfig,
+                    authorizedClient.getToken());
             try {
-            
-                final OAuth2AuthorizedClient authorizedClient =
-                        oauthService.loadAuthorizedClient(user, clientRegistration);
-                final DbxClientV2 dbxClient = new DbxClientV2(dbxRequestConfig,
-                        authorizedClient.getToken());
-                try {
-                    dbxClient.auth().tokenRevoke();
-                    oauthService.deleteAuthorizedClient(authorizedClient);
-                    return;
-                } catch (DbxApiException e) {
-                    throw new SpecificDropboxException("Unable to logout.", e);
-                } catch (DbxException e) {
-                    throw new ThirdPartyApiException("General dropbox exception was thrown.", e);
-                }
-            } catch (OAuth2AuthorizedClientLoadingException e) {
-                throw new UnsupportedOperationException("Unable to logout because user is not "
-                        + "currently logged in.", e);
+                dbxClient.auth().tokenRevoke();
+                oauthService.deleteAuthorizedClient(authorizedClient);
+                return;
+            } catch (DbxApiException e) {
+                throw new SpecificDropboxException("Unable to logout.", e);
+            } catch (DbxException e) {
+                throw new GeneralDropboxException("General dropbox exception was thrown.", e);
+            }
+        } catch (OAuth2AuthorizedClientLoadingException e) {
+            throw new UnsupportedOperationException("Unable to logout because user is not "
+                    + "currently logged in.", e);
+        }
+    }
+
+    private void checkWhetherUserCanLogout(User user) {
+        List<ProjectRole> projectRoles = projectRoleRepository.findByUserId(user.getId());
+        if (!projectRoles.isEmpty()) {
+            List<Project> projects = projectRoles.stream().map(pr -> pr.getProject())
+                    .filter(p -> p.isDropboxConnected()).toList();
+            if (!projects.isEmpty()) {
+                List<Long> projectIds = projects.stream().map(p -> p.getId()).toList();
+                throw new UnsupportedOperationException("Unable to log out because user "
+                        + user.getId() + " is a part of one or more projects " + projectIds
+                        + " that are connected to dropbox. User has to quit all projects "
+                        + "to log out.");
             }
         }
-        List<Long> projectIds = projectRoles.stream().map(pr -> pr.getProject().getId()).toList();
-        throw new UnsupportedOperationException("Unable to log out because user "
-                + user.getId() + " is a part of one or several projects " + projectIds
-                + ". User has to quit all projects to log out.");
     }
 
     private DbxClientV2 getDbxClient(User user) {

@@ -70,23 +70,18 @@ public class LabelServiceImpl implements LabelService {
             @NonNull UpdateLabelRequestDto requestDto) {
         final Label label = entityUtil.getLabelById(labelId);
         
-        if (requestDto.getName() != null) {
-            label.setName(requestDto.getName());
-        }
-        if (requestDto.getColor() != null) {
-            label.setColor(requestDto.getColor());
-        }
-        if (requestDto.getTaskIds() != null) {
-            final List<Task> tasksFromRequest = taskRepository.findAllById(requestDto.getTaskIds());
-
-            for (Task task : label.getTasks()) {
-                if (!tasksFromRequest.contains(task)) {
-                    task.getLabels().remove(label);
-                }
+        label.setName(requestDto.getName());
+        label.setColor(requestDto.getColor());
+        
+        List<Task> tasksFromRequest = taskRepository.findAllById(requestDto.getTaskIds());
+        for (Task task : label.getTasks()) {
+            if (!tasksFromRequest.contains(task)) {
+                task.getLabels().remove(label);
             }
-            tasksFromRequest.forEach(t -> t.getLabels().add(label));
-            label.setTasks(new HashSet<>(tasksFromRequest));
         }
+        tasksFromRequest.forEach(t -> t.getLabels().add(label));
+        label.setTasks(new HashSet<>(tasksFromRequest));
+        
         return labelMapper.toDto(labelRepository.save(label));
     }
 

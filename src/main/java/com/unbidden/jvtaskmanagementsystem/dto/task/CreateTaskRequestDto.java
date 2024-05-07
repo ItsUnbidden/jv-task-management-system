@@ -22,4 +22,6 @@ public class CreateTaskRequestDto {
 
     @NotNull
     private Long projectId;
+
+    private Long assigneeId;
 }

@@ -107,9 +107,10 @@ public class TaskServiceImpl implements TaskService {
         Task task = taskMapper.toModel(requestDto);
         project.getTasks().add(task);
         task.setProject(project);
-        task.setAssignee(user);
         task.setStatus(TaskStatus.NOT_STARTED);
         task.setLabels(new HashSet<>());
+        task.setAssignee((requestDto.getAssigneeId() == null) ? user
+                : entityUtil.getUserById(requestDto.getAssigneeId()));
 
         dropboxService.createTaskFolder(user, task);
         updateTaskStatusAccordingToDate(task, false);
@@ -124,18 +125,10 @@ public class TaskServiceImpl implements TaskService {
             @NonNull UpdateTaskRequestDto requestDto) {
         final Task taskFromDb = entityUtil.getTaskById(taskId);
         
-        if (requestDto.getName() != null) {
-            taskFromDb.setName(requestDto.getName());
-        }
-        if (requestDto.getDescription() != null) {
-            taskFromDb.setDescription(requestDto.getDescription());
-        }
-        if (requestDto.getPriority() != null) {
-            taskFromDb.setPriority(requestDto.getPriority());
-        }
-        if (requestDto.getDueDate() != null) {
-            taskFromDb.setDueDate(requestDto.getDueDate());
-        }
+        taskFromDb.setName(requestDto.getName());
+        taskFromDb.setDescription(requestDto.getDescription());
+        taskFromDb.setDueDate(requestDto.getDueDate());
+        taskFromDb.setPriority(requestDto.getPriority());
         if (requestDto.getNewAssigneeId() != null) {
             taskFromDb.setAssignee(entityUtil.getUserById(requestDto.getNewAssigneeId()));
         }
