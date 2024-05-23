@@ -2,7 +2,8 @@ package com.unbidden.jvtaskmanagementsystem.service.impl;
 
 import com.unbidden.jvtaskmanagementsystem.dto.project.CreateProjectRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.project.ProjectResponseDto;
-import com.unbidden.jvtaskmanagementsystem.dto.project.UpdateProjectRoleRequestDto;
+import com.unbidden.jvtaskmanagementsystem.dto.project.UpdateProjectRequestDto;
+import com.unbidden.jvtaskmanagementsystem.dto.projectrole.UpdateProjectRoleRequestDto;
 import com.unbidden.jvtaskmanagementsystem.mapper.ProjectMapper;
 import com.unbidden.jvtaskmanagementsystem.model.Project;
 import com.unbidden.jvtaskmanagementsystem.model.Project.ProjectStatus;
@@ -13,6 +14,7 @@ import com.unbidden.jvtaskmanagementsystem.repository.ProjectRepository;
 import com.unbidden.jvtaskmanagementsystem.repository.ProjectRoleRepository;
 import com.unbidden.jvtaskmanagementsystem.security.project.ProjectSecurity;
 import com.unbidden.jvtaskmanagementsystem.service.DropboxService;
+import com.unbidden.jvtaskmanagementsystem.service.GoogleCalendarService;
 import com.unbidden.jvtaskmanagementsystem.service.ProjectService;
 import com.unbidden.jvtaskmanagementsystem.util.EntityUtil;
 import java.time.LocalDate;
@@ -38,6 +40,8 @@ public class ProjectServiceImpl implements ProjectService {
     private final EntityUtil entityUtil;
 
     private final DropboxService dropboxService;
+
+    private final GoogleCalendarService calendarService;
 
     @Value("${dropbox.root.path}")
     private String dropboxRootPath;
@@ -98,17 +102,21 @@ public class ProjectServiceImpl implements ProjectService {
         if (requestDto.getStartDate() == null) {
             project.setStartDate(LocalDate.now());
         }
-
+        
         updateProjectStatusAccordingToDate(project, false);
-        return projectMapper.toProjectDto(projectRepository.save(project));
+        projectRepository.save(project);
+        calendarService.createCalendarForProject(user, project);
+        return projectMapper.toProjectDto(project);
     }
 
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.ADMIN)
     public ProjectResponseDto updateProject(User user, @NonNull Long projectId,
-            @NonNull CreateProjectRequestDto requestDto) {
+            @NonNull UpdateProjectRequestDto requestDto) {
         final Project project = entityUtil.getProjectById(projectId);
         
+        calendarService.changeProjectEventsDates(user, project,
+                requestDto.getStartDate(), requestDto.getEndDate());
         project.setName(requestDto.getName());
         project.setDescription(requestDto.getDescription());
         project.setStartDate(requestDto.getStartDate());
@@ -124,6 +132,7 @@ public class ProjectServiceImpl implements ProjectService {
         final Project project = entityUtil.getProjectById(projectId);
         
         dropboxService.deleteProjectFolder(user, project);
+        calendarService.deleteProjectCalendar(user, project);
         projectRepository.delete(project);
     }
 
@@ -142,6 +151,7 @@ public class ProjectServiceImpl implements ProjectService {
         }
 
         dropboxService.addProjectMemberToSharedFolder(user, newProjectMember, project);
+        calendarService.addUserToCalendar(project, newProjectMember);
         ProjectRole projectRole = new ProjectRole();
         projectRole.setProject(project);
         projectRole.setRoleType(ProjectRoleType.CONTRIBUTOR);
@@ -167,6 +177,7 @@ public class ProjectServiceImpl implements ProjectService {
         }
 
         dropboxService.removeMemberFromSharedFolder(user, userToRemove, project);
+        calendarService.removeUserFromCalendar(project, userToRemove);
         project.getProjectRoles().removeIf(pr -> pr.getId() == projectRole.getId());
         projectRoleRepository.delete(projectRole);
         return projectMapper.toProjectDto(projectRepository.save(project));
@@ -192,6 +203,7 @@ public class ProjectServiceImpl implements ProjectService {
             final User userToTrasferTo = entityUtil.getUserById(userId);
 
             dropboxService.transferOwnership(user, userToTrasferTo, project);
+            calendarService.transferOwnership(user, project, userToTrasferTo);
             creatorRole.setRoleType(ProjectRoleType.ADMIN);
             projectRoleRepository.save(creatorRole);
         }
@@ -207,6 +219,23 @@ public class ProjectServiceImpl implements ProjectService {
         
         dropboxService.connectProjectToDropbox(user, project);
         return projectMapper.toProjectDto(projectRepository.save(project));
+    }
+
+    @Override
+    @ProjectSecurity(securityLevel = ProjectRoleType.CREATOR)
+    public ProjectResponseDto connectProjectToCalendar(User user, Long projectId) {
+        final Project project = entityUtil.getProjectById(projectId);
+        
+        calendarService.connectProjectToCalendar(user, project);
+        return projectMapper.toProjectDto(entityUtil.getProjectById(projectId));
+    }
+
+    @Override
+    @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR)
+    public void joinCalendar(User user, Long projectId) {
+        final Project project = entityUtil.getProjectById(projectId);
+
+        calendarService.joinCalendar(user, project);
     }
 
     private void updateProjectStatusAccordingToDate(Project project, boolean doSave) {

@@ -15,6 +15,7 @@ import com.unbidden.jvtaskmanagementsystem.repository.ProjectRepository;
 import com.unbidden.jvtaskmanagementsystem.repository.TaskRepository;
 import com.unbidden.jvtaskmanagementsystem.security.project.ProjectSecurity;
 import com.unbidden.jvtaskmanagementsystem.service.DropboxService;
+import com.unbidden.jvtaskmanagementsystem.service.GoogleCalendarService;
 import com.unbidden.jvtaskmanagementsystem.service.TaskService;
 import com.unbidden.jvtaskmanagementsystem.util.EntityUtil;
 import java.time.LocalDate;
@@ -39,6 +40,8 @@ public class TaskServiceImpl implements TaskService {
     private final EntityUtil entityUtil;
 
     private final DropboxService dropboxService;
+
+    private final GoogleCalendarService calendarService;
 
     @Override
     public List<TaskResponseDto> getTasksForUser(User user, Pageable pageable) {
@@ -115,7 +118,9 @@ public class TaskServiceImpl implements TaskService {
         dropboxService.createTaskFolder(user, task);
         updateTaskStatusAccordingToDate(task, false);
         projectRepository.save(project);
-        return taskMapper.toDto(taskRepository.save(task));
+        taskRepository.save(task);
+        calendarService.createEventForTask(user, task);
+        return taskMapper.toDto(task);
     }
 
     @Override
@@ -125,6 +130,7 @@ public class TaskServiceImpl implements TaskService {
             @NonNull UpdateTaskRequestDto requestDto) {
         final Task taskFromDb = entityUtil.getTaskById(taskId);
         
+        calendarService.changeTaskEventDueDate(user, taskFromDb, requestDto.getDueDate());
         taskFromDb.setName(requestDto.getName());
         taskFromDb.setDescription(requestDto.getDescription());
         taskFromDb.setDueDate(requestDto.getDueDate());
@@ -142,6 +148,7 @@ public class TaskServiceImpl implements TaskService {
         final Task task = entityUtil.getTaskById(taskId);
 
         dropboxService.deleteTaskFolder(user, task);
+        calendarService.deleteTaskEvent(user, task);
         taskRepository.delete(task);
     }
 

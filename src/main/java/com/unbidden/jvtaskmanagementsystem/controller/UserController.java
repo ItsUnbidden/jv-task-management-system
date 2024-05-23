@@ -8,6 +8,9 @@ import com.unbidden.jvtaskmanagementsystem.model.User;
 import com.unbidden.jvtaskmanagementsystem.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
@@ -76,7 +79,8 @@ public class UserController {
     //TODO: This is a test endpoint. It needs to be removed
     @GetMapping("/test")
     public String testMethod(HttpServletRequest request) {
-        LOGGER.info("This is an INFO message.");
+        LOGGER.info(Date.from(LocalDate.now().atStartOfDay()
+                .atZone(ZoneId.systemDefault()).toInstant()));
         return "This is a test method.";
     }
-}
+} 

@@ -91,6 +91,14 @@ public class InMemoryClientRegistrationRepository implements ClientRegistrationR
         }
         clientRegistration.setAuthorizationUri(authorizationUri);
         LOGGER.info("Authorization URI for " + provider + " is set to " + authorizationUri);
+
+        String scope = environment.getProperty(basePath + "scope");
+        if (scope == null) {
+            throw new OAuth2PropertiesParsingException("Scope " 
+                    + "cannot be null.");
+        }
+        clientRegistration.setScope(scope);
+        LOGGER.info("Scope for " + provider + " is set to " + scope);
         
         clientRegistration.setUseRefreshTokens(Boolean.valueOf(environment.getProperty(
                 basePath + "use-refresh-tokens")));

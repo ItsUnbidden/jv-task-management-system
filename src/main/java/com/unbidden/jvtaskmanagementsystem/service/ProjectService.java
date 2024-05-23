@@ -2,7 +2,8 @@ package com.unbidden.jvtaskmanagementsystem.service;
 
 import com.unbidden.jvtaskmanagementsystem.dto.project.CreateProjectRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.project.ProjectResponseDto;
-import com.unbidden.jvtaskmanagementsystem.dto.project.UpdateProjectRoleRequestDto;
+import com.unbidden.jvtaskmanagementsystem.dto.project.UpdateProjectRequestDto;
+import com.unbidden.jvtaskmanagementsystem.dto.projectrole.UpdateProjectRoleRequestDto;
 import com.unbidden.jvtaskmanagementsystem.model.User;
 import java.util.List;
 import org.springframework.data.domain.Pageable;
@@ -21,7 +22,7 @@ public interface ProjectService {
             @NonNull CreateProjectRequestDto requestDto);
     
     public ProjectResponseDto updateProject(User user, @NonNull Long projectId,
-            @NonNull CreateProjectRequestDto requestDto);
+            @NonNull UpdateProjectRequestDto requestDto);
 
     public void deleteProject(User user, @NonNull Long projectId);
 
@@ -35,4 +36,8 @@ public interface ProjectService {
             @NonNull Long projectId, @NonNull Long userId);
 
     public ProjectResponseDto connectProjectToDropbox(User user, @NonNull Long projectId);
+
+    public ProjectResponseDto connectProjectToCalendar(User user, @NonNull Long projectId);
+
+    public void joinCalendar(User user, @NonNull Long projectId);
 }

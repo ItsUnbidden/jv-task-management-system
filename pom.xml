@@ -22,6 +22,9 @@
         <testcontainers.version>1.19.5</testcontainers.version>  
         <checkstyle.version>3.3.1</checkstyle.version>
         <jacoco.version>0.8.11</jacoco.version>
+        <dropbox.version>6.1.0</dropbox.version>
+        <google.api.client.version>2.5.0</google.api.client.version>
+        <google.calendar.version>v3-rev20240419-2.0.0</google.calendar.version>
 	</properties>
 	<dependencies>
         <dependency>
@@ -45,8 +48,18 @@
         <dependency>
             <groupId>com.dropbox.core</groupId>
             <artifactId>dropbox-core-sdk</artifactId>
-            <version>6.1.0</version>
+            <version>${dropbox.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.google.api-client</groupId>
+            <artifactId>google-api-client</artifactId>
+            <version>${google.api.client.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.apis</groupId>
+            <artifactId>google-api-services-calendar</artifactId>
+            <version>${google.calendar.version}</version>
+          </dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>

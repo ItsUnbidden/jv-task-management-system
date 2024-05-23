@@ -87,7 +87,7 @@ public class DropboxServiceImpl implements DropboxService {
             createSharedProjectFolder0(dbxClient, project);
         } catch (OAuth2AuthorizedClientLoadingException e) {
             LOGGER.warn("Since user " + user.getId() + " hasn't connected their dropbox account,"
-                    + " the project will not have shared folder. It can be connected later.", e);
+                    + " the project will not have shared folder. It can be connected later.");
         }
     }
 
@@ -99,8 +99,9 @@ public class DropboxServiceImpl implements DropboxService {
             try {
                 dbxClient.files().deleteV2(project.getDropboxProjectFolderId());
             } catch (DeleteErrorException e) {
-                throw new SpecificDropboxException("Uanble to delete project " + project.getId()
-                        + "'s folder on dropbox.", e);
+                LOGGER.error("Uanble to delete project " + project.getId()
+                        + "'s folder on dropbox. Project will be deleted regardless. "
+                        + "This might have happened because project folder does not exist.", e);
             } catch (DbxException e) {
                 throw new GeneralDropboxException("General dropbox exception was thrown.", e);
             }
@@ -124,8 +125,9 @@ public class DropboxServiceImpl implements DropboxService {
             try {
                 dbxClient.files().deleteV2(task.getDropboxTaskFolderId());
             } catch (CreateFolderErrorException e) {
-                throw new SpecificDropboxException("Unable to delete a folder for task "
-                        + task.getId(), e);
+                LOGGER.error("Unable to delete a folder for task "
+                        + task.getId() + ". Task will be deleted regardless. "
+                        + "This might have happened because task folder does not exist.", e);
             } catch (DbxException e) {
                 throw new GeneralDropboxException("General dropbox exception was thrown.", e);
             }
@@ -366,7 +368,7 @@ public class DropboxServiceImpl implements DropboxService {
         } catch (OAuth2AuthorizedClientLoadingException e) {
             throw new EntityNotFoundException("Unable to find valid authorized client for user "
                     + user.getId() + ". The user will have to login into dropbox for this "
-                    + "operation to become available.");
+                    + "operation to become available.", e);
         }
     }
 

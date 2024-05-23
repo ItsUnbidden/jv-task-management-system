@@ -2,7 +2,8 @@ package com.unbidden.jvtaskmanagementsystem.controller;
 
 import com.unbidden.jvtaskmanagementsystem.dto.project.CreateProjectRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.project.ProjectResponseDto;
-import com.unbidden.jvtaskmanagementsystem.dto.project.UpdateProjectRoleRequestDto;
+import com.unbidden.jvtaskmanagementsystem.dto.project.UpdateProjectRequestDto;
+import com.unbidden.jvtaskmanagementsystem.dto.projectrole.UpdateProjectRoleRequestDto;
 import com.unbidden.jvtaskmanagementsystem.model.User;
 import com.unbidden.jvtaskmanagementsystem.service.ProjectService;
 import jakarta.validation.Valid;
@@ -57,7 +58,7 @@ public class ProjectController {
     @PutMapping("/{id}")
     public ProjectResponseDto updateProject(Authentication authentication, 
             @NonNull @PathVariable Long id,
-            @NonNull @RequestBody @Valid CreateProjectRequestDto requestDto) {
+            @NonNull @RequestBody @Valid UpdateProjectRequestDto requestDto) {
         return projectService.updateProject((User)authentication.getPrincipal(), id, requestDto);
     }
 
@@ -106,5 +107,18 @@ public class ProjectController {
             @NonNull @PathVariable Long projectId) {
         return projectService.connectProjectToDropbox((User)authentication.getPrincipal(),
                 projectId);
+    }
+
+    @PatchMapping("/{projectId}/calendar/connect")
+    public ProjectResponseDto connectProjectToCalendar(Authentication authentication,
+            @NonNull @PathVariable Long projectId) {
+        return projectService.connectProjectToCalendar((User)authentication.getPrincipal(),
+                projectId);
+    }
+
+    @PatchMapping("/{projectId}/calendar/join")
+    public void joinCalendar(Authentication authentication,
+            @NonNull @PathVariable Long projectId) {
+        projectService.joinCalendar((User) authentication.getPrincipal(), projectId);
     }
 }

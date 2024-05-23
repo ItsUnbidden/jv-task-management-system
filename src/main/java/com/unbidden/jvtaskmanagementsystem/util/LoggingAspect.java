@@ -31,8 +31,10 @@ public class LoggingAspect {
         Logger logger = getLogger(signature.getDeclaringType());
         
         for (int i = 0; i < joinPoint.getArgs().length; i++) {
-            builder.append(signature.getParameterNames()[i]).append(" - ")
-                    .append(joinPoint.getArgs()[i].toString()).append("; ");
+            if (joinPoint.getArgs()[i] != null) {
+                builder.append(signature.getParameterNames()[i]).append(" - ")
+                        .append(joinPoint.getArgs()[i].toString()).append("; ");
+            }
         }
         builder.delete(builder.length() - 2, builder.length());
 

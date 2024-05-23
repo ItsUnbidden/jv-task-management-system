@@ -1,6 +1,7 @@
 package com.unbidden.jvtaskmanagementsystem.service.oauth2;
 
 import com.unbidden.jvtaskmanagementsystem.dto.oauth2.OAuth2SuccessResponse;
+import com.unbidden.jvtaskmanagementsystem.exception.EntityNotFoundException;
 import com.unbidden.jvtaskmanagementsystem.exception.oauth2.OAuth2AuthorizedClientLoadingException;
 import com.unbidden.jvtaskmanagementsystem.model.ClientRegistration;
 import com.unbidden.jvtaskmanagementsystem.model.OAuth2AuthorizedClient;
@@ -55,4 +56,15 @@ public interface OAuth2Service {
      * @param authorizedClient which needs to be deleted
      */
     void deleteAuthorizedClient(OAuth2AuthorizedClient authorizedClient);
+
+    /**
+     * Will fetch authorized client from the database or throw an {@link EntityNotFoundException}.
+     * This method should not be used to load authorized clients for third party api operations,
+     * use {@link #loadAuthorizedClient(User, ClientRegistration)} instead.
+     * @param user for which to get client
+     * @param clientRegistration contains required provider data
+     * @return instance of {@link OAuth2AuthorizedClient}
+     */
+    OAuth2AuthorizedClient getAuthorizedClientForUser(User user,
+            ClientRegistration clientRegistration);
 }

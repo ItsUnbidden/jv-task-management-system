@@ -8,6 +8,7 @@ import com.unbidden.jvtaskmanagementsystem.model.Label;
 import com.unbidden.jvtaskmanagementsystem.model.Message;
 import com.unbidden.jvtaskmanagementsystem.model.Project;
 import com.unbidden.jvtaskmanagementsystem.model.ProjectRole;
+import com.unbidden.jvtaskmanagementsystem.model.ProjectRole.ProjectRoleType;
 import com.unbidden.jvtaskmanagementsystem.model.Reply;
 import com.unbidden.jvtaskmanagementsystem.model.Role.RoleType;
 import com.unbidden.jvtaskmanagementsystem.model.Task;
@@ -164,5 +165,15 @@ public class EntityUtil {
         } while (superParent instanceof Reply);
 
         return (Comment)superParent;
+    }
+
+    @NonNull
+    public User getProjectOwner(Project project) {
+        ProjectRole ownerProjectRole = project.getProjectRoles()
+                .stream()
+                .filter(pr -> pr.getRoleType().equals(ProjectRoleType.CREATOR))
+                .toList()
+                .get(0);
+        return ownerProjectRole.getUser();
     }
 }

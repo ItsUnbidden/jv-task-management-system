@@ -29,6 +29,14 @@ public class OAuth2Controller {
         oauth2Service.authorize((User)authentication.getPrincipal(), response, 
                 clientRegistration);
     }
+
+    @GetMapping("/google")
+    public void initiateGoogleAuthorization(Authentication authentication, 
+            HttpServletResponse response) {
+        ClientRegistration clientRegistration = entityUtil.getClientRegistrationByName("google");
+        oauth2Service.authorize((User)authentication.getPrincipal(), response, 
+                clientRegistration);
+    }
     
     @GetMapping("/code")
     public OAuth2SuccessResponse callback(HttpServletResponse response,

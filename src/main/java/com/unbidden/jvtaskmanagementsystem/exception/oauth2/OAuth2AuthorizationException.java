@@ -1,6 +1,6 @@
 package com.unbidden.jvtaskmanagementsystem.exception.oauth2;
 
-public class OAuth2AuthorizationException extends OAuth2Exception {
+public class OAuth2AuthorizationException extends OAuth2UnexpectedException {
     public OAuth2AuthorizationException(String message) {
         super(message);
     }
