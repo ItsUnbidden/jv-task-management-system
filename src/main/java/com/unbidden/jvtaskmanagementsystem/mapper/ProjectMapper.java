@@ -26,6 +26,7 @@ public interface ProjectMapper {
                 .map(this::toProjectRoleDto)
                 .toList()));
         dto.setDropboxConnected(project.getDropboxProjectFolderId() != null);
+        dto.setCalendarConnected(project.getProjectCalendar() != null);
     }
 
     @AfterMapping

@@ -25,4 +25,6 @@ public class ProjectResponseDto {
     private boolean isPrivate;
 
     private boolean isDropboxConnected;
+
+    private boolean isCalendarConnected;
 }

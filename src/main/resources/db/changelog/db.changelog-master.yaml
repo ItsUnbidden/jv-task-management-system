@@ -25,3 +25,7 @@ databaseChangeLog:
       file: /db/changelog/changes/12-create-messages-table.yaml
   - include:
       file: /db/changelog/changes/13-create-authorized-clients-table.yaml
+  - include:
+      file: /db/changelog/changes/14-create-project-calendars-table.yaml
+  - include:
+      file: /db/changelog/changes/15-create-task-events-table.yaml

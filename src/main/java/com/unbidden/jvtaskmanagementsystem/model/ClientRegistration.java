@@ -18,5 +18,7 @@ public class ClientRegistration {
 
     private String tokenUri;
 
+    private String scope;
+
     private Boolean useRefreshTokens;
 }

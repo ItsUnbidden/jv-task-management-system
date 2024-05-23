@@ -7,6 +7,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
 import java.util.List;
@@ -35,7 +36,6 @@ public class Project {
     @Column(nullable = false)
     private LocalDate startDate;
 
-    @Column(nullable = false)
     private LocalDate endDate;
 
     @Column(nullable = false)
@@ -56,6 +56,11 @@ public class Project {
     private String dropboxProjectFolderId;
 
     private String dropboxProjectSharedFolderId;
+
+    @OneToOne(mappedBy = "project")
+    @EqualsAndHashCode.Exclude
+    @ToString.Exclude
+    private ProjectCalendar projectCalendar;
 
     @Column(nullable = false)
     private boolean isPrivate;

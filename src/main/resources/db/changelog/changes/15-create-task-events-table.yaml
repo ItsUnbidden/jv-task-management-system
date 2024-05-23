@@ -1,0 +1,41 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-task-events-table
+      author: Unbidden
+      changes:
+        - createTable:
+            tableName: task_events
+            columns: 
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+              - column:
+                  name: task_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_tasks_task_events
+                    references: tasks(id)
+              - column:
+                  name: project_calendar_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_project_calendars_task_events
+                    references: project_calendars(id)
+              - column:
+                  name: event_id
+                  type: varchar(255)
+                  constraints:
+                    nullable: false    
+              - column:
+                  name: is_deleted
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+    

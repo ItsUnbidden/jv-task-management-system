@@ -41,7 +41,7 @@ public class OAuth2Client {
 
     @NonNull
     public OAuth2TokenResponseDto exchange(@NonNull String code, 
-            @NonNull ClientRegistration clientRegistration) {
+            @NonNull ClientRegistration clientRegistration) throws OAuth2CodeExchangeException {
         LOGGER.info("Initiating token exchange.");
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(AUTHORIZATION_CODE_TOKEN_URI_BASE.formatted(
@@ -57,7 +57,7 @@ public class OAuth2Client {
 
     @NonNull
     public OAuth2TokenResponseDto refresh(OAuth2AuthorizedClient authorizedClient,
-            ClientRegistration clientRegistration) {
+            ClientRegistration clientRegistration) throws OAuth2CodeExchangeException {
         LOGGER.info("Initiating token refresh.");
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(REFRESH_TOKEN_URI_BASE.formatted(clientRegistration.getTokenUri(),
@@ -71,7 +71,8 @@ public class OAuth2Client {
         return executeExchange(request);
     }
 
-    private OAuth2TokenResponseDto executeExchange(HttpRequest request) {
+    private OAuth2TokenResponseDto executeExchange(HttpRequest request)
+            throws OAuth2CodeExchangeException {
         HttpResponse<String> response = null;
         try {
             LOGGER.info("Sending request.");

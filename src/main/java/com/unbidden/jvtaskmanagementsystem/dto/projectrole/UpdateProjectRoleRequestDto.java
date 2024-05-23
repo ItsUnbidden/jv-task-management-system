@@ -1,4 +1,4 @@
-package com.unbidden.jvtaskmanagementsystem.dto.project;
+package com.unbidden.jvtaskmanagementsystem.dto.projectrole;
 
 import com.unbidden.jvtaskmanagementsystem.model.ProjectRole.ProjectRoleType;
 import jakarta.validation.constraints.NotNull;

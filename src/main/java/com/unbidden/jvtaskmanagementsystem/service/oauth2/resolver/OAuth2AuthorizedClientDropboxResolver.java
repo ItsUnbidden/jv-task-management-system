@@ -40,26 +40,26 @@ public class OAuth2AuthorizedClientDropboxResolver extends OAuth2AuthorizedClien
             OAuth2TokenResponseDto tokenData,
             Optional<OAuth2AuthorizedClient> authorizedClientOpt) {
         LOGGER.info("Calling super method for user " + user.getId());
-        OAuth2AuthorizedClient setUpAuthorizedClient =
+        OAuth2AuthorizedClient authorizedClient =
                 super.resolveAuthorizedClient(user, tokenData, authorizedClientOpt);
         
         LOGGER.info("Setting external account id for user " + user.getId());
-        setUpAuthorizedClient.setExternalAccountId(
-                getAccountIdFromDropbox(setUpAuthorizedClient));
+        authorizedClient.setExternalAccountId(
+                getAccountIdFromDropbox(authorizedClient));
         Optional<OAuth2AuthorizedClient> authClientWithCurrentExtIdOpt =
-                authorizedClientRepository.findByExternalAccountId(setUpAuthorizedClient
+                authorizedClientRepository.findByExternalAccountId(authorizedClient
                 .getExternalAccountId());
         LOGGER.info("Testing whether the external id is taken.");
         if (authClientWithCurrentExtIdOpt.isPresent()
                 && authClientWithCurrentExtIdOpt.get().getUser().getId() != user.getId()) {
-            authorizedClientRepository.deleteById(setUpAuthorizedClient.getId());
+            authorizedClientRepository.deleteById(authorizedClient.getId());
             throw new OAuth2AuthorizationException("External account id "
-                    + setUpAuthorizedClient.getExternalAccountId()
+                    + authorizedClient.getExternalAccountId()
                     + " is already taken by another user. While that user is authorized, no"
                     + " other user is allowed to authorize with this dropbox account.");
         }
         LOGGER.info("Persisting updated authorized client to db for user " + user.getId());
-        return authorizedClientRepository.save(setUpAuthorizedClient);
+        return authorizedClientRepository.save(authorizedClient);
     }
 
     private String getAccountIdFromDropbox(OAuth2AuthorizedClient authorizedClient) {

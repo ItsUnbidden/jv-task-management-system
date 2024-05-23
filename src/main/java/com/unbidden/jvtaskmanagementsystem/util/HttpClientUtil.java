@@ -26,5 +26,8 @@ public class HttpClientUtil {
         public static final String APPLICATION_JSON = "application/json";
 
         public static final String APPLICATION_OCTET_STREAM = "application/octet-stream";
+
+        public static final String APPLICATION_FORM_URLENCODED =
+                "application/x-www-form-urlencoded";
     }
 }
