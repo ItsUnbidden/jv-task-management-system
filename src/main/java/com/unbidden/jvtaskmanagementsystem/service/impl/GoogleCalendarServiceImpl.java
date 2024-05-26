@@ -316,11 +316,34 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
                             getEventWithNewDate(newStart)).execute();
                     }
                     
-                    if (!project.getEndDate().equals(newEnd)) {
-                        LOGGER.info("End date changed.");
-                        service.events().patch(projectCalendarOpt.get().getCalendarId(),
-                            projectCalendarOpt.get().getEndEventId(),
-                            getEventWithNewDate(newEnd)).execute();
+                    if ((project.getEndDate() == null && newEnd == null)
+                            || (project.getEndDate() != null
+                            && project.getEndDate().equals(newEnd))) {
+                        LOGGER.info("End date is the same as before. Nothing happens.");
+                        return;
+                    }
+                    if (project.getEndDate() != null) {
+                        LOGGER.info("Project " + project.getId()
+                                + " had an end date previously.");
+                        if (newEnd == null) {
+                            LOGGER.info("New end date is null. End event will be deleted.");
+                            service.events().delete(projectCalendarOpt.get().getCalendarId(),
+                                    projectCalendarOpt.get().getEndEventId()).execute();
+                        } else {
+                            LOGGER.info("Updating end date for project...");
+                            service.events().patch(projectCalendarOpt.get().getCalendarId(),
+                                    projectCalendarOpt.get().getEndEventId(),
+                                    getEventWithNewDate(newEnd)).execute();
+                        }
+                    } else {
+                        LOGGER.info("Project did not have an end date previously. "
+                                + "Creating new event.");
+                        Event endEvent = getEvent("Project '" + project.getName() + "' ends",
+                                project.getDescription(), newEnd);
+                        endEvent = service.events().insert(projectCalendarOpt.get()
+                                .getCalendarId(), endEvent).execute();
+                        projectCalendarOpt.get().setEndEventId(endEvent.getId());
+                        projectCalendarRepository.save(projectCalendarOpt.get());
                     }
                 } catch (IOException e) {
                     throw new ThirdPartyApiException("Unable to patch events with new project "

@@ -247,7 +247,8 @@ public class ProjectServiceImpl implements ProjectService {
             project.setStatus(ProjectStatus.INITIATED);
         }
 
-        if (project.getStartDate().isBefore(currentDate) 
+        if ((project.getStartDate().isBefore(currentDate)
+                || project.getStartDate().isEqual(currentDate)) 
                 && !project.getStatus().equals(ProjectStatus.IN_PROGRESS)) {
             project.setStatus(ProjectStatus.IN_PROGRESS);
         }
