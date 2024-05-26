@@ -110,6 +110,7 @@ public class TaskServiceImpl implements TaskService {
         Task task = taskMapper.toModel(requestDto);
         project.getTasks().add(task);
         task.setProject(project);
+        checkDateIsLigit(task);
         task.setStatus(TaskStatus.NOT_STARTED);
         task.setLabels(new HashSet<>());
         task.setAssignee((requestDto.getAssigneeId() == null) ? user
@@ -130,10 +131,11 @@ public class TaskServiceImpl implements TaskService {
             @NonNull UpdateTaskRequestDto requestDto) {
         final Task taskFromDb = entityUtil.getTaskById(taskId);
         
-        calendarService.changeTaskEventDueDate(user, taskFromDb, requestDto.getDueDate());
         taskFromDb.setName(requestDto.getName());
         taskFromDb.setDescription(requestDto.getDescription());
         taskFromDb.setDueDate(requestDto.getDueDate());
+        checkDateIsLigit(taskFromDb);
+        calendarService.changeTaskEventDueDate(user, taskFromDb, requestDto.getDueDate());
         taskFromDb.setPriority(requestDto.getPriority());
         if (requestDto.getNewAssigneeId() != null) {
             taskFromDb.setAssignee(entityUtil.getUserById(requestDto.getNewAssigneeId()));
@@ -189,6 +191,30 @@ public class TaskServiceImpl implements TaskService {
 
         if (doSave && !initialStatus.equals(task.getStatus())) {
             taskRepository.save(task); 
+        }
+    }
+
+    private void checkDateIsLigit(Task task) {
+        if (task.getDueDate() != null) {
+            if (task.getProject().getEndDate() == null) {
+                if (!task.getDueDate().isAfter(task.getProject().getStartDate())) {
+                    throw new IllegalArgumentException("Task's due date is specified as "
+                            + task.getDueDate() + " in project where start date is currently "
+                            + task.getProject().getStartDate()
+                            + ". Task's due date must be after project's start date.");
+                }
+            } else {
+                if (!(task.getDueDate().isAfter(task.getProject().getStartDate())
+                        && (task.getDueDate().isBefore(task.getProject().getEndDate())
+                        || task.getDueDate().isEqual(task.getProject().getEndDate())))) {
+                    throw new IllegalArgumentException("Task's due date is specified as "
+                            + task.getDueDate() + " in project where start and end dates "
+                            + "currently are " + task.getProject().getStartDate() + " and "
+                            + task.getProject().getEndDate() + " respectively. Task's due date "
+                            + "must belong to the interval between project's "
+                            + "start and end dates.");
+                }
+            }
         }
     }
 }

@@ -49,7 +49,8 @@ public class CustomGlobalExceptionHandler extends ResponseEntityExceptionHandler
     @ExceptionHandler({EntityNotFoundException.class, 
             RegistrationException.class, 
             PropertyReferenceException.class,
-            UnsupportedOperationException.class})
+            UnsupportedOperationException.class,
+            IllegalArgumentException.class})
     protected ResponseEntity<Object> handleInvalidUserInput(
             @NonNull Exception ex,
             @NonNull WebRequest request
