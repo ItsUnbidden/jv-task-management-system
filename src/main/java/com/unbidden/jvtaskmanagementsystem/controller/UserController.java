@@ -6,16 +6,10 @@ import com.unbidden.jvtaskmanagementsystem.dto.user.UserUpdateDetailsRequestDto;
 import com.unbidden.jvtaskmanagementsystem.model.Role;
 import com.unbidden.jvtaskmanagementsystem.model.User;
 import com.unbidden.jvtaskmanagementsystem.service.UserService;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.lang.NonNull;
@@ -35,8 +29,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/users")
 @RequiredArgsConstructor
 public class UserController {
-    private static final Logger LOGGER = LogManager.getLogger(UserController.class);
-
     private final UserService userService;
 
     @GetMapping("/me")
@@ -74,13 +66,5 @@ public class UserController {
     @PreAuthorize("hasRole('MANAGER')")
     public UserResponseDto changeLockedStatus(@NonNull @PathVariable Long id) {
         return userService.lockUserById(id);
-    }
-
-    //TODO: This is a test endpoint. It needs to be removed
-    @GetMapping("/test")
-    public String testMethod(HttpServletRequest request) {
-        LOGGER.info(Date.from(LocalDate.now().atStartOfDay()
-                .atZone(ZoneId.systemDefault()).toInstant()));
-        return "This is a test method.";
     }
 } 

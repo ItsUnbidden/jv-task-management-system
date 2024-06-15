@@ -10,10 +10,10 @@ import org.springframework.lang.NonNull;
 
 public interface ReplyRepository extends JpaRepository<Reply, Long> {
     @NonNull
-    @EntityGraph(attributePaths = {"parent", "replies"})
+    @EntityGraph(attributePaths = {"parent", "replies", "user"})
     Optional<Reply> findById(@NonNull Long id);
 
     @NonNull
-    @EntityGraph(attributePaths = {"parent", "replies"})
+    @EntityGraph(attributePaths = {"parent", "replies", "user"})
     List<Reply> findByParentId(@NonNull Long parentId, Pageable pageable);
 }
