@@ -1,4 +1,4 @@
-package com.unbidden.jvtaskmanagementsystem.security;
+package com.unbidden.jvtaskmanagementsystem.util;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
