@@ -1,5 +1,6 @@
 package com.unbidden.jvtaskmanagementsystem.security;
 
+import com.unbidden.jvtaskmanagementsystem.util.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

@@ -2,6 +2,7 @@ package com.unbidden.jvtaskmanagementsystem.security;
 
 import com.unbidden.jvtaskmanagementsystem.dto.auth.LoginRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.auth.LoginResponseDto;
+import com.unbidden.jvtaskmanagementsystem.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

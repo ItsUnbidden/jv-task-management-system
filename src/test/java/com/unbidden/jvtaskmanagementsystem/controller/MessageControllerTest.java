@@ -341,7 +341,7 @@ public class MessageControllerTest {
 
     @Test
     @WithUserDetails("alice")
-    void replyToMessage_ValidRequest_NewReply() throws Exception {
+    void replyToMessage_ValidRequestReplyToComment_NewReply() throws Exception {
         CreateMessageRequestDto requestDto = new CreateMessageRequestDto();
         requestDto.setText("New reply.");
 
@@ -363,6 +363,35 @@ public class MessageControllerTest {
         Assertions.assertTrue(potentialReply.isPresent());
         assertMessageDtosEqual(mapReplyToDto(potentialReply.get()), actual);
         Assertions.assertEquals(requestDto.getText(), actual.getText());
+    }
+
+    @Test
+    @WithUserDetails("alice")
+    void replyToMessage_ValidRequestReplyToReply_NewReply() throws Exception {
+        CreateMessageRequestDto requestDto = new CreateMessageRequestDto();
+        requestDto.setText("New reply to reply.");
+
+        final Comment newComment = createNewComment();
+        final Reply newReply = createNewReply(newComment);
+
+        MvcResult result = mockMvc.perform(post("/messages/" + newReply.getId() + "/replies")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        ReplyResponseDto actual = objectMapper.readValue(
+                result.getResponse().getContentAsString(), ReplyResponseDto.class);
+
+        Assertions.assertNotNull(actual);
+
+        Optional<Reply> potentialReply = replyRepository.findById(actual.getId());
+
+        Assertions.assertTrue(potentialReply.isPresent());
+        assertMessageDtosEqual(mapReplyToDto(potentialReply.get()), actual);
+        Assertions.assertEquals(requestDto.getText(), actual.getText());
+        Comment commentFromDb = commentRepository.findById(newComment.getId()).get();
+        Assertions.assertEquals(2, commentFromDb.getAmountOfReplies());
     }
 
     @Test
@@ -389,7 +418,7 @@ public class MessageControllerTest {
 
     @Test
     @WithUserDetails("alice")
-    void deleteMessage_ValidRequest_Ok() throws Exception {
+    void deleteMessage_ValidRequestWithComment_Ok() throws Exception {
         final Comment newComment = createNewComment();
 
         mockMvc.perform(delete("/messages/" + newComment.getId()))
@@ -398,6 +427,22 @@ public class MessageControllerTest {
 
         Optional<Comment> potentialComment = commentRepository.findById(newComment.getId());
         Assertions.assertFalse(potentialComment.isPresent());
+    }
+
+    @Test
+    @WithUserDetails("alice")
+    void deleteMessage_ValidRequestWithReply_Ok() throws Exception {
+        final Comment newComment = createNewComment();
+        final Reply newReply = createNewReply(newComment);
+
+        mockMvc.perform(delete("/messages/" + newReply.getId()))
+                .andExpect(status().isNoContent())
+                .andReturn();
+
+        Optional<Reply> potentialReply = replyRepository.findById(newComment.getId());
+        Assertions.assertFalse(potentialReply.isPresent());
+        Assertions.assertEquals(0,
+                commentRepository.findById(newComment.getId()).get().getAmountOfReplies());
     }
 
     @AfterAll
@@ -460,6 +505,19 @@ public class MessageControllerTest {
         newComment.setText("New comment.");
         newComment.setAmountOfReplies(0);
         return commentRepository.save(newComment);
+    }
+
+    private Reply createNewReply(Comment comment) {
+        Reply reply = new Reply();
+        reply.setParent(comment);
+        reply.setText("New reply");
+        reply.setTimestamp(LocalDateTime.now());
+        reply.setUser(users.get(0));
+        reply.setReplies(new ArrayList<>());
+        comment.setAmountOfReplies(comment.getAmountOfReplies() + 1);
+        commentRepository.save(comment);
+        replyRepository.save(reply);
+        return reply;
     }
 
     private void assertMessageDtosEqual(MessageResponseDto dto1, MessageResponseDto dto2) {
