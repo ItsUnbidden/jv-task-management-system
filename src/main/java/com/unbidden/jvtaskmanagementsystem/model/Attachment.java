@@ -13,7 +13,6 @@ import java.time.LocalDateTime;
 import lombok.Data;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
-import org.hibernate.annotations.Type;
 
 @Entity
 @Data
