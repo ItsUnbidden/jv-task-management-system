@@ -17,8 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/google")
 public class GoogleController {
     private final GoogleCalendarService calendarService;
-
-    // TODO: This is for debug only. It needs to be removed in the final version.
+    
     @GetMapping("/test")
     public GoogleSuccessfulTestResponseDto test(Authentication authentication) throws Exception {
         return calendarService.test((User)authentication.getPrincipal());

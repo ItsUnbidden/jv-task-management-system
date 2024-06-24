@@ -14,6 +14,7 @@ import com.unbidden.jvtaskmanagementsystem.model.Task;
 import com.unbidden.jvtaskmanagementsystem.model.User;
 import com.unbidden.jvtaskmanagementsystem.repository.CommentRepository;
 import com.unbidden.jvtaskmanagementsystem.repository.ReplyRepository;
+import com.unbidden.jvtaskmanagementsystem.repository.TaskRepository;
 import com.unbidden.jvtaskmanagementsystem.security.project.ProjectSecurity;
 import com.unbidden.jvtaskmanagementsystem.service.MessageService;
 import com.unbidden.jvtaskmanagementsystem.util.EntityUtil;
@@ -33,6 +34,8 @@ public class MessageServiceImpl implements MessageService {
     private final CommentRepository commentRepository;
 
     private final ReplyRepository replyRepository;
+
+    private final TaskRepository taskRepository;
 
     private final EntityUtil entityUtil;
 
@@ -97,7 +100,9 @@ public class MessageServiceImpl implements MessageService {
         comment.setText(requestDto.getText());
         comment.setTimestamp(LocalDateTime.now());
         comment.setAmountOfReplies(0);
+        task.setAmountOfMessages(task.getAmountOfMessages() + 1);
         
+        taskRepository.save(task);
         return messageMapper.toCommentWithTaskIdDto(commentRepository.save(comment));
     }
 
@@ -116,11 +121,16 @@ public class MessageServiceImpl implements MessageService {
 
         if (message instanceof Comment) {
             Comment comment = (Comment)message;
-            comment.setAmountOfReplies(comment.getAmountOfReplies() + 1);
 
+            final Task task = comment.getTask();
+            task.setAmountOfMessages(task.getAmountOfMessages() + 1);
+
+            comment.setAmountOfReplies(comment.getAmountOfReplies() + 1);
+            
             reply.setParent(comment);
 
             commentRepository.save(comment);
+            taskRepository.save(task);
             return messageMapper.toReplyDto(replyRepository.save(reply));
         }
 
@@ -131,9 +141,13 @@ public class MessageServiceImpl implements MessageService {
         parent.getReplies().add(reply);
         reply.setParent(parent);
 
+        final Task task = superParentComment.getTask();
+        task.setAmountOfMessages(task.getAmountOfMessages() + 1);
+
         replyRepository.save(reply);
         replyRepository.save(parent);
         commentRepository.save(superParentComment);
+        taskRepository.save(task);
         return messageMapper.toReplyDto(reply);
     }
 
@@ -147,7 +161,7 @@ public class MessageServiceImpl implements MessageService {
         checkMessageBelongsToUser(user, message);
 
         message.setText(requestDto.getText());
-        message.setTimestamp(LocalDateTime.now());
+        message.setLastUpdated(LocalDateTime.now());
 
         if (message instanceof Comment) {
             return messageMapper.toCommentWithTaskIdDto(commentRepository.save((Comment)message));
@@ -164,15 +178,28 @@ public class MessageServiceImpl implements MessageService {
         checkMessageBelongsToUser(user, message);
 
         if (message instanceof Comment) {
+            final Comment comment = (Comment)message;
             List<Reply> replies = replyRepository.findByParentId(messageId, null);
+
             replyRepository.deleteAll(replies);
-            commentRepository.delete((Comment)message);
+            final Task task = comment.getTask();
+            task.setAmountOfMessages(task.getAmountOfMessages()
+                    - comment.getAmountOfReplies() - 1);
+            
+            commentRepository.delete(comment);
+            taskRepository.save(task);
             return;
         }
         Reply reply = (Reply)message;
         Comment superParent = entityUtil.getSuperParent(reply);
+        int amountOfDeletedReplies = unwindReplies(reply).size();
+
         superParent.setAmountOfReplies(superParent.getAmountOfReplies()
-                - unwindReplies(reply).size());
+                - amountOfDeletedReplies);
+        final Task task = superParent.getTask();
+        task.setAmountOfMessages(task.getAmountOfMessages() - amountOfDeletedReplies);
+
+        taskRepository.save(task);
         commentRepository.save(superParent);
         replyRepository.delete(reply);
     }

@@ -14,4 +14,6 @@ public abstract class MessageResponseDto {
     private String text;
 
     private LocalDateTime timestamp;
+
+    private LocalDateTime lastUpdated;
 }

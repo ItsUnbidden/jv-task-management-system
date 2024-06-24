@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 import lombok.Data;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
+import org.hibernate.annotations.Type;
 
 @Entity
 @Data
@@ -37,6 +38,6 @@ public class Attachment {
     @Column(nullable = false)
     private LocalDateTime uploadDate;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TINYINT(1)")
     private boolean isDeleted;
 }

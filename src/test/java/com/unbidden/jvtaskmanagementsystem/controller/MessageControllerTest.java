@@ -165,6 +165,7 @@ public class MessageControllerTest {
         task1.setPriority(TaskPriority.MEDIUM);
         task1.setStatus(TaskStatus.NOT_STARTED);
         task1.setProject(projectA);
+        task1.setAmountOfMessages(3);
         tasks.add(taskRepository.save(task1));
 
         Task task2 = new Task();
@@ -176,6 +177,7 @@ public class MessageControllerTest {
         task2.setPriority(TaskPriority.LOW);
         task2.setStatus(TaskStatus.NOT_STARTED);
         task2.setProject(projectA);
+        task2.setAmountOfMessages(1);
         tasks.add(taskRepository.save(task2));
 
         Task task3 = new Task();
@@ -187,6 +189,7 @@ public class MessageControllerTest {
         task3.setPriority(TaskPriority.HIGH);
         task3.setStatus(TaskStatus.NOT_STARTED);
         task3.setProject(projectB);
+        task3.setAmountOfMessages(0);
         tasks.add(taskRepository.save(task3));
 
         Comment comment1 = new Comment();

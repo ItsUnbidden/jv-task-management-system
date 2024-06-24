@@ -35,6 +35,9 @@ databaseChangeLog:
                   name: due_date
                   type: date
               - column:
+                  name: amount_of_messages
+                  type: int
+              - column:
                   name: dropbox_task_folder_id
                   type: varchar(255)
               - column:

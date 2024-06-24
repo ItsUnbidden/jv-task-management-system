@@ -45,7 +45,7 @@ public class ProjectCalendar {
     @OneToMany(mappedBy = "projectCalendar", cascade = CascadeType.REMOVE)
     private Set<TaskEvent> taskEvents;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TINYINT(1)")
     private boolean isDeleted;
 
     public ProjectCalendar() {

@@ -28,5 +28,7 @@ public class TaskResponseDto {
 
     private String assigneeUsername;
 
+    private Integer amountOfMessages;
+
     private Set<Long> labelIds;
 }

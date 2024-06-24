@@ -34,7 +34,7 @@ public class TaskEvent {
     @JoinColumn(name = "project_calendar_id", nullable = false)
     private ProjectCalendar projectCalendar;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TINYINT(1)")
     private boolean isDeleted;
 
     public TaskEvent() {

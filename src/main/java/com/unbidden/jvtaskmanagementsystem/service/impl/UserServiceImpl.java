@@ -74,6 +74,7 @@ public class UserServiceImpl implements UserService {
         user.setUsername(requestDto.getUsername());
         user.setFirstName(requestDto.getFirstName());
         user.setLastName(requestDto.getLastName());
+        user.setPassword(passwordEncoder.encode(requestDto.getPassword()));
         return userMapper.toDto(userRepository.save(user));
     }
 

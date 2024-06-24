@@ -115,6 +115,7 @@ public class TaskServiceImpl implements TaskService {
         task.setLabels(new HashSet<>());
         task.setAssignee((requestDto.getAssigneeId() == null) ? user
                 : entityUtil.getUserById(requestDto.getAssigneeId()));
+        task.setAmountOfMessages(0);
 
         dropboxService.createTaskFolder(user, task);
         updateTaskStatusAccordingToDate(task, false);
