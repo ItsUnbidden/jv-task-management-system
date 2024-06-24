@@ -35,6 +35,8 @@ public abstract class Message {
     @Column(nullable = false)
     private LocalDateTime timestamp;
 
-    @Column(nullable = false)
+    private LocalDateTime lastUpdated;
+
+    @Column(nullable = false, columnDefinition = "TINYINT(1)")
     private boolean isDeleted;
 }

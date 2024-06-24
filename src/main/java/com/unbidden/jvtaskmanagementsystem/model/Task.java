@@ -42,7 +42,7 @@ public class Task {
 
     private String dropboxTaskFolderId;
 
-    //TODO: implement comment counter like the one with replies
+    private Integer amountOfMessages;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id", nullable = false)
@@ -58,7 +58,7 @@ public class Task {
             inverseJoinColumns = @JoinColumn(name = "label_id"))
     private Set<Label> labels;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TINYINT(1)")
     private boolean isDeleted;
 
     public static enum TaskStatus {

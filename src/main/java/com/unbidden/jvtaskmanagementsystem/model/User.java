@@ -47,10 +47,10 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private String lastName;
     
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TINYINT(1)")
     private boolean isLocked;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TINYINT(1)")
     private boolean isDeleted;
 
     @ManyToMany()

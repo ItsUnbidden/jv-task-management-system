@@ -143,6 +143,8 @@ public class UserControllerTest {
         requestDto.setUsername("updatedTestUser");
         requestDto.setFirstName("updatedFirstName");
         requestDto.setLastName("updatedLastName");
+        requestDto.setPassword("newPassword123");
+        requestDto.setRepeatPassword("newPassword123");
         testUserDto.setUsername(requestDto.getUsername());
         testUserDto.setFirstName(requestDto.getFirstName());
         testUserDto.setLastName(requestDto.getLastName());

@@ -34,7 +34,7 @@ public class ProjectRole {
     @JoinColumn(name = "project_id", nullable = false)
     private Project project;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TINYINT(1)")
     private boolean isDeleted;
 
     public static enum ProjectRoleType {

@@ -62,10 +62,10 @@ public class Project {
     @ToString.Exclude
     private ProjectCalendar projectCalendar;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TINYINT(1)")
     private boolean isPrivate;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TINYINT(1)")
     private boolean isDeleted;
 
     public boolean isDropboxConnected() {
