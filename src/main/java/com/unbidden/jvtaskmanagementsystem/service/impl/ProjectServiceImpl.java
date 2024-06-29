@@ -165,22 +165,13 @@ public class ProjectServiceImpl implements ProjectService {
     @ProjectSecurity(securityLevel = ProjectRoleType.ADMIN)
     public ProjectResponseDto removeUserFromProject(User user, @NonNull Long projectId,
             @NonNull Long userId) {
-        final ProjectRole projectRole = entityUtil
-                .getProjectRoleByProjectIdAndUserId(projectId, userId);
-        final Project project = entityUtil.getProjectById(projectId);
-        final User userToRemove = (user.getId() != userId) 
-                ? entityUtil.getUserById(userId) : user;
+        return removeUserFromProject0(user, projectId, userId);
+    }
 
-        if (projectRole.getRoleType().equals(ProjectRoleType.CREATOR)) {
-            throw new UnsupportedOperationException(
-                    "Project creator cannot be removed from the project.");
-        }
-
-        dropboxService.removeMemberFromSharedFolder(user, userToRemove, project);
-        calendarService.removeUserFromCalendar(project, userToRemove);
-        project.getProjectRoles().removeIf(pr -> pr.getId() == projectRole.getId());
-        projectRoleRepository.delete(projectRole);
-        return projectMapper.toProjectDto(projectRepository.save(project));
+    @Override
+    @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR)
+    public void quitProject(User user, Long projectId) {
+        removeUserFromProject0(user, projectId, user.getId());
     }
 
     @Override
@@ -263,5 +254,24 @@ public class ProjectServiceImpl implements ProjectService {
         if (doSave && !initialStatus.equals(project.getStatus())) {
             projectRepository.save(project);
         }
+    }
+
+    private ProjectResponseDto removeUserFromProject0(User user, Long projectId, Long userId) {
+        final ProjectRole projectRole = entityUtil
+                .getProjectRoleByProjectIdAndUserId(projectId, userId);
+        final Project project = entityUtil.getProjectById(projectId);
+        final User userToRemove = (user.getId() != userId) 
+                ? entityUtil.getUserById(userId) : user;
+
+        if (projectRole.getRoleType().equals(ProjectRoleType.CREATOR)) {
+            throw new UnsupportedOperationException(
+                    "Project creator cannot be removed from the project.");
+        }
+
+        dropboxService.removeMemberFromSharedFolder(user, userToRemove, project);
+        calendarService.removeUserFromCalendar(project, userToRemove);
+        project.getProjectRoles().removeIf(pr -> pr.getId() == projectRole.getId());
+        projectRoleRepository.delete(projectRole);
+        return projectMapper.toProjectDto(projectRepository.save(project));
     }
 }
