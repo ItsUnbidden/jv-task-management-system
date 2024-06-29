@@ -35,6 +35,8 @@ public interface ProjectService {
     public ProjectResponseDto removeUserFromProject(User user,
             @NonNull Long projectId, @NonNull Long userId);
 
+    public void quitProject(User user, @NonNull Long projectId);
+
     public ProjectResponseDto connectProjectToDropbox(User user, @NonNull Long projectId);
 
     public ProjectResponseDto connectProjectToCalendar(User user, @NonNull Long projectId);

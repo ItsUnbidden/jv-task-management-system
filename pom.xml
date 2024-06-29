@@ -26,6 +26,7 @@
         <dropbox.version>6.1.0</dropbox.version>
         <google.api.client.version>2.5.0</google.api.client.version>
         <google.calendar.version>v3-rev20240419-2.0.0</google.calendar.version>
+        <springdoc.openapi.starter.version>2.5.0</springdoc.openapi.starter.version>
 	</properties>
 	<dependencies>
         <dependency>
@@ -141,6 +142,11 @@
 	        <groupId>org.liquibase</groupId>
 	        <artifactId>liquibase-core</artifactId>
 	        <version>${liquibase.version}</version>
+	    </dependency>
+        <dependency>
+	        <groupId>org.springdoc</groupId>
+	        <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+	        <version>${springdoc.openapi.starter.version}</version>
 	    </dependency>
 	</dependencies>
 
