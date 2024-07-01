@@ -22,6 +22,6 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     @Query("from Project p left join fetch p.projectRoles pr left join"
             + " fetch pr.user u left join fetch p.projectCalendar pc "
             + "where (p.isPrivate = false or u.id = ?1) and p.name like %?2%")
-    List<Project> findPublicByNameContainsAllIgnoreCase(@NonNull Long userId,
+    List<Project> findPublicByNameContainsAllIgnoreCase(Long userId,
             String name, Pageable pageable);
 }

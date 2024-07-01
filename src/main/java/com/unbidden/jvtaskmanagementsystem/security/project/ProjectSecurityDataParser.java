@@ -1,6 +1,7 @@
 package com.unbidden.jvtaskmanagementsystem.security.project;
 
 import org.aspectj.lang.JoinPoint;
+import org.springframework.lang.NonNull;
 
 /**
  * This class contains a single {@link #parse} method that parses raw data from {@link JoinPoint}
@@ -15,5 +16,6 @@ public interface ProjectSecurityDataParser {
      * @param data from the method
      * @return {@link ProjectSecurityDto} object with parsed data
      */
-    ProjectSecurityDto parse(JoinPoint data);
+    @NonNull
+    ProjectSecurityDto parse(@NonNull JoinPoint data);
 }

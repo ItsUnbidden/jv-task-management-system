@@ -29,7 +29,6 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-@SuppressWarnings("null")
 public class ProjectServiceImpl implements ProjectService {
     private final ProjectRepository projectRepository;
 
@@ -46,17 +45,19 @@ public class ProjectServiceImpl implements ProjectService {
     @Value("${dropbox.root.path}")
     private String dropboxRootPath;
 
+    @NonNull
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true)
-    public ProjectResponseDto findProjectById(User user, @NonNull Long projectId) {
+    public ProjectResponseDto findProjectById(@NonNull User user, @NonNull Long projectId) {
         final Project project = entityUtil.getProjectById(projectId);
         
         updateProjectStatusAccordingToDate(project, true);
         return projectMapper.toProjectDto(project);
     }
 
+    @NonNull
     @Override
-    public List<ProjectResponseDto> findAllProjectsForUser(User user) {
+    public List<ProjectResponseDto> findAllProjectsForUser(@NonNull User user) {
         List<ProjectRole> projectRoles = projectRoleRepository.findByUserId(user.getId());
         List<Project> projects = projectRoles.stream().map(ProjectRole::getProject).toList();
 
@@ -66,8 +67,9 @@ public class ProjectServiceImpl implements ProjectService {
                 .toList();
     }
 
+    @NonNull
     @Override
-    public List<ProjectResponseDto> searchProjectsByName(User user, String name,
+    public List<ProjectResponseDto> searchProjectsByName(@NonNull User user, String name,
             @NonNull Pageable pageable) {
         final boolean isManager = entityUtil.isManager(user);
         List<Project> projects = (isManager) ? projectRepository
@@ -86,8 +88,9 @@ public class ProjectServiceImpl implements ProjectService {
                 .toList();
     }
 
+    @NonNull
     @Override
-    public ProjectResponseDto createProject(User user,
+    public ProjectResponseDto createProject(@NonNull User user,
             @NonNull CreateProjectRequestDto requestDto) {
         final Project project = projectMapper.toProject(requestDto);
         
@@ -109,9 +112,10 @@ public class ProjectServiceImpl implements ProjectService {
         return projectMapper.toProjectDto(project);
     }
 
+    @NonNull
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.ADMIN)
-    public ProjectResponseDto updateProject(User user, @NonNull Long projectId,
+    public ProjectResponseDto updateProject(@NonNull User user, @NonNull Long projectId,
             @NonNull UpdateProjectRequestDto requestDto) {
         final Project project = entityUtil.getProjectById(projectId);
         
@@ -128,7 +132,7 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.CREATOR)
-    public void deleteProject(User user, @NonNull Long projectId) {
+    public void deleteProject(@NonNull User user, @NonNull Long projectId) {
         final Project project = entityUtil.getProjectById(projectId);
         
         dropboxService.deleteProjectFolder(user, project);
@@ -136,10 +140,11 @@ public class ProjectServiceImpl implements ProjectService {
         projectRepository.delete(project);
     }
 
+    @NonNull
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.ADMIN)
-    public ProjectResponseDto addUserToProject(User user, @NonNull Long projectId,
-            @NonNull Long userId) {
+    public ProjectResponseDto addUserToProject(@NonNull User user,
+            @NonNull Long projectId, @NonNull Long userId) {
         final Project project = entityUtil.getProjectById(projectId);
         final User newProjectMember = entityUtil.getUserById(userId);
 
@@ -161,22 +166,24 @@ public class ProjectServiceImpl implements ProjectService {
         return projectMapper.toProjectDto(projectRepository.save(project));
     }
 
+    @NonNull
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.ADMIN)
-    public ProjectResponseDto removeUserFromProject(User user, @NonNull Long projectId,
-            @NonNull Long userId) {
+    public ProjectResponseDto removeUserFromProject(@NonNull User user,
+            @NonNull Long projectId, @NonNull Long userId) {
         return removeUserFromProject0(user, projectId, userId);
     }
 
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR)
-    public void quitProject(User user, Long projectId) {
+    public void quitProject(@NonNull User user, Long projectId) {
         removeUserFromProject0(user, projectId, user.getId());
     }
 
+    @NonNull
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.CREATOR)
-    public ProjectResponseDto changeProjectMemberRole(User user, @NonNull Long projectId,
+    public ProjectResponseDto changeProjectMemberRole(@NonNull User user, @NonNull Long projectId,
             @NonNull Long userId, @NonNull UpdateProjectRoleRequestDto requestDto) {
         final Project project = entityUtil.getProjectById(projectId);
 
@@ -203,15 +210,18 @@ public class ProjectServiceImpl implements ProjectService {
         return projectMapper.toProjectDto(entityUtil.getProjectById(projectId));
     }
 
+    @NonNull
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.CREATOR)
-    public ProjectResponseDto connectProjectToDropbox(User user, Long projectId) {
+    public ProjectResponseDto connectProjectToDropbox(@NonNull User user,
+            @NonNull Long projectId) {
         final Project project = entityUtil.getProjectById(projectId);
         
         dropboxService.connectProjectToDropbox(user, project);
         return projectMapper.toProjectDto(projectRepository.save(project));
     }
 
+    @NonNull
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.CREATOR)
     public ProjectResponseDto connectProjectToCalendar(User user, Long projectId) {

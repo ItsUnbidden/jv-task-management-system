@@ -33,7 +33,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/tasks")
-@SuppressWarnings("null")
 @Tag(name = "Task related methods")
 public class TaskController {
     private final TaskService taskService;

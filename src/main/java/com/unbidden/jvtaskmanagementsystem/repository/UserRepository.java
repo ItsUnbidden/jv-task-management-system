@@ -14,11 +14,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @NonNull
     @EntityGraph(attributePaths = "roles")
-    Optional<User> findByUsername(String username);
+    Optional<User> findByUsername(@NonNull String username);
 
     @NonNull
     @EntityGraph(attributePaths = "roles")
-    Optional<User> findByEmail(String email);
+    Optional<User> findByEmail(@NonNull String email);
 
     @NonNull
     @EntityGraph(attributePaths = "roles")

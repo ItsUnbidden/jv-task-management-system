@@ -3,6 +3,7 @@ package com.unbidden.jvtaskmanagementsystem.security;
 import com.unbidden.jvtaskmanagementsystem.repository.UserRepository;
 import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
+import org.springframework.lang.NonNull;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -18,15 +19,17 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     private final UserRepository repository;
 
+    @NonNull
     @Override
-    public UserDetails loadUserByUsername(String input) throws UsernameNotFoundException {
+    public UserDetails loadUserByUsername(@NonNull String input)
+            throws UsernameNotFoundException {
         return isEmail(input) ? repository.findByEmail(input).orElseThrow(() -> 
                 new UsernameNotFoundException("Can't find user by email."))
                 : repository.findByUsername(input).orElseThrow(() -> 
                 new UsernameNotFoundException("There is no user with such username."));
     }
 
-    private boolean isEmail(String username) {
+    private boolean isEmail(@NonNull String username) {
         return username != null && PATTERN.matcher(username).matches();
     }   
 }

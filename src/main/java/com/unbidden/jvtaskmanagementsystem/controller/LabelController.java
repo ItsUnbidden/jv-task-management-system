@@ -31,7 +31,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/labels")
 @RequiredArgsConstructor
-@SuppressWarnings("null")
 @Tag(name = "Label related methods")
 public class LabelController {
     private final LabelService labelService;

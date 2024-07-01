@@ -55,7 +55,7 @@ public interface OAuth2Service {
      * token expires or in any other case.
      * @param authorizedClient which needs to be deleted
      */
-    void deleteAuthorizedClient(OAuth2AuthorizedClient authorizedClient);
+    void deleteAuthorizedClient(@NonNull OAuth2AuthorizedClient authorizedClient);
 
     /**
      * Will fetch authorized client from the database or throw an {@link EntityNotFoundException}.
@@ -65,6 +65,6 @@ public interface OAuth2Service {
      * @param clientRegistration contains required provider data
      * @return instance of {@link OAuth2AuthorizedClient}
      */
-    OAuth2AuthorizedClient getAuthorizedClientForUser(User user,
-            ClientRegistration clientRegistration);
+    OAuth2AuthorizedClient getAuthorizedClientForUser(@NonNull User user,
+            @NonNull ClientRegistration clientRegistration);
 }

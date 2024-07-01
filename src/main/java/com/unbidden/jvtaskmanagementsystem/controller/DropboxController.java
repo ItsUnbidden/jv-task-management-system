@@ -1,7 +1,5 @@
 package com.unbidden.jvtaskmanagementsystem.controller;
 
-import com.dropbox.core.DbxApiException;
-import com.dropbox.core.DbxException;
 import com.dropbox.core.v2.check.EchoResult;
 import com.unbidden.jvtaskmanagementsystem.model.User;
 import com.unbidden.jvtaskmanagementsystem.service.DropboxService;
@@ -10,8 +8,6 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -24,7 +20,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/dropbox")
-@SuppressWarnings("null")
 @Tag(name = "Exclusively dropbox related methods")
 public class DropboxController {
     private final DropboxService dropboxService;
@@ -51,8 +46,7 @@ public class DropboxController {
                     description = "Unauthorized. Might be some other issue as well")
             }
     )
-    public EchoResult test(Authentication authentication)
-            throws DbxApiException, DbxException {
+    public EchoResult test(Authentication authentication) {
         return dropboxService.testDropboxUserConnection((User)authentication.getPrincipal());
     }
 
@@ -79,9 +73,7 @@ public class DropboxController {
                     description = "Unauthorized. Might be some other issue as well")
             }
     )
-    public void logout(Authentication authentication,
-            HttpServletRequest request, HttpServletResponse response)
-            throws DbxApiException, DbxException {
+    public void logout(Authentication authentication) {
         dropboxService.logout((User)authentication.getPrincipal());
     }
 }

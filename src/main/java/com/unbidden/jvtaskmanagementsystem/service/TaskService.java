@@ -11,26 +11,28 @@ import org.springframework.lang.NonNull;
 
 public interface TaskService {
 
-    List<TaskResponseDto> getTasksForUser(User user, Pageable pageable);
+    List<TaskResponseDto> getTasksForUser(@NonNull User user, Pageable pageable);
 
-    List<TaskResponseDto> getProjectTasks(User user, @NonNull Long projectId, Pageable pageable);
+    List<TaskResponseDto> getProjectTasks(@NonNull User user, @NonNull Long projectId,
+            Pageable pageable);
 
-    List<TaskResponseDto> getTasksForUserInProjectById(User user, @NonNull Long projectId,
-            @NonNull Long userId, Pageable pageable);
+    List<TaskResponseDto> getTasksForUserInProjectById(@NonNull User user,
+            @NonNull Long projectId, @NonNull Long userId, Pageable pageable);
 
-    TaskResponseDto getTaskById(User user, @NonNull Long taskId);
+    TaskResponseDto getTaskById(@NonNull User user, @NonNull Long taskId);
 
-    TaskResponseDto createTaskInProject(User user,
+    TaskResponseDto createTaskInProject(@NonNull User user,
             @NonNull Long projectId,
             @NonNull CreateTaskRequestDto requestDto);
 
-    TaskResponseDto updateTask(User user, @NonNull Long taskId,
+    TaskResponseDto updateTask(@NonNull User user, @NonNull Long taskId,
             @NonNull UpdateTaskRequestDto requestDto);
 
-    void deleteTask(User user, @NonNull Long taskId);
+    void deleteTask(@NonNull User user, @NonNull Long taskId);
 
-    TaskResponseDto changeStatus(User user, @NonNull Long taskId,
+    TaskResponseDto changeStatus(@NonNull User user, @NonNull Long taskId,
             @NonNull UpdateTaskStatusRequestDto requestDto);
 
-    List<TaskResponseDto> getTasksByLabelId(User user, @NonNull Long labelId, Pageable pageable);
+    List<TaskResponseDto> getTasksByLabelId(@NonNull User user, @NonNull Long labelId,
+            Pageable pageable);
 }

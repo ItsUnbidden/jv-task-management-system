@@ -1,16 +1,20 @@
 package com.unbidden.jvtaskmanagementsystem.util;
 
 import java.util.Base64;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 
 @Component
 public class HttpClientUtil {
-    public String getBasicAuthorizationHeader(String username, String password) {
+    @NonNull 
+    public String getBasicAuthorizationHeader(@NonNull String username,
+            @NonNull String password) {
         final String rawValue = username + ":" + password;
         return "Basic " + Base64.getEncoder().encodeToString(rawValue.getBytes());
     }
 
-    public String getBearerAuthorizationHeader(String token) {
+    @NonNull
+    public String getBearerAuthorizationHeader(@NonNull String token) {
         return "Bearer " + token;
     }
 

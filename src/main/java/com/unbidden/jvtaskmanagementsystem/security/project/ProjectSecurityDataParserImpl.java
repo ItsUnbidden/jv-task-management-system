@@ -8,6 +8,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.reflect.MethodSignature;
+import org.springframework.lang.NonNull;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -20,8 +21,9 @@ public class ProjectSecurityDataParserImpl implements ProjectSecurityDataParser 
 
     private final ProjectProviderManager projectProviderManager;
 
+    @NonNull
     @Override
-    public ProjectSecurityDto parse(JoinPoint data) {
+    public ProjectSecurityDto parse(@NonNull JoinPoint data) {
         MethodSignature signature = (MethodSignature)data.getSignature();
         ProjectSecurity annotation = signature.getMethod().getAnnotation(ProjectSecurity.class);
         String[] parameterNames = signature.getParameterNames();

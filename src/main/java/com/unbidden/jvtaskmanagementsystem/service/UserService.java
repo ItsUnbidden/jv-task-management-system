@@ -15,16 +15,16 @@ import org.springframework.lang.NonNull;
 public interface UserService {
     UserResponseDto register(@NonNull RegistrationRequest request) throws RegistrationException;
 
-    UserResponseDto findCurrentUser(User user);
+    UserResponseDto findCurrentUser(@NonNull User user);
 
-    UserResponseDto updateRoles(@NonNull Long id, Set<Role> roles);
+    UserResponseDto updateRoles(@NonNull Long id, @NonNull Set<Role> roles);
 
-    UserResponseDto updateUserDetails(User user,
+    UserResponseDto updateUserDetails(@NonNull User user,
             @NonNull UserUpdateDetailsRequestDto requestDto);
 
     List<UserResponseDto> findAll(@NonNull Pageable pageable);
 
-    void deleteCurrentUser(User user, @NonNull LoginRequestDto requestDto);
+    void deleteCurrentUser(@NonNull User user, @NonNull LoginRequestDto requestDto);
 
     UserResponseDto lockUserById(@NonNull Long id);
 }

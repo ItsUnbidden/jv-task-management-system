@@ -12,12 +12,14 @@ import org.springframework.stereotype.Component;
 public class ProjectFromTaskIdProvider implements ProjectProvider {
     private final EntityUtil entityUtil;
 
+    @NonNull
     @Override
     public Project getProject(@NonNull Long id) {
         final Task taskById = entityUtil.getTaskById(id);
         return taskById.getProject();
     }
 
+    @NonNull
     @Override
     public Class<?> getProviderClass() {
         return Task.class;

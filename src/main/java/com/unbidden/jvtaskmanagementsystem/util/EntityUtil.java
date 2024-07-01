@@ -31,7 +31,6 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-@SuppressWarnings("null")
 public class EntityUtil {
     private final ProjectRepository projectRepository;
 
@@ -168,7 +167,7 @@ public class EntityUtil {
     }
 
     @NonNull
-    public User getProjectOwner(Project project) {
+    public User getProjectOwner(@NonNull Project project) {
         ProjectRole ownerProjectRole = project.getProjectRoles()
                 .stream()
                 .filter(pr -> pr.getRoleType().equals(ProjectRoleType.CREATOR))

@@ -29,7 +29,6 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-@SuppressWarnings("null")
 public class MessageServiceImpl implements MessageService {
     private final CommentRepository commentRepository;
 
@@ -41,56 +40,63 @@ public class MessageServiceImpl implements MessageService {
 
     private final MessageMapper messageMapper;
 
+    @NonNull
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true,
             entityIdClass = Task.class)
-    public List<CommentResponseDto> getCommentsForTask(User user, @NonNull Long taskId,
+    public List<CommentResponseDto> getCommentsForTask(@NonNull User user, @NonNull Long taskId,
             Pageable pageable) {
         return commentRepository.findByTaskId(taskId, pageable).stream()
                 .map(messageMapper::toCommentDto)
                 .toList();
     }
 
+    @NonNull
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true)
-    public List<CommentWithTaskIdResponseDto> getCommentsForProject(User user,
+    public List<CommentWithTaskIdResponseDto> getCommentsForProject(@NonNull User user,
             @NonNull Long projectId, Pageable pageable) {
         return commentRepository.findByProjectId(projectId, pageable).stream()
                 .map(messageMapper::toCommentWithTaskIdDto)
                 .toList();
     }
 
+    @NonNull
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true,
             entityIdClass = Message.class, entityIdParamName = "commentId")
-    public CommentWithTaskIdResponseDto getCommentById(User user, @NonNull Long commentId) {
+    public CommentWithTaskIdResponseDto getCommentById(@NonNull User user,
+            @NonNull Long commentId) {
         final Comment comment = (Comment)entityUtil.getMessageById(commentId, Comment.class);
         return messageMapper.toCommentWithTaskIdDto(comment);
     }
 
+    @NonNull
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true,
             entityIdClass = Message.class, entityIdParamName = "commentId")
-    public List<ReplyResponseDto> getRepliesForComment(User user, @NonNull Long commentId,
-            Pageable pageable) {
+    public List<ReplyResponseDto> getRepliesForComment(@NonNull User user,
+            @NonNull Long commentId, Pageable pageable) {
         return replyRepository.findByParentId(commentId, pageable).stream()
                 .map(messageMapper::toReplyDto)
                 .toList();
     }
 
+    @NonNull
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true,
             entityIdClass = Message.class, entityIdParamName = "replyId")
-    public ReplyResponseDto getReplyById(User user, @NonNull Long replyId) {
+    public ReplyResponseDto getReplyById(@NonNull User user, @NonNull Long replyId) {
         final Reply reply = (Reply)entityUtil.getMessageById(replyId, Reply.class);
 
         return messageMapper.toReplyDto(reply);
     }
 
+    @NonNull
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true,
             entityIdClass = Task.class)
-    public CommentResponseDto leaveComment(User user, @NonNull Long taskId,
+    public CommentResponseDto leaveComment(@NonNull User user, @NonNull Long taskId,
             @NonNull CreateMessageRequestDto requestDto) {
         final Task task = entityUtil.getTaskById(taskId);
 
@@ -106,10 +112,11 @@ public class MessageServiceImpl implements MessageService {
         return messageMapper.toCommentWithTaskIdDto(commentRepository.save(comment));
     }
 
+    @NonNull
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true,
             entityIdClass = Message.class)
-    public ReplyResponseDto replyToMessage(User user, @NonNull Long messageId,
+    public ReplyResponseDto replyToMessage(@NonNull User user, @NonNull Long messageId,
             @NonNull CreateMessageRequestDto requestDto) {
         final Message message = entityUtil.getMessageById(messageId);
 
@@ -151,10 +158,11 @@ public class MessageServiceImpl implements MessageService {
         return messageMapper.toReplyDto(reply);
     }
 
+    @NonNull
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true,
             entityIdClass = Message.class)
-    public MessageResponseDto updateMessage(User user, @NonNull Long messageId,
+    public MessageResponseDto updateMessage(@NonNull User user, @NonNull Long messageId,
             @NonNull CreateMessageRequestDto requestDto) {
         final Message message = entityUtil.getMessageById(messageId);
 
@@ -172,7 +180,7 @@ public class MessageServiceImpl implements MessageService {
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true,
             entityIdClass = Message.class)
-    public void deleteMessage(User user, @NonNull Long messageId) {
+    public void deleteMessage(@NonNull User user, @NonNull Long messageId) {
         final Message message = entityUtil.getMessageById(messageId);
 
         checkMessageBelongsToUser(user, message);

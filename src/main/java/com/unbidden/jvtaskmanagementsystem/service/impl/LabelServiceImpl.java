@@ -23,7 +23,6 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-@SuppressWarnings("null")
 public class LabelServiceImpl implements LabelService {
     private final EntityUtil entityUtil;
 
@@ -33,25 +32,28 @@ public class LabelServiceImpl implements LabelService {
 
     private final TaskRepository taskRepository;
 
+    @NonNull
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true)
-    public List<LabelResponseDto> getLablesForProject(User user, @NonNull Long projectId,
+    public List<LabelResponseDto> getLablesForProject(@NonNull User user, @NonNull Long projectId,
             Pageable pageable) {
         return labelRepository.findByProjectId(projectId).stream()
                 .map(labelMapper::toDto)
                 .toList();
     }
 
+    @NonNull
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true,
             entityIdClass = Label.class)
-    public LabelResponseDto getLabelById(User user, @NonNull Long labelId) {
+    public LabelResponseDto getLabelById(@NonNull User user, @NonNull Long labelId) {
         return labelMapper.toDto(entityUtil.getLabelById(labelId));
     }
 
+    @NonNull
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.ADMIN)
-    public LabelResponseDto createLabel(User user, @NonNull Long projectId,
+    public LabelResponseDto createLabel(@NonNull User user, @NonNull Long projectId,
             @NonNull CreateLabelRequestDto requestDto) {
         final Label label = labelMapper.toModel(requestDto);
         final Project project = entityUtil.getProjectById(projectId);
@@ -63,10 +65,11 @@ public class LabelServiceImpl implements LabelService {
         return labelMapper.toDto(labelRepository.save(label));
     }
 
+    @NonNull
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.ADMIN,
             entityIdClass = Label.class)
-    public LabelResponseDto updateLabel(User user, @NonNull Long labelId,
+    public LabelResponseDto updateLabel(@NonNull User user, @NonNull Long labelId,
             @NonNull UpdateLabelRequestDto requestDto) {
         final Label label = entityUtil.getLabelById(labelId);
         
@@ -88,7 +91,7 @@ public class LabelServiceImpl implements LabelService {
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.ADMIN,
             entityIdClass = Label.class)
-    public void deleteLabel(User user, @NonNull Long labelId) {
+    public void deleteLabel(@NonNull User user, @NonNull Long labelId) {
         labelRepository.deleteById(labelId);
     }
 }

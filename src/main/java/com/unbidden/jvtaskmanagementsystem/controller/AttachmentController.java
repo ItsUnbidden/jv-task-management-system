@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
@@ -25,7 +26,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/attachments")
-@SuppressWarnings("null")
 @RequiredArgsConstructor
 @Tag(name = "Attachment related methods",
         description = "All methods in this controller require dropbox connection")
@@ -57,7 +57,7 @@ public class AttachmentController {
             @Parameter(
                 description = "Task id"
             )
-            @PathVariable Long taskId,
+            @NonNull @PathVariable Long taskId,
             @Parameter(
                 description = "Pagination and sorting"
             )
@@ -92,11 +92,11 @@ public class AttachmentController {
             @Parameter(
                 description = "Task id"
             )
-            @PathVariable Long taskId,
+            @NonNull @PathVariable Long taskId,
             @Parameter(
                 description = "File that will be uploaded"
             )
-            @RequestParam("file") MultipartFile file) throws IOException {
+            @NonNull @RequestParam("file") MultipartFile file) throws IOException {
         return attachmentService.upload((User)authentication.getPrincipal(), taskId, file);
     }
     
@@ -124,7 +124,7 @@ public class AttachmentController {
             @Parameter(
                 description = "Attachment id"
             )
-            @PathVariable Long attachmentId) {
+            @NonNull @PathVariable Long attachmentId) {
         attachmentService.download((User)authentication.getPrincipal(), response, attachmentId);
     }
 }

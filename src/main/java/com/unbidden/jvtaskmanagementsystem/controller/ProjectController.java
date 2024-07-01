@@ -115,11 +115,11 @@ public class ProjectController {
             @Parameter(
                 description = "Search query"
             )
-            @RequestParam String name,
+            @NonNull @RequestParam String name,
             @Parameter(
                 description = "Pagination and sorting"
             )
-            @NonNull Pageable pageable) {
+            Pageable pageable) {
         return projectService.searchProjectsByName((User)authentication.getPrincipal(),
                 name, pageable);
     }
