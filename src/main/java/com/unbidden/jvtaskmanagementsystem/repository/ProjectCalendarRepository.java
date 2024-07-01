@@ -5,10 +5,13 @@ import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.lang.NonNull;
 
 public interface ProjectCalendarRepository extends JpaRepository<ProjectCalendar, Long> {
-    Optional<ProjectCalendar> findByProjectId(Long projectId);
+    @NonNull
+    Optional<ProjectCalendar> findByProjectId(@NonNull Long projectId);
 
+    @NonNull
     @EntityGraph(attributePaths = "project")
-    List<ProjectCalendar> findByCreatorId(Long creatorId);
+    List<ProjectCalendar> findByCreatorId(@NonNull Long creatorId);
 }

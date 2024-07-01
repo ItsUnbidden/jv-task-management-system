@@ -5,32 +5,34 @@ import com.unbidden.jvtaskmanagementsystem.model.Project;
 import com.unbidden.jvtaskmanagementsystem.model.Task;
 import com.unbidden.jvtaskmanagementsystem.model.User;
 import java.time.LocalDate;
+import org.springframework.lang.NonNull;
 
 public interface GoogleCalendarService {
-    void createCalendarForProject(User user, Project project);
+    void createCalendarForProject(@NonNull User user, @NonNull Project project);
 
-    void deleteProjectCalendar(User user, Project project);
+    void deleteProjectCalendar(@NonNull User user, @NonNull Project project);
 
-    void createEventForTask(User user, Task task);
+    void createEventForTask(@NonNull User user, @NonNull Task task);
 
-    void deleteTaskEvent(User user, Task task);
+    void deleteTaskEvent(@NonNull User user, @NonNull Task task);
 
-    void addUserToCalendar(Project project, User newUser);
+    void addUserToCalendar(@NonNull Project project, @NonNull User newUser);
 
-    void removeUserFromCalendar(Project project, User userToRemove);
+    void removeUserFromCalendar(@NonNull Project project, @NonNull User userToRemove);
 
-    void transferOwnership(User user, Project project, User newOwner);
+    void transferOwnership(@NonNull User user, @NonNull Project project, @NonNull User newOwner);
 
-    void connectProjectToCalendar(User user, Project project);
+    void connectProjectToCalendar(@NonNull User user, @NonNull Project project);
 
-    void joinCalendar(User user, Project project);
+    void joinCalendar(@NonNull User user, @NonNull Project project);
 
-    void changeProjectEventsDates(User user, Project project,
-            LocalDate newStart, LocalDate newEnd);
+    void changeProjectEventsDates(@NonNull User user, @NonNull Project project,
+            @NonNull LocalDate newStart, @NonNull LocalDate newEnd);
 
-    void changeTaskEventDueDate(User user, Task task, LocalDate newDueDate);
+    void changeTaskEventDueDate(@NonNull User user, @NonNull Task task,
+            @NonNull LocalDate newDueDate);
 
-    GoogleSuccessfulTestResponseDto test(User user);
+    GoogleSuccessfulTestResponseDto test(@NonNull User user);
 
-    void logout(User user);
+    void logout(@NonNull User user);
 }

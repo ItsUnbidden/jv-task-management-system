@@ -12,28 +12,28 @@ import org.springframework.lang.NonNull;
 
 public interface MessageService {
 
-    List<CommentResponseDto> getCommentsForTask(User user, @NonNull Long taskId,
+    List<CommentResponseDto> getCommentsForTask(@NonNull User user, @NonNull Long taskId,
             Pageable pageable);
 
-    List<CommentWithTaskIdResponseDto> getCommentsForProject(User user,
+    List<CommentWithTaskIdResponseDto> getCommentsForProject(@NonNull User user,
             @NonNull Long projectId, Pageable pageable);
 
-    CommentWithTaskIdResponseDto getCommentById(User user, @NonNull Long commentId);
+    CommentWithTaskIdResponseDto getCommentById(@NonNull User user, @NonNull Long commentId);
 
-    List<ReplyResponseDto> getRepliesForComment(User user, @NonNull Long commentId,
+    List<ReplyResponseDto> getRepliesForComment(@NonNull User user, @NonNull Long commentId,
             Pageable pageable);
 
-    ReplyResponseDto getReplyById(User user, @NonNull Long replyId);
+    ReplyResponseDto getReplyById(@NonNull User user, @NonNull Long replyId);
 
-    CommentResponseDto leaveComment(User user, @NonNull Long taskId,
+    CommentResponseDto leaveComment(@NonNull User user, @NonNull Long taskId,
             @NonNull CreateMessageRequestDto requestDto);
 
-    ReplyResponseDto replyToMessage(User user, @NonNull Long messageId,
+    ReplyResponseDto replyToMessage(@NonNull User user, @NonNull Long messageId,
             @NonNull CreateMessageRequestDto requestDto);
 
-    MessageResponseDto updateMessage(User user, @NonNull Long messageId,
+    MessageResponseDto updateMessage(@NonNull User user, @NonNull Long messageId,
             @NonNull CreateMessageRequestDto requestDto);
 
-    void deleteMessage(User user, @NonNull Long messageId);
+    void deleteMessage(@NonNull User user, @NonNull Long messageId);
 
 }

@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -17,7 +18,8 @@ public class ProjectProviderManager {
         }
     }
 
-    public ProjectProvider getProvider(Class<?> clazz) {
+    @NonNull
+    public ProjectProvider getProvider(@NonNull Class<?> clazz) {
         ProjectProvider projectProvider = PROVIDERS_MAP.get(clazz);
         if (projectProvider == null) {
             throw new IllegalArgumentException("There is no available ProjectProvider "

@@ -21,6 +21,7 @@ public class AuthenticationService {
 
     private final JwtUtil jwtUtil;
 
+    @NonNull
     public LoginResponseDto authenticate(@NonNull LoginRequestDto requestDto) {
         LOGGER.info("User " + requestDto.getUsername() + " is trying to authenticate.");
         final Authentication authentication = authManager.authenticate(

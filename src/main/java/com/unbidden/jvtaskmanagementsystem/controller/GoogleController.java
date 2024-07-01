@@ -48,7 +48,7 @@ public class GoogleController {
                     description = "Unauthorized. Might be some other issue as well")
             }
     )
-    public GoogleSuccessfulTestResponseDto test(Authentication authentication) throws Exception {
+    public GoogleSuccessfulTestResponseDto test(Authentication authentication) {
         return calendarService.test((User)authentication.getPrincipal());
     }
 

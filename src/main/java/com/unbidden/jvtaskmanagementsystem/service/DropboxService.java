@@ -6,30 +6,35 @@ import com.unbidden.jvtaskmanagementsystem.model.Project;
 import com.unbidden.jvtaskmanagementsystem.model.Task;
 import com.unbidden.jvtaskmanagementsystem.model.User;
 import java.io.OutputStream;
+import org.springframework.lang.NonNull;
 import org.springframework.web.multipart.MultipartFile;
 
 public interface DropboxService {
-    void createSharedProjectFolder(User user, Project project);
+    void createSharedProjectFolder(@NonNull User user, @NonNull Project project);
 
-    void deleteProjectFolder(User user, Project project);
+    void deleteProjectFolder(@NonNull User user, @NonNull Project project);
 
-    void createTaskFolder(User user, Task task);
+    void createTaskFolder(@NonNull User user, @NonNull Task task);
 
-    void deleteTaskFolder(User user, Task task);
+    void deleteTaskFolder(@NonNull User user, @NonNull Task task);
 
-    void addProjectMemberToSharedFolder(User user, User newMember, Project project);
+    void addProjectMemberToSharedFolder(@NonNull User user, @NonNull User newMember,
+            @NonNull Project project);
 
-    void removeMemberFromSharedFolder(User user, User memberToRemove, Project project);
+    void removeMemberFromSharedFolder(@NonNull User user, @NonNull User memberToRemove,
+            @NonNull Project project);
 
-    void transferOwnership(User user, User newOwner, Project project);
+    void transferOwnership(@NonNull User user, @NonNull User newOwner, @NonNull Project project);
 
-    void connectProjectToDropbox(User user, Project project);
+    void connectProjectToDropbox(@NonNull User user, @NonNull Project project);
 
-    FileMetadata uploadFileInTaskFolder(User user, Task task, MultipartFile file);
+    FileMetadata uploadFileInTaskFolder(@NonNull User user, @NonNull Task task,
+            @NonNull MultipartFile file);
 
-    FileMetadata downloadFile(User user, String dropboxId, OutputStream os);
+    FileMetadata downloadFile(@NonNull User user,@NonNull String dropboxId,
+            @NonNull OutputStream os);
 
-    EchoResult testDropboxUserConnection(User user);
+    EchoResult testDropboxUserConnection(@NonNull User user);
 
-    void logout(User user);
+    void logout(@NonNull User user);
 }

@@ -11,35 +11,37 @@ import org.springframework.lang.NonNull;
 import org.springframework.web.bind.annotation.RequestParam;
 
 public interface ProjectService {
-    public ProjectResponseDto findProjectById(User user, @NonNull Long projectId);
+    public ProjectResponseDto findProjectById(@NonNull User user, @NonNull Long projectId);
     
-    public List<ProjectResponseDto> findAllProjectsForUser(User user);
+    public List<ProjectResponseDto> findAllProjectsForUser(@NonNull User user);
 
-    public List<ProjectResponseDto> searchProjectsByName(User user, 
+    public List<ProjectResponseDto> searchProjectsByName(@NonNull User user, 
             @RequestParam String name, @NonNull Pageable pageable);
     
-    public ProjectResponseDto createProject(User user,
+    public ProjectResponseDto createProject(@NonNull User user,
             @NonNull CreateProjectRequestDto requestDto);
     
-    public ProjectResponseDto updateProject(User user, @NonNull Long projectId,
+    public ProjectResponseDto updateProject(@NonNull User user, @NonNull Long projectId,
             @NonNull UpdateProjectRequestDto requestDto);
 
-    public void deleteProject(User user, @NonNull Long projectId);
+    public void deleteProject(@NonNull User user, @NonNull Long projectId);
 
-    public ProjectResponseDto addUserToProject(User user, @NonNull Long projectId,
+    public ProjectResponseDto addUserToProject(@NonNull User user, @NonNull Long projectId,
             @NonNull Long userId);
 
-    public ProjectResponseDto changeProjectMemberRole(User user, @NonNull Long projectId,
+    public ProjectResponseDto changeProjectMemberRole(@NonNull User user, @NonNull Long projectId,
             @NonNull Long userId, @NonNull UpdateProjectRoleRequestDto requestDto);
 
-    public ProjectResponseDto removeUserFromProject(User user,
+    public ProjectResponseDto removeUserFromProject(@NonNull User user,
             @NonNull Long projectId, @NonNull Long userId);
 
-    public void quitProject(User user, @NonNull Long projectId);
+    public void quitProject(@NonNull User user, @NonNull Long projectId);
 
-    public ProjectResponseDto connectProjectToDropbox(User user, @NonNull Long projectId);
+    public ProjectResponseDto connectProjectToDropbox(@NonNull User user,
+            @NonNull Long projectId);
 
-    public ProjectResponseDto connectProjectToCalendar(User user, @NonNull Long projectId);
+    public ProjectResponseDto connectProjectToCalendar(@NonNull User user,
+            @NonNull Long projectId);
 
-    public void joinCalendar(User user, @NonNull Long projectId);
+    public void joinCalendar(@NonNull User user, @NonNull Long projectId);
 }

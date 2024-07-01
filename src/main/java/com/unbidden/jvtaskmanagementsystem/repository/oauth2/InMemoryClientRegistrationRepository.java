@@ -13,7 +13,6 @@ import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Repository;
 
 @Repository
-@SuppressWarnings("null")
 public class InMemoryClientRegistrationRepository implements ClientRegistrationRepository {
     private static final Logger LOGGER =
             LogManager.getLogger(InMemoryClientRegistrationRepository.class);

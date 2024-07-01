@@ -37,6 +37,7 @@ public class UserServiceImpl implements UserService {
 
     private Role ownerRole;
 
+    @NonNull
     @Override
     public UserResponseDto register(@NonNull RegistrationRequest request)
             throws RegistrationException {
@@ -55,21 +56,24 @@ public class UserServiceImpl implements UserService {
         return userMapper.toDto(user);
     }
 
+    @NonNull
     @Override
-    public UserResponseDto findCurrentUser(User user) {
+    public UserResponseDto findCurrentUser(@NonNull User user) {
         return userMapper.toDto(user);
     }
 
+    @NonNull
     @Override
-    public UserResponseDto updateRoles(@NonNull Long id, Set<Role> roles) {
+    public UserResponseDto updateRoles(@NonNull Long id, @NonNull Set<Role> roles) {
         User user = entityUtil.getUserById(id);
         checkUserIsNotOwner(user, "Owner's roles are not allowed to be changed.");
         user.setRoles(roles);
         return userMapper.toDto(userRepository.save(user));
     }
 
+    @NonNull
     @Override
-    public UserResponseDto updateUserDetails(User user, 
+    public UserResponseDto updateUserDetails(@NonNull User user, 
             @NonNull UserUpdateDetailsRequestDto requestDto) {
         user.setUsername(requestDto.getUsername());
         user.setFirstName(requestDto.getFirstName());
@@ -78,6 +82,7 @@ public class UserServiceImpl implements UserService {
         return userMapper.toDto(userRepository.save(user));
     }
 
+    @NonNull
     @Override
     public List<UserResponseDto> findAll(@NonNull Pageable pageable) {
         return userRepository.findAll(pageable).stream()
@@ -86,8 +91,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    @SuppressWarnings("null")
-    public void deleteCurrentUser(User user, @NonNull LoginRequestDto requestDto) {
+    public void deleteCurrentUser(@NonNull User user, @NonNull LoginRequestDto requestDto) {
         checkUserIsNotOwner(user, "Owner cannot be deleted.");
         if (user.getUsername().equals(requestDto.getUsername()) 
                 && passwordEncoder.matches(requestDto.getPassword(), user.getPassword())) {
@@ -98,6 +102,7 @@ public class UserServiceImpl implements UserService {
                 + "Please provide correct username and password.");
     }
 
+    @NonNull
     @Override
     public UserResponseDto lockUserById(@NonNull Long id) {
         User user = entityUtil.getUserById(id);

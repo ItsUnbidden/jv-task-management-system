@@ -29,7 +29,6 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-@SuppressWarnings("null")
 public class TaskServiceImpl implements TaskService {
     private final ProjectRepository projectRepository;
 
@@ -43,8 +42,9 @@ public class TaskServiceImpl implements TaskService {
 
     private final GoogleCalendarService calendarService;
 
+    @NonNull
     @Override
-    public List<TaskResponseDto> getTasksForUser(User user, Pageable pageable) {
+    public List<TaskResponseDto> getTasksForUser(@NonNull User user, Pageable pageable) {
         List<Task> tasks = taskRepository.findByAssigneeId(user.getId(), pageable);
 
         tasks.stream().forEach(t -> updateTaskStatusAccordingToDate(t, true));
@@ -53,9 +53,10 @@ public class TaskServiceImpl implements TaskService {
                 .toList();
     }
 
+    @NonNull
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true)
-    public List<TaskResponseDto> getProjectTasks(User user, @NonNull Long projectId,
+    public List<TaskResponseDto> getProjectTasks(@NonNull User user, @NonNull Long projectId,
             Pageable pageable) {
         List<Task> tasks = taskRepository.findByProjectId(projectId, pageable);
 
@@ -65,10 +66,11 @@ public class TaskServiceImpl implements TaskService {
                 .toList();
     }
 
+    @NonNull
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true)
-    public List<TaskResponseDto> getTasksForUserInProjectById(User user, @NonNull Long projectId,
-            @NonNull Long userId, Pageable pageable) {
+    public List<TaskResponseDto> getTasksForUserInProjectById(@NonNull User user,
+            @NonNull Long projectId, @NonNull Long userId, Pageable pageable) {
         List<Task> tasks = taskRepository
                 .findByAssigneeIdAndByProjectId(userId, projectId, pageable);
         
@@ -78,20 +80,22 @@ public class TaskServiceImpl implements TaskService {
                 .toList();
     }
 
+    @NonNull
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true,
             entityIdClass = Task.class)
-    public TaskResponseDto getTaskById(User user, @NonNull Long taskId) {
+    public TaskResponseDto getTaskById(@NonNull User user, @NonNull Long taskId) {
         Task task = entityUtil.getTaskById(taskId);
 
         updateTaskStatusAccordingToDate(task, true);
         return taskMapper.toDto(task);
     }
 
+    @NonNull
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true,
             entityIdClass = Label.class)
-    public List<TaskResponseDto> getTasksByLabelId(User user, @NonNull Long labelId,
+    public List<TaskResponseDto> getTasksByLabelId(@NonNull User user, @NonNull Long labelId,
             Pageable pageable) {
         List<Task> tasks = taskRepository.findByLabelId(labelId, pageable);
 
@@ -101,9 +105,10 @@ public class TaskServiceImpl implements TaskService {
                 .toList();
     }
 
+    @NonNull
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.ADMIN)
-    public TaskResponseDto createTaskInProject(User user, @NonNull Long projectId,
+    public TaskResponseDto createTaskInProject(@NonNull User user, @NonNull Long projectId,
             @NonNull CreateTaskRequestDto requestDto) {
         final Project project = entityUtil.getProjectById(projectId);
         
@@ -125,10 +130,11 @@ public class TaskServiceImpl implements TaskService {
         return taskMapper.toDto(task);
     }
 
+    @NonNull
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.ADMIN,
             entityIdClass = Task.class)
-    public TaskResponseDto updateTask(User user, @NonNull Long taskId,
+    public TaskResponseDto updateTask(@NonNull User user, @NonNull Long taskId,
             @NonNull UpdateTaskRequestDto requestDto) {
         final Task taskFromDb = entityUtil.getTaskById(taskId);
         
@@ -147,7 +153,7 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.ADMIN, entityIdClass = Task.class)
-    public void deleteTask(User user, @NonNull Long taskId) {
+    public void deleteTask(@NonNull User user, @NonNull Long taskId) {
         final Task task = entityUtil.getTaskById(taskId);
 
         dropboxService.deleteTaskFolder(user, task);
@@ -155,9 +161,10 @@ public class TaskServiceImpl implements TaskService {
         taskRepository.delete(task);
     }
 
+    @NonNull
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, entityIdClass = Task.class)
-    public TaskResponseDto changeStatus(User user, @NonNull Long taskId,
+    public TaskResponseDto changeStatus(@NonNull User user, @NonNull Long taskId,
             @NonNull UpdateTaskStatusRequestDto requestDto) {
         final Task task = entityUtil.getTaskById(taskId);
 

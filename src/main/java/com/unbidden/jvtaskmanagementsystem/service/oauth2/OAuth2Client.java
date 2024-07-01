@@ -23,7 +23,6 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-@SuppressWarnings("null")
 public class OAuth2Client {
     private static final Logger LOGGER = LogManager.getLogger(OAuth2Client.class);
 

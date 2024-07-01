@@ -14,7 +14,6 @@ import org.springframework.stereotype.Component;
 @Aspect
 @Component
 @RequiredArgsConstructor
-@SuppressWarnings("null")
 public class ProjectSecurityAspect {
     private static final Logger LOGGER = LogManager.getLogger(ProjectSecurityAspect.class);
 

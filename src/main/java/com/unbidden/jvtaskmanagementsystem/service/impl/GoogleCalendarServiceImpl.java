@@ -48,6 +48,7 @@ import java.util.Optional;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -89,7 +90,7 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
     }
     
     @Override
-    public void createCalendarForProject(User user, Project project) {
+    public void createCalendarForProject(@NonNull User user, @NonNull Project project) {
         Calendar service;
         try {
             service = getService(user);
@@ -103,7 +104,7 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
     }
 
     @Override
-    public void deleteProjectCalendar(User user, Project project) {
+    public void deleteProjectCalendar(@NonNull User user, @NonNull Project project) {
         try {
             Optional<ProjectCalendar> projectCalendarOpt =
                     projectCalendarRepository.findByProjectId(project.getId());
@@ -130,7 +131,7 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
     }
     
     @Override
-    public void createEventForTask(User user, Task task) {
+    public void createEventForTask(@NonNull User user, @NonNull Task task) {
         if (isCalendarConnected(task.getProject())) {
             try {
                 Calendar service = getService(user);
@@ -145,7 +146,7 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
     }
     
     @Override
-    public void deleteTaskEvent(User user, Task task) {
+    public void deleteTaskEvent(@NonNull User user, @NonNull Task task) {
         if (isCalendarConnected(task.getProject())) {
             try {
                 Calendar service = getService(user);
@@ -160,7 +161,7 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
     }
 
     @Override
-    public void addUserToCalendar(Project project, User newUser) {
+    public void addUserToCalendar(@NonNull Project project, @NonNull User newUser) {
         final User user = entityUtil.getProjectOwner(project);
 
         if (isCalendarConnected(project)) {
@@ -177,7 +178,7 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
     }
 
     @Override
-    public void removeUserFromCalendar(Project project, User userToRemove) {
+    public void removeUserFromCalendar(@NonNull Project project, @NonNull User userToRemove) {
         
         try {
             Optional<ProjectCalendar> projectCalendarOpt =
@@ -210,7 +211,8 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
     }
 
     @Override
-    public void transferOwnership(User user, Project project, User newOwner) {
+    public void transferOwnership(@NonNull User user, @NonNull Project project,
+            @NonNull User newOwner) {
         try {
             Optional<ProjectCalendar> projectCalendarOpt =
                     projectCalendarRepository.findByProjectId(project.getId());
@@ -255,7 +257,7 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
     }
 
     @Override
-    public void connectProjectToCalendar(User user, Project project) {
+    public void connectProjectToCalendar(@NonNull User user, @NonNull Project project) {
         Optional<ProjectCalendar> projectCalendarOpt =
                 projectCalendarRepository.findByProjectId(project.getId());
         if (!projectCalendarOpt.isPresent()) {
@@ -283,7 +285,7 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
     }
 
     @Override
-    public void joinCalendar(User user, Project project) {
+    public void joinCalendar(@NonNull User user, @NonNull Project project) {
         Optional<ProjectCalendar> projectCalendarOpt =
                 projectCalendarRepository.findByProjectId(project.getId());
         if (projectCalendarOpt.isPresent()) {
@@ -301,8 +303,8 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
     }
 
     @Override
-    public void changeProjectEventsDates(User user, Project project,
-            LocalDate newStart, LocalDate newEnd) {
+    public void changeProjectEventsDates(@NonNull User user, @NonNull Project project,
+            @NonNull LocalDate newStart, @NonNull LocalDate newEnd) {
         Optional<ProjectCalendar> projectCalendarOpt =
                 projectCalendarRepository.findByProjectId(project.getId());
         if (projectCalendarOpt.isPresent()) {
@@ -359,7 +361,8 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
     }
 
     @Override
-    public void changeTaskEventDueDate(User user, Task task, LocalDate newDueDate) {
+    public void changeTaskEventDueDate(@NonNull User user, @NonNull Task task,
+            @NonNull LocalDate newDueDate) {
         Optional<ProjectCalendar> projectCalendarOpt =
                 projectCalendarRepository.findByProjectId(task.getProject().getId());
         if (projectCalendarOpt.isPresent()) {
@@ -404,8 +407,9 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
         }
     }
 
+    @NonNull
     @Override
-    public GoogleSuccessfulTestResponseDto test(User user) {
+    public GoogleSuccessfulTestResponseDto test(@NonNull User user) {
         try {
             Calendar service = getService(user);
 
@@ -438,7 +442,7 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
     }
 
     @Override
-    public void logout(User user) {
+    public void logout(@NonNull User user) {
         final List<ProjectCalendar> projectCalendars =
                 projectCalendarRepository.findByCreatorId(user.getId());
         OAuth2AuthorizedClient authorizedClient;

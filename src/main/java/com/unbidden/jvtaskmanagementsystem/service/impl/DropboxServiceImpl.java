@@ -47,6 +47,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -78,7 +79,7 @@ public class DropboxServiceImpl implements DropboxService {
     }
 
     @Override
-    public void createSharedProjectFolder(User user, Project project) {
+    public void createSharedProjectFolder(@NonNull User user, @NonNull Project project) {
         try {
             OAuth2AuthorizedClient authorizedClient = oauthService.loadAuthorizedClient(user,
                     clientRegistration);
@@ -92,7 +93,7 @@ public class DropboxServiceImpl implements DropboxService {
     }
 
     @Override
-    public void deleteProjectFolder(User user, Project project) {
+    public void deleteProjectFolder(@NonNull User user, @NonNull Project project) {
         if (project.isDropboxConnected()) {
             final DbxClientV2 dbxClient = getDbxClient(user);
 
@@ -109,7 +110,7 @@ public class DropboxServiceImpl implements DropboxService {
     }
 
     @Override
-    public void createTaskFolder(User user, Task task) {
+    public void createTaskFolder(@NonNull User user, @NonNull Task task) {
         if (task.getProject().isDropboxConnected()) {
             final DbxClientV2 dbxClient = getDbxClient(user);
 
@@ -118,7 +119,7 @@ public class DropboxServiceImpl implements DropboxService {
     }
 
     @Override
-    public void deleteTaskFolder(User user, Task task) {
+    public void deleteTaskFolder(@NonNull User user, @NonNull Task task) {
         if (task.getProject().isDropboxConnected()) {
             final DbxClientV2 dbxClient = getDbxClient(user);
 
@@ -135,7 +136,7 @@ public class DropboxServiceImpl implements DropboxService {
     }
 
     @Override
-    public void addProjectMemberToSharedFolder(User user, User newMember,
+    public void addProjectMemberToSharedFolder(@NonNull User user, @NonNull User newMember,
             Project project) {
         if (project.isDropboxConnected()) {
             if (user.getId() == newMember.getId()) {
@@ -151,7 +152,7 @@ public class DropboxServiceImpl implements DropboxService {
     }
 
     @Override
-    public void removeMemberFromSharedFolder(User user, User memberToRemove,
+    public void removeMemberFromSharedFolder(@NonNull User user, @NonNull User memberToRemove,
             Project project) {
         if (project.isDropboxConnected()) {
             final DbxClientV2 dbxClient = getDbxClient(user);
@@ -187,7 +188,7 @@ public class DropboxServiceImpl implements DropboxService {
     }
 
     @Override
-    public void transferOwnership(User user, User newOwner,
+    public void transferOwnership(@NonNull User user, @NonNull User newOwner,
             Project project) {
         if (project.isDropboxConnected()) {
             if (user.getId() == newOwner.getId()) {
@@ -218,8 +219,8 @@ public class DropboxServiceImpl implements DropboxService {
     }
 
     @Override
-    public void connectProjectToDropbox(User user,
-            Project project) {
+    public void connectProjectToDropbox(@NonNull User user,
+            @NonNull Project project) {
         if (project.isDropboxConnected()) {
             throw new UnsupportedOperationException("No need to connect project " 
                     + project.getId() + " to dropbox because it is already connected.");
@@ -250,8 +251,9 @@ public class DropboxServiceImpl implements DropboxService {
         }
     }
 
+    @NonNull
     @Override
-    public FileMetadata uploadFileInTaskFolder(User user, Task task,
+    public FileMetadata uploadFileInTaskFolder(@NonNull User user, @NonNull Task task,
             MultipartFile file) {
         if (task.getProject().isDropboxConnected()) {
             final DbxClientV2 dbxClient = getDbxClient(user);
@@ -278,9 +280,10 @@ public class DropboxServiceImpl implements DropboxService {
                 + " is not connected to dropbox. Project creator can connect the project.");
     }
 
+    @NonNull
     @Override
-    public FileMetadata downloadFile(User user, String dropboxId,
-            OutputStream os) {
+    public FileMetadata downloadFile(@NonNull User user, @NonNull String dropboxId,
+            @NonNull OutputStream os) {
         final DbxClientV2 dbxClient = getDbxClient(user);
 
         try {
@@ -296,8 +299,9 @@ public class DropboxServiceImpl implements DropboxService {
         }
     }
 
+    @NonNull
     @Override
-    public EchoResult testDropboxUserConnection(User user) {
+    public EchoResult testDropboxUserConnection(@NonNull User user) {
         final DbxClientV2 dbxClient = getDbxClient(user);
 
         try {
@@ -309,9 +313,9 @@ public class DropboxServiceImpl implements DropboxService {
             throw new GeneralDropboxException("General dropbox exception was thrown.", e);
         }
     }
-
+    
     @Override
-    public void logout(User user) {
+    public void logout(@NonNull User user) {
         checkWhetherUserCanLogout(user);
         try {
             final OAuth2AuthorizedClient authorizedClient =

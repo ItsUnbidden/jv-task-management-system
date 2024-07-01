@@ -12,6 +12,7 @@ import javax.crypto.SecretKey;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Component;
 
@@ -28,7 +29,8 @@ public class JwtUtil {
         secret = Keys.hmacShaKeyFor(secretString.getBytes(StandardCharsets.UTF_8));
     }
 
-    public String generateToken(String username) {
+    @NonNull
+    public String generateToken(@NonNull String username) {
         LOGGER.info("Generating JWT for user " + username);
         return Jwts.builder()
                 .subject(username)
@@ -38,7 +40,8 @@ public class JwtUtil {
                 .compact();
     }
 
-    public boolean isValidToken(String token) {
+    @NonNull    
+    public boolean isValidToken(@NonNull String token) {
         LOGGER.info("Verifying token...");
         try {
             Jws<Claims> claimsJws = Jwts.parser()
@@ -51,7 +54,8 @@ public class JwtUtil {
         }
     }
 
-    public String getUsername(String token) {
+    @NonNull 
+    public String getUsername(@NonNull String token) {
         return getClaimFromToken(token, Claims::getSubject);
     }
 

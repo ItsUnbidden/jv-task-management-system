@@ -12,12 +12,14 @@ import org.springframework.stereotype.Component;
 public class ProjectFromLabelIdProvider implements ProjectProvider {
     private final EntityUtil entityUtil;
 
+    @NonNull
     @Override
     public Project getProject(@NonNull Long id) {
         final Label label = entityUtil.getLabelById(id);
         return label.getProject();
     }
 
+    @NonNull
     @Override
     public Class<?> getProviderClass() {
         return Label.class;

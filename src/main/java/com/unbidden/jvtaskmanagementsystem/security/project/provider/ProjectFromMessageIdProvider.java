@@ -11,10 +11,10 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-@SuppressWarnings("null")
 public class ProjectFromMessageIdProvider implements ProjectProvider {
     private final EntityUtil entityUtil;
 
+    @NonNull
     @Override
     public Project getProject(@NonNull Long id) {
         final Message message = entityUtil.getMessageById(id);
@@ -25,6 +25,7 @@ public class ProjectFromMessageIdProvider implements ProjectProvider {
         return getFromReply((Reply)message);
     }
 
+    @NonNull
     @Override
     public Class<?> getProviderClass() {
         return Message.class;

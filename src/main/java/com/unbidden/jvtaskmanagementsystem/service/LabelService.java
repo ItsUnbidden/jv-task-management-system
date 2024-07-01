@@ -10,17 +10,17 @@ import org.springframework.lang.NonNull;
 
 public interface LabelService {
 
-    List<LabelResponseDto> getLablesForProject(User user,
+    List<LabelResponseDto> getLablesForProject(@NonNull User user,
             @NonNull Long projectId, Pageable pageable);
 
-    LabelResponseDto getLabelById(User user, @NonNull Long labelId);
+    LabelResponseDto getLabelById(@NonNull User user, @NonNull Long labelId);
 
-    LabelResponseDto createLabel(User user, @NonNull Long projectId,
+    LabelResponseDto createLabel(@NonNull User user, @NonNull Long projectId,
             @NonNull CreateLabelRequestDto requestDto);
 
-    LabelResponseDto updateLabel(User user, @NonNull Long labelId,
+    LabelResponseDto updateLabel(@NonNull User user, @NonNull Long labelId,
             @NonNull UpdateLabelRequestDto requestDto);
 
-    void deleteLabel(User user, @NonNull Long labelId);
+    void deleteLabel(@NonNull User user, @NonNull Long labelId);
 
 }
