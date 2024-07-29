@@ -3,7 +3,9 @@ package com.unbidden.jvtaskmanagementsystem.controller;
 import com.unbidden.jvtaskmanagementsystem.dto.project.CreateProjectRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.project.ProjectResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.project.UpdateProjectRequestDto;
+import com.unbidden.jvtaskmanagementsystem.dto.project.UpdateProjectStatusRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.projectrole.UpdateProjectRoleRequestDto;
+import com.unbidden.jvtaskmanagementsystem.dto.task.TaskResponseDto;
 import com.unbidden.jvtaskmanagementsystem.model.User;
 import com.unbidden.jvtaskmanagementsystem.service.ProjectService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -377,6 +379,45 @@ public class ProjectController {
             @NonNull @RequestBody @Valid UpdateProjectRoleRequestDto requestDto) {
         return projectService.changeProjectMemberRole((User)authentication.getPrincipal(),
                 projectId, userId, requestDto);
+    }
+
+    @PatchMapping("/{projectId}/status")
+    @Operation(
+            summary = "Change project status",
+            description = "Only available to project CREATOR. Allowed values are "
+                    + "<IN_PROGRESS> or <COMPLETED>",
+            responses = {
+                @ApiResponse(
+                    content = @Content(
+                        mediaType = "application/json",
+                        schema = @Schema(implementation = TaskResponseDto.class)),
+                    responseCode = "200",
+                    description = "Updated project"),
+                @ApiResponse(
+                    content = @Content(schema = @Schema(hidden = true)),
+                    responseCode = "400",
+                    description = "Invalid input"),
+                @ApiResponse(
+                    content = @Content(schema = @Schema(hidden = true)),
+                    responseCode = "401",
+                    description = "Unauthorized"),
+                @ApiResponse(
+                    content = @Content(schema = @Schema(hidden = true)),
+                    responseCode = "403",
+                    description = "Forbidden")
+            }
+    )
+    public ProjectResponseDto changeStatus(Authentication authentication,
+            @Parameter(
+                description = "Project id"
+            )
+            @NonNull @PathVariable Long projectId,
+            @Parameter(
+                description = "Change project status request dto"
+            )
+            @NonNull @Valid @RequestBody UpdateProjectStatusRequestDto requestDto) {
+        return projectService.changeStatus((User)authentication.getPrincipal(),
+                projectId, requestDto);
     }
 
     @PatchMapping("/{projectId}/dropbox/connect")

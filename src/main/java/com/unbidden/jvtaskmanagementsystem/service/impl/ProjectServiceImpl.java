@@ -3,6 +3,7 @@ package com.unbidden.jvtaskmanagementsystem.service.impl;
 import com.unbidden.jvtaskmanagementsystem.dto.project.CreateProjectRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.project.ProjectResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.project.UpdateProjectRequestDto;
+import com.unbidden.jvtaskmanagementsystem.dto.project.UpdateProjectStatusRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.projectrole.UpdateProjectRoleRequestDto;
 import com.unbidden.jvtaskmanagementsystem.mapper.ProjectMapper;
 import com.unbidden.jvtaskmanagementsystem.model.Project;
@@ -129,7 +130,7 @@ public class ProjectServiceImpl implements ProjectService {
         updateProjectStatusAccordingToDate(project, false);
         return projectMapper.toProjectDto(projectRepository.save(project));
     }
-
+    //TODO: Prevent managers from interfering in third-party actions
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.CREATOR)
     public void deleteProject(@NonNull User user, @NonNull Long projectId) {
@@ -176,8 +177,19 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR)
-    public void quitProject(@NonNull User user, Long projectId) {
+    public void quitProject(@NonNull User user, @NonNull Long projectId) {
         removeUserFromProject0(user, projectId, user.getId());
+    }
+
+    @Override
+    @ProjectSecurity(securityLevel = ProjectRoleType.CREATOR)
+    public ProjectResponseDto changeStatus(@NonNull User user, @NonNull Long projectId,
+            @NonNull UpdateProjectStatusRequestDto requestDto) {
+        final Project project = entityUtil.getProjectById(projectId);
+
+        project.setStatus(requestDto.getNewStatus());
+        updateProjectStatusAccordingToDate(project, false);
+        return projectMapper.toProjectDto(projectRepository.save(project));
     }
 
     @NonNull
@@ -244,13 +256,15 @@ public class ProjectServiceImpl implements ProjectService {
         final ProjectStatus initialStatus = project.getStatus();
 
         if (project.getStartDate().isAfter(currentDate) 
-                && !project.getStatus().equals(ProjectStatus.INITIATED)) {
+                && !project.getStatus().equals(ProjectStatus.INITIATED)
+                && !project.getStatus().equals(ProjectStatus.COMPLETED)) {
             project.setStatus(ProjectStatus.INITIATED);
         }
 
         if ((project.getStartDate().isBefore(currentDate)
                 || project.getStartDate().isEqual(currentDate)) 
-                && !project.getStatus().equals(ProjectStatus.IN_PROGRESS)) {
+                && !project.getStatus().equals(ProjectStatus.IN_PROGRESS)
+                && !project.getStatus().equals(ProjectStatus.COMPLETED)) {
             project.setStatus(ProjectStatus.IN_PROGRESS);
         }
 
