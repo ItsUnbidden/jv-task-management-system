@@ -131,6 +131,7 @@ public class ProjectServiceImpl implements ProjectService {
         return projectMapper.toProjectDto(projectRepository.save(project));
     }
     //TODO: Prevent managers from interfering in third-party actions
+    
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.CREATOR)
     public void deleteProject(@NonNull User user, @NonNull Long projectId) {
