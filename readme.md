@@ -336,9 +336,9 @@ Some examples:
 Quite unsurprisingly, in order to work, **attachments** require *Dropbox connection*. If *Dropbox* is **not connected** to the *project*, **attachments** will **not be available**.
 
 ***Available endpoints:***
- - **GET:** `/attachments/tasks/{taskId}` — **find** all *attachments* for the *specified task*. *Requires* the user to be at least **CONTRIBUTOR** or for the project to be **public**.
+ - **GET:** `/attachments/tasks/{taskId}` — **find** all *attachments* for the *specified task*. *Requires* the user to be at least **CONTRIBUTOR**.
  - **POST:** `/attachments/tasks/{taskId}` — **creates** a new *attachment* by **uploading** a file to *Dropbox*. *Requires* the user to be at least **CONTRIBUTOR**.
- - **GET:** `/attachments/{attachmentId}` — **downloads** a *file* in this *attachment* from *Dropbox*. *Requires* the user to be at least **CONTRIBUTOR** or for the project to be **public**.
+ - **GET:** `/attachments/{attachmentId}` — **downloads** a *file* in this *attachment* from *Dropbox*. *Requires* the user to be at least **CONTRIBUTOR**.
 
 Some examples:
 
@@ -491,3 +491,5 @@ Known problems:
 
  - There is currently **a problem** with *error codes* — **401 error code** and usually incorrect message are returned in cases where there is supposed to be a *different exception response*. This might create some confusion when identifying the cause of the issue. I haven't been able to find a solution for this so it's going *to stay* for now.
  - **Logging out** of *Docker* might **not be possible** under certain conditions. One of those *conditions* is when the **access token** has been rendered *invalid*.
+ - *Google Calendar* and *Dropbox* **Services** are implemented very **differently**, so there might be some **inconsistencies** between them. This is because they were written at *different times* and with different *amount* of **experience**. I consider *Google Calendar Service* to be superior and *Dropbox Service* might be **updgraded** to it's level later.
+ - **Only about 40%** of the *application* is *covered* with **tests**. This is due to the fact, that a *significant amount* of app's **code** is related to **OAuth2**, **Google Calendar** and **Dropbox**. These services are **very hard** to **test**, since they require *connection* to some *external resource* and 'logging in' an *external account* (API Console). For now I **wasn't able** to find a way to **test** them, and so they *lower the overall coverage severely*.

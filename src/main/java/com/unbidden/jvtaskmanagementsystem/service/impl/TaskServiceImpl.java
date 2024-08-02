@@ -111,6 +111,8 @@ public class TaskServiceImpl implements TaskService {
     public TaskResponseDto createTaskInProject(@NonNull User user, @NonNull Long projectId,
             @NonNull CreateTaskRequestDto requestDto) {
         final Project project = entityUtil.getProjectById(projectId);
+        final User authorizedUser = (entityUtil.isManager(user))
+                ? entityUtil.getProjectOwner(project) : user;
         
         Task task = taskMapper.toModel(requestDto);
         project.getTasks().add(task);
@@ -118,15 +120,15 @@ public class TaskServiceImpl implements TaskService {
         checkDateIsLigit(task);
         task.setStatus(TaskStatus.NOT_STARTED);
         task.setLabels(new HashSet<>());
-        task.setAssignee((requestDto.getAssigneeId() == null) ? user
+        task.setAssignee((requestDto.getAssigneeId() == null) ? authorizedUser
                 : entityUtil.getUserById(requestDto.getAssigneeId()));
         task.setAmountOfMessages(0);
 
-        dropboxService.createTaskFolder(user, task);
+        dropboxService.createTaskFolder(authorizedUser, task);
         updateTaskStatusAccordingToDate(task, false);
         projectRepository.save(project);
         taskRepository.save(task);
-        calendarService.createEventForTask(user, task);
+        calendarService.createEventForTask(authorizedUser, task);
         return taskMapper.toDto(task);
     }
 
@@ -137,12 +139,15 @@ public class TaskServiceImpl implements TaskService {
     public TaskResponseDto updateTask(@NonNull User user, @NonNull Long taskId,
             @NonNull UpdateTaskRequestDto requestDto) {
         final Task taskFromDb = entityUtil.getTaskById(taskId);
+        final User authorizedUser = (entityUtil.isManager(user))
+                ? entityUtil.getProjectOwner(taskFromDb.getProject()) : user;
         
         taskFromDb.setName(requestDto.getName());
         taskFromDb.setDescription(requestDto.getDescription());
         taskFromDb.setDueDate(requestDto.getDueDate());
         checkDateIsLigit(taskFromDb);
-        calendarService.changeTaskEventDueDate(user, taskFromDb, requestDto.getDueDate());
+        calendarService.changeTaskEventDueDate(authorizedUser, taskFromDb,
+                requestDto.getDueDate());
         taskFromDb.setPriority(requestDto.getPriority());
         if (requestDto.getNewAssigneeId() != null) {
             taskFromDb.setAssignee(entityUtil.getUserById(requestDto.getNewAssigneeId()));
@@ -155,9 +160,11 @@ public class TaskServiceImpl implements TaskService {
     @ProjectSecurity(securityLevel = ProjectRoleType.ADMIN, entityIdClass = Task.class)
     public void deleteTask(@NonNull User user, @NonNull Long taskId) {
         final Task task = entityUtil.getTaskById(taskId);
+        final User authorizedUser = (entityUtil.isManager(user))
+                ? entityUtil.getProjectOwner(task.getProject()) : user;
 
-        dropboxService.deleteTaskFolder(user, task);
-        calendarService.deleteTaskEvent(user, task);
+        dropboxService.deleteTaskFolder(authorizedUser, task);
+        calendarService.deleteTaskEvent(authorizedUser, task);
         taskRepository.delete(task);
     }
 

@@ -94,6 +94,21 @@ public class CustomGlobalExceptionHandler extends ResponseEntityExceptionHandler
         return handleBadRequest(ex, request);
     } 
 
+    @ExceptionHandler(FileSizeLimitExceededException.class)
+    protected ResponseEntity<Object> handleFileSizeExceededException(
+            @NonNull FileSizeLimitExceededException ex,
+            @NonNull WebRequest request
+    ) {
+        Map<String, Object> body = new LinkedHashMap<>();
+
+        body.put("timestamp", LocalDateTime.now());
+        body.put("status", HttpStatus.PAYLOAD_TOO_LARGE);
+        body.put("error", ex.getMessage());
+
+        return handleExceptionInternal(ex, body, new HttpHeaders(), 
+                HttpStatus.PAYLOAD_TOO_LARGE, request);
+    } 
+
     private ResponseEntity<Object> handleBadRequest(
             @NonNull Exception ex,
             @NonNull WebRequest request) {
