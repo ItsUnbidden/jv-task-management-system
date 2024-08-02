@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.unbidden.jvtaskmanagementsystem.dto.project.CreateProjectRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.project.ProjectResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.project.UpdateProjectRequestDto;
+import com.unbidden.jvtaskmanagementsystem.dto.project.UpdateProjectStatusRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.projectrole.ProjectRoleDto;
 import com.unbidden.jvtaskmanagementsystem.dto.projectrole.UpdateProjectRoleRequestDto;
 import com.unbidden.jvtaskmanagementsystem.model.Project;
@@ -383,6 +384,26 @@ public class ProjectControllerTest {
                 && pr.getUsername().equals(users.get(3).getUsername()))
                 .toList();
         Assertions.assertTrue(potentialProjectRole.isEmpty());
+    }
+
+    @Test
+    @WithUserDetails("testCreator3")
+    void changeStatus_ValidRequest_PatchedProject() throws Exception {
+        final Project newProject = addNewProject();
+        final UpdateProjectStatusRequestDto requestDto = new UpdateProjectStatusRequestDto();
+        requestDto.setNewStatus(ProjectStatus.COMPLETED);
+
+        MvcResult result = mockMvc.perform(patch("/projects/" + newProject.getId() + "/status")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        ProjectResponseDto actual = objectMapper.readValue(
+                result.getResponse().getContentAsString(), ProjectResponseDto.class);
+
+        Assertions.assertNotNull(actual);
+        Assertions.assertEquals(ProjectStatus.COMPLETED, actual.getStatus());
     }
 
     @AfterAll

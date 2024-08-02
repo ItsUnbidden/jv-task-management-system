@@ -3,6 +3,7 @@ package com.unbidden.jvtaskmanagementsystem.service;
 import com.unbidden.jvtaskmanagementsystem.dto.project.CreateProjectRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.project.ProjectResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.project.UpdateProjectRequestDto;
+import com.unbidden.jvtaskmanagementsystem.dto.project.UpdateProjectStatusRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.projectrole.UpdateProjectRoleRequestDto;
 import com.unbidden.jvtaskmanagementsystem.model.User;
 import java.util.List;
@@ -36,6 +37,9 @@ public interface ProjectService {
             @NonNull Long projectId, @NonNull Long userId);
 
     public void quitProject(@NonNull User user, @NonNull Long projectId);
+
+    public ProjectResponseDto changeStatus(@NonNull User user, @NonNull Long projectId,
+            @NonNull UpdateProjectStatusRequestDto requestDto);
 
     public ProjectResponseDto connectProjectToDropbox(@NonNull User user,
             @NonNull Long projectId);

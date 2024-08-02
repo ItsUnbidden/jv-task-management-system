@@ -9,10 +9,10 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.unbidden</groupId>
-	<artifactId>jv-task-managment-system</artifactId>
+	<artifactId>jv-task-management-system</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>jv-task-managment-system</name>
-	<description>Demo project for Spring Boot</description>
+	<name>jv-task-management-system</name>
+	<description>Server for creating a project management application for development teams</description>
 	<properties>
 		<java.version>21</java.version>
         <mapstruct.version>1.5.5.Final</mapstruct.version>

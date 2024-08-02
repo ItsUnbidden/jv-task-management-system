@@ -311,7 +311,8 @@ public class TaskController {
     @PatchMapping("/{taskId}/status")
     @Operation(
             summary = "Change task status",
-            description = "Only available for the task assignee or app manager",
+            description = "Only available for the task assignee or app manager. Available "
+                    + "values are <IN_PROGRESS> or <COMPLETED>",
             responses = {
                 @ApiResponse(
                     content = @Content(
@@ -339,7 +340,7 @@ public class TaskController {
             )
             @NonNull @PathVariable Long taskId,
             @Parameter(
-                description = "Change status request dto"
+                description = "Change task status request dto"
             )
             @NonNull @Valid @RequestBody UpdateTaskStatusRequestDto requestDto) {
         return taskService.changeStatus((User)authentication.getPrincipal(), taskId, requestDto);

@@ -3,6 +3,7 @@ package com.unbidden.jvtaskmanagementsystem.service.impl;
 import com.unbidden.jvtaskmanagementsystem.dto.project.CreateProjectRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.project.ProjectResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.project.UpdateProjectRequestDto;
+import com.unbidden.jvtaskmanagementsystem.dto.project.UpdateProjectStatusRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.projectrole.UpdateProjectRoleRequestDto;
 import com.unbidden.jvtaskmanagementsystem.mapper.ProjectMapper;
 import com.unbidden.jvtaskmanagementsystem.model.Project;
@@ -109,7 +110,7 @@ public class ProjectServiceImpl implements ProjectService {
         updateProjectStatusAccordingToDate(project, false);
         projectRepository.save(project);
         calendarService.createCalendarForProject(user, project);
-        return projectMapper.toProjectDto(project);
+        return projectMapper.toProjectDto(entityUtil.getProjectById(project.getId()));
     }
 
     @NonNull
@@ -118,8 +119,10 @@ public class ProjectServiceImpl implements ProjectService {
     public ProjectResponseDto updateProject(@NonNull User user, @NonNull Long projectId,
             @NonNull UpdateProjectRequestDto requestDto) {
         final Project project = entityUtil.getProjectById(projectId);
-        
-        calendarService.changeProjectEventsDates(user, project,
+        final User authorizedUser = (entityUtil.isManager(user))
+                ? entityUtil.getProjectOwner(project) : user;
+
+        calendarService.changeProjectEventsDates(authorizedUser, project,
                 requestDto.getStartDate(), requestDto.getEndDate());
         project.setName(requestDto.getName());
         project.setDescription(requestDto.getDescription());
@@ -129,14 +132,16 @@ public class ProjectServiceImpl implements ProjectService {
         updateProjectStatusAccordingToDate(project, false);
         return projectMapper.toProjectDto(projectRepository.save(project));
     }
-
+    
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.CREATOR)
     public void deleteProject(@NonNull User user, @NonNull Long projectId) {
         final Project project = entityUtil.getProjectById(projectId);
-        
-        dropboxService.deleteProjectFolder(user, project);
-        calendarService.deleteProjectCalendar(user, project);
+        final User authorizedUser = (entityUtil.isManager(user))
+                ? entityUtil.getProjectOwner(project) : user;
+
+        dropboxService.deleteProjectFolder(authorizedUser, project);
+        calendarService.deleteProjectCalendar(authorizedUser, project);
         projectRepository.delete(project);
     }
 
@@ -147,6 +152,8 @@ public class ProjectServiceImpl implements ProjectService {
             @NonNull Long projectId, @NonNull Long userId) {
         final Project project = entityUtil.getProjectById(projectId);
         final User newProjectMember = entityUtil.getUserById(userId);
+        final User authorizedUser = (entityUtil.isManager(user))
+                ? entityUtil.getProjectOwner(project) : user;
 
         if (!project.getProjectRoles().stream()
                 .filter(pr -> pr.getUser().getId() == userId)
@@ -155,7 +162,7 @@ public class ProjectServiceImpl implements ProjectService {
                     + " is already a member of project with id " + projectId);
         }
 
-        dropboxService.addProjectMemberToSharedFolder(user, newProjectMember, project);
+        dropboxService.addProjectMemberToSharedFolder(authorizedUser, newProjectMember, project);
         calendarService.addUserToCalendar(project, newProjectMember);
         ProjectRole projectRole = new ProjectRole();
         projectRole.setProject(project);
@@ -176,8 +183,19 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR)
-    public void quitProject(@NonNull User user, Long projectId) {
+    public void quitProject(@NonNull User user, @NonNull Long projectId) {
         removeUserFromProject0(user, projectId, user.getId());
+    }
+
+    @Override
+    @ProjectSecurity(securityLevel = ProjectRoleType.CREATOR)
+    public ProjectResponseDto changeStatus(@NonNull User user, @NonNull Long projectId,
+            @NonNull UpdateProjectStatusRequestDto requestDto) {
+        final Project project = entityUtil.getProjectById(projectId);
+
+        project.setStatus(requestDto.getNewStatus());
+        updateProjectStatusAccordingToDate(project, false);
+        return projectMapper.toProjectDto(projectRepository.save(project));
     }
 
     @NonNull
@@ -186,6 +204,8 @@ public class ProjectServiceImpl implements ProjectService {
     public ProjectResponseDto changeProjectMemberRole(@NonNull User user, @NonNull Long projectId,
             @NonNull Long userId, @NonNull UpdateProjectRoleRequestDto requestDto) {
         final Project project = entityUtil.getProjectById(projectId);
+        final User authorizedUser = (entityUtil.isManager(user))
+                ? entityUtil.getProjectOwner(project) : user;
 
         updateProjectStatusAccordingToDate(project, true);
 
@@ -200,8 +220,8 @@ public class ProjectServiceImpl implements ProjectService {
         if (requestDto.getNewRole().equals(ProjectRoleType.CREATOR)) {
             final User userToTrasferTo = entityUtil.getUserById(userId);
 
-            dropboxService.transferOwnership(user, userToTrasferTo, project);
-            calendarService.transferOwnership(user, project, userToTrasferTo);
+            dropboxService.transferOwnership(authorizedUser, userToTrasferTo, project);
+            calendarService.transferOwnership(authorizedUser, project, userToTrasferTo);
             creatorRole.setRoleType(ProjectRoleType.ADMIN);
             projectRoleRepository.save(creatorRole);
         }
@@ -216,8 +236,10 @@ public class ProjectServiceImpl implements ProjectService {
     public ProjectResponseDto connectProjectToDropbox(@NonNull User user,
             @NonNull Long projectId) {
         final Project project = entityUtil.getProjectById(projectId);
+        final User authorizedUser = (entityUtil.isManager(user))
+                ? entityUtil.getProjectOwner(project) : user;
         
-        dropboxService.connectProjectToDropbox(user, project);
+        dropboxService.connectProjectToDropbox(authorizedUser, project);
         return projectMapper.toProjectDto(projectRepository.save(project));
     }
 
@@ -226,8 +248,10 @@ public class ProjectServiceImpl implements ProjectService {
     @ProjectSecurity(securityLevel = ProjectRoleType.CREATOR)
     public ProjectResponseDto connectProjectToCalendar(User user, Long projectId) {
         final Project project = entityUtil.getProjectById(projectId);
+        final User authorizedUser = (entityUtil.isManager(user))
+                ? entityUtil.getProjectOwner(project) : user;
         
-        calendarService.connectProjectToCalendar(user, project);
+        calendarService.connectProjectToCalendar(authorizedUser, project);
         return projectMapper.toProjectDto(entityUtil.getProjectById(projectId));
     }
 
@@ -235,7 +259,14 @@ public class ProjectServiceImpl implements ProjectService {
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR)
     public void joinCalendar(User user, Long projectId) {
         final Project project = entityUtil.getProjectById(projectId);
+        final boolean isProjectMember = !project.getProjectRoles().stream()
+                .filter(pr -> pr.getUser().equals(user))
+                .toList().isEmpty();
 
+        if (!isProjectMember) {
+            throw new UnsupportedOperationException("Only project members "
+                    + "can call this endpoint.");
+        }
         calendarService.joinCalendar(user, project);
     }
 
@@ -244,13 +275,15 @@ public class ProjectServiceImpl implements ProjectService {
         final ProjectStatus initialStatus = project.getStatus();
 
         if (project.getStartDate().isAfter(currentDate) 
-                && !project.getStatus().equals(ProjectStatus.INITIATED)) {
+                && !project.getStatus().equals(ProjectStatus.INITIATED)
+                && !project.getStatus().equals(ProjectStatus.COMPLETED)) {
             project.setStatus(ProjectStatus.INITIATED);
         }
 
         if ((project.getStartDate().isBefore(currentDate)
                 || project.getStartDate().isEqual(currentDate)) 
-                && !project.getStatus().equals(ProjectStatus.IN_PROGRESS)) {
+                && !project.getStatus().equals(ProjectStatus.IN_PROGRESS)
+                && !project.getStatus().equals(ProjectStatus.COMPLETED)) {
             project.setStatus(ProjectStatus.IN_PROGRESS);
         }
 
@@ -272,13 +305,15 @@ public class ProjectServiceImpl implements ProjectService {
         final Project project = entityUtil.getProjectById(projectId);
         final User userToRemove = (user.getId() != userId) 
                 ? entityUtil.getUserById(userId) : user;
+        final User authorizedUser = (entityUtil.isManager(user))
+                ? entityUtil.getProjectOwner(project) : user;
 
         if (projectRole.getRoleType().equals(ProjectRoleType.CREATOR)) {
             throw new UnsupportedOperationException(
                     "Project creator cannot be removed from the project.");
         }
 
-        dropboxService.removeMemberFromSharedFolder(user, userToRemove, project);
+        dropboxService.removeMemberFromSharedFolder(authorizedUser, userToRemove, project);
         calendarService.removeUserFromCalendar(project, userToRemove);
         project.getProjectRoles().removeIf(pr -> pr.getId() == projectRole.getId());
         projectRoleRepository.delete(projectRole);
