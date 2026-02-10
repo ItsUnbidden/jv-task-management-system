@@ -126,9 +126,7 @@ public class MessageServiceImpl implements MessageService {
         reply.setTimestamp(LocalDateTime.now());
         reply.setUser(user);
 
-        if (message instanceof Comment) {
-            Comment comment = (Comment)message;
-
+        if (message instanceof Comment comment) {
             final Task task = comment.getTask();
             task.setAmountOfMessages(task.getAmountOfMessages() + 1);
 
@@ -171,8 +169,8 @@ public class MessageServiceImpl implements MessageService {
         message.setText(requestDto.getText());
         message.setLastUpdated(LocalDateTime.now());
 
-        if (message instanceof Comment) {
-            return messageMapper.toCommentWithTaskIdDto(commentRepository.save((Comment)message));
+        if (message instanceof Comment comment) {
+            return messageMapper.toCommentWithTaskIdDto(commentRepository.save(comment));
         }
         return messageMapper.toReplyDto(replyRepository.save((Reply)message));
     }
@@ -185,8 +183,7 @@ public class MessageServiceImpl implements MessageService {
 
         checkMessageBelongsToUser(user, message);
 
-        if (message instanceof Comment) {
-            final Comment comment = (Comment)message;
+        if (message instanceof Comment comment) {
             List<Reply> replies = replyRepository.findByParentId(messageId, null);
 
             replyRepository.deleteAll(replies);
@@ -213,7 +210,7 @@ public class MessageServiceImpl implements MessageService {
     }
 
     private void checkMessageBelongsToUser(User user, Message message) {
-        if (!entityUtil.isManager(user) && message.getUser().getId() != user.getId()) {
+        if (!entityUtil.isManager(user) && !message.getUser().getId().equals(user.getId())) {
             throw new AccessDeniedException("In order to change the message with id " 
             + message.getId() + " it needs to belong to the user with id " + user.getId());
         }

@@ -1,5 +1,20 @@
 package com.unbidden.jvtaskmanagementsystem.service.impl;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Pageable;
+import org.springframework.lang.NonNull;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
+
 import com.dropbox.core.DbxApiException;
 import com.dropbox.core.DbxException;
 import com.dropbox.core.DbxRequestConfig;
@@ -39,18 +54,6 @@ import com.unbidden.jvtaskmanagementsystem.repository.ProjectRoleRepository;
 import com.unbidden.jvtaskmanagementsystem.service.DropboxService;
 import com.unbidden.jvtaskmanagementsystem.service.oauth2.OAuth2Service;
 import com.unbidden.jvtaskmanagementsystem.util.EntityUtil;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.List;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.lang.NonNull;
-import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
-import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class DropboxServiceImpl implements DropboxService {
@@ -139,7 +142,7 @@ public class DropboxServiceImpl implements DropboxService {
     public void addProjectMemberToSharedFolder(@NonNull User user, @NonNull User newMember,
             Project project) {
         if (project.isDropboxConnected()) {
-            if (user.getId() == newMember.getId()) {
+            if (user.getId().equals(newMember.getId())) {
                 throw new UnsupportedOperationException("User " + user.getId() 
                         + " cannot add themselfs to project " + project.getId() + ".");
             }
@@ -158,7 +161,7 @@ public class DropboxServiceImpl implements DropboxService {
             final DbxClientV2 dbxClient = getDbxClient(user);
 
             try {
-                if (user.getId() == memberToRemove.getId()) {
+                if (user.getId().equals(memberToRemove.getId())) {
                     try {
                         dbxClient.sharing().relinquishFolderMembership(
                                 project.getDropboxProjectSharedFolderId());
@@ -191,7 +194,7 @@ public class DropboxServiceImpl implements DropboxService {
     public void transferOwnership(@NonNull User user, @NonNull User newOwner,
             Project project) {
         if (project.isDropboxConnected()) {
-            if (user.getId() == newOwner.getId()) {
+            if (user.getId().equals(newOwner.getId())) {
                 throw new UnsupportedOperationException("User " + user.getId() 
                         + " cannot transfer project " + project.getId() 
                         + "'s folder to themselfs.");
@@ -325,7 +328,6 @@ public class DropboxServiceImpl implements DropboxService {
             try {
                 dbxClient.auth().tokenRevoke();
                 oauthService.deleteAuthorizedClient(authorizedClient);
-                return;
             } catch (DbxApiException e) {
                 throw new SpecificDropboxException("Unable to logout.", e);
             } catch (DbxException e) {
@@ -338,7 +340,7 @@ public class DropboxServiceImpl implements DropboxService {
     }
 
     private void checkWhetherUserCanLogout(User user) {
-        List<ProjectRole> projectRoles = projectRoleRepository.findByUserId(user.getId());
+        List<ProjectRole> projectRoles = projectRoleRepository.findByUserId(user.getId(), Pageable.unpaged());
         if (!projectRoles.isEmpty()) {
             List<Project> projects = projectRoles.stream().map(pr -> pr.getProject())
                     .filter(p -> p.isDropboxConnected()).toList();

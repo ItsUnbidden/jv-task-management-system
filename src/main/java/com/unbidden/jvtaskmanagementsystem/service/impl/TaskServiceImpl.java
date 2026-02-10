@@ -175,7 +175,7 @@ public class TaskServiceImpl implements TaskService {
             @NonNull UpdateTaskStatusRequestDto requestDto) {
         final Task task = entityUtil.getTaskById(taskId);
 
-        if (!entityUtil.isManager(user) && task.getAssignee().getId() != user.getId()) {
+        if (!entityUtil.isManager(user) && !task.getAssignee().getId().equals(user.getId())) {
             throw new AccessDeniedException("Only user that is assigned to task " + taskId 
                     + " can change it's status.");
         }

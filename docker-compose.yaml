@@ -41,8 +41,7 @@ services:
         "oauth2.google.authorization-uri" : "$GOOGLE_AUTH_URI",
         "oauth2.google.token-uri" : "$GOOGLE_TOKEN_URI",
         "oauth2.google.scope" : "$GOOGLE_SCOPE",
-        "oauth2.google.use-refresh-tokens" : "$GOOGLE_REFRESH_TOKENS"
-        "dropbox.root.path" : "$GOOGLE_SHARED_FOLDER_ROOT_PATH"
-      }'
+        "oauth2.google.use-refresh-tokens" : "$GOOGLE_REFRESH_TOKENS",
+        "dropbox.root.path" : "$GOOGLE_SHARED_FOLDER_ROOT_PATH"}'
       JAVA_TOOL_OPTIONS: "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
       

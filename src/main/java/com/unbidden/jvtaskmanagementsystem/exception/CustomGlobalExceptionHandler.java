@@ -43,7 +43,7 @@ public class CustomGlobalExceptionHandler extends ResponseEntityExceptionHandler
         body.put("errors", ex.getBindingResult().getAllErrors().stream()
                 .map(this::getErrorMessage)
                 .toList());
-        return new ResponseEntity<Object>(body, headers, status);
+        return new ResponseEntity<>(body, headers, status);
     }
 
     @ExceptionHandler({EntityNotFoundException.class, 
@@ -123,11 +123,11 @@ public class CustomGlobalExceptionHandler extends ResponseEntityExceptionHandler
     }
 
     private String getErrorMessage(ObjectError e) {
-        if (e instanceof FieldError) {
-            String field = ((FieldError)e).getField();
+        if (e instanceof FieldError fieldError) {
+            String field = fieldError.getField();
             String message = e.getDefaultMessage();
             return field + " " + message;
         }
-        return e.getDefaultMessage();
+        return (e != null) ? e.getDefaultMessage() : "Exception is null.";
     }
 }
