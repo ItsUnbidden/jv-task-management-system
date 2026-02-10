@@ -108,7 +108,7 @@ public class UserServiceImpl implements UserService {
         User user = entityUtil.getUserById(id);
 
         checkUserIsNotOwner(user, "Owner cannot be locked.");
-        user.setLocked(user.isLocked() ? false : true);
+        user.setLocked(!user.isLocked());
         return userMapper.toDto(userRepository.save(user));
     }
 

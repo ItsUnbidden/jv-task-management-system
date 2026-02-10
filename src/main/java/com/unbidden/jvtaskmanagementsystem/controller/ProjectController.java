@@ -88,8 +88,12 @@ public class ProjectController {
                     description = "Unauthorized")
             }
     )
-    public List<ProjectResponseDto> getAllProjectsForUser(Authentication authentication) {
-        return projectService.findAllProjectsForUser((User)authentication.getPrincipal());
+    public List<ProjectResponseDto> getAllProjectsForUser(Authentication authentication, 
+            @Parameter(
+                description = "Pagination and sorting"
+            )
+            Pageable pageable) {
+        return projectService.findAllProjectsForUser((User)authentication.getPrincipal(), pageable);
     }
 
     @GetMapping("/search")

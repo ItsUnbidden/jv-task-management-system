@@ -79,8 +79,11 @@ public class AttachmentServiceImpl implements AttachmentService {
 
         Attachment attachment = new Attachment();
         attachment.setTask(task);
-        attachment.setFilename(file.getOriginalFilename().replace(" ", "_"));
 
+        if (file.getOriginalFilename() != null) {
+            attachment.setFilename(file.getOriginalFilename().replace(" ", "_"));
+        }
+        
         if (file.getSize() > MAXIMUM_FILE_SIZE) {
             throw new FileSizeLimitExceededException("Maximum file size is 150 MiB. "
                     + "Current file size has exceeded this limit.");

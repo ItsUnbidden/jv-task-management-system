@@ -1,13 +1,16 @@
 package com.unbidden.jvtaskmanagementsystem.security;
 
-import com.unbidden.jvtaskmanagementsystem.repository.UserRepository;
 import java.util.regex.Pattern;
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.lang.NonNull;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
+
+import com.unbidden.jvtaskmanagementsystem.repository.UserRepository;
+
+import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 @Component
@@ -30,6 +33,6 @@ public class CustomUserDetailsService implements UserDetailsService {
     }
 
     private boolean isEmail(@NonNull String username) {
-        return username != null && PATTERN.matcher(username).matches();
+        return PATTERN.matcher(username).matches();
     }   
 }

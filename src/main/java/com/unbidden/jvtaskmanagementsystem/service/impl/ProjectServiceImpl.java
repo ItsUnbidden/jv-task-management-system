@@ -1,5 +1,14 @@
 package com.unbidden.jvtaskmanagementsystem.service.impl;
 
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
+import org.springframework.data.domain.Pageable;
+import org.springframework.lang.NonNull;
+import org.springframework.stereotype.Service;
+
 import com.unbidden.jvtaskmanagementsystem.dto.project.CreateProjectRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.project.ProjectResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.project.UpdateProjectRequestDto;
@@ -18,15 +27,8 @@ import com.unbidden.jvtaskmanagementsystem.service.DropboxService;
 import com.unbidden.jvtaskmanagementsystem.service.GoogleCalendarService;
 import com.unbidden.jvtaskmanagementsystem.service.ProjectService;
 import com.unbidden.jvtaskmanagementsystem.util.EntityUtil;
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Pageable;
-import org.springframework.lang.NonNull;
-import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
@@ -43,9 +45,6 @@ public class ProjectServiceImpl implements ProjectService {
 
     private final GoogleCalendarService calendarService;
 
-    @Value("${dropbox.root.path}")
-    private String dropboxRootPath;
-
     @NonNull
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true)
@@ -58,8 +57,8 @@ public class ProjectServiceImpl implements ProjectService {
 
     @NonNull
     @Override
-    public List<ProjectResponseDto> findAllProjectsForUser(@NonNull User user) {
-        List<ProjectRole> projectRoles = projectRoleRepository.findByUserId(user.getId());
+    public List<ProjectResponseDto> findAllProjectsForUser(@NonNull User user, @NonNull Pageable pageable) {
+        List<ProjectRole> projectRoles = projectRoleRepository.findByUserId(user.getId(), pageable);
         List<Project> projects = projectRoles.stream().map(ProjectRole::getProject).toList();
 
         projects.stream().forEach(p -> updateProjectStatusAccordingToDate(p, true));
@@ -156,7 +155,7 @@ public class ProjectServiceImpl implements ProjectService {
                 ? entityUtil.getProjectOwner(project) : user;
 
         if (!project.getProjectRoles().stream()
-                .filter(pr -> pr.getUser().getId() == userId)
+                .filter(pr -> pr.getUser().getId().equals(userId))
                 .toList().isEmpty()) {
             throw new UnsupportedOperationException("User with id " + userId 
                     + " is already a member of project with id " + projectId);
@@ -303,7 +302,7 @@ public class ProjectServiceImpl implements ProjectService {
         final ProjectRole projectRole = entityUtil
                 .getProjectRoleByProjectIdAndUserId(projectId, userId);
         final Project project = entityUtil.getProjectById(projectId);
-        final User userToRemove = (user.getId() != userId) 
+        final User userToRemove = (!user.getId().equals(userId)) 
                 ? entityUtil.getUserById(userId) : user;
         final User authorizedUser = (entityUtil.isManager(user))
                 ? entityUtil.getProjectOwner(project) : user;
@@ -315,7 +314,7 @@ public class ProjectServiceImpl implements ProjectService {
 
         dropboxService.removeMemberFromSharedFolder(authorizedUser, userToRemove, project);
         calendarService.removeUserFromCalendar(project, userToRemove);
-        project.getProjectRoles().removeIf(pr -> pr.getId() == projectRole.getId());
+        project.getProjectRoles().removeIf(pr -> pr.getId().equals(projectRole.getId()));
         projectRoleRepository.delete(projectRole);
         return projectMapper.toProjectDto(projectRepository.save(project));
     }
