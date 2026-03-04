@@ -1,16 +1,18 @@
 package com.unbidden.jvtaskmanagementsystem.dto.task;
 
+import java.time.LocalDate;
+
 import com.unbidden.jvtaskmanagementsystem.model.Task.TaskPriority;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import java.time.LocalDate;
 import lombok.Data;
 
 @Data
 public class CreateTaskRequestDto {
     @NotBlank
-    @Size(min = 1, max = 50)
+    @Size(min = 3, max = 50)
     private String name;
 
     private String description;

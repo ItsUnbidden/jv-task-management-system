@@ -1,5 +1,15 @@
 package com.unbidden.jvtaskmanagementsystem.service.impl;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.lang.NonNull;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.stereotype.Service;
+
 import com.unbidden.jvtaskmanagementsystem.dto.message.CommentResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.message.CommentWithTaskIdResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.message.CreateMessageRequestDto;
@@ -18,14 +28,8 @@ import com.unbidden.jvtaskmanagementsystem.repository.TaskRepository;
 import com.unbidden.jvtaskmanagementsystem.security.project.ProjectSecurity;
 import com.unbidden.jvtaskmanagementsystem.service.MessageService;
 import com.unbidden.jvtaskmanagementsystem.util.EntityUtil;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Pageable;
-import org.springframework.lang.NonNull;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
@@ -44,21 +48,19 @@ public class MessageServiceImpl implements MessageService {
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true,
             entityIdClass = Task.class)
-    public List<CommentResponseDto> getCommentsForTask(@NonNull User user, @NonNull Long taskId,
+    public Page<CommentResponseDto> getCommentsForTask(@NonNull User user, @NonNull Long taskId,
             Pageable pageable) {
-        return commentRepository.findByTaskId(taskId, pageable).stream()
-                .map(messageMapper::toCommentDto)
-                .toList();
+        return commentRepository.findByTaskId(taskId, pageable)
+                .map(messageMapper::toCommentDto);
     }
 
     @NonNull
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true)
-    public List<CommentWithTaskIdResponseDto> getCommentsForProject(@NonNull User user,
+    public Page<CommentWithTaskIdResponseDto> getCommentsForProject(@NonNull User user,
             @NonNull Long projectId, Pageable pageable) {
-        return commentRepository.findByProjectId(projectId, pageable).stream()
-                .map(messageMapper::toCommentWithTaskIdDto)
-                .toList();
+        return commentRepository.findByProjectId(projectId, pageable)
+                .map(messageMapper::toCommentWithTaskIdDto);
     }
 
     @NonNull
@@ -75,11 +77,10 @@ public class MessageServiceImpl implements MessageService {
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true,
             entityIdClass = Message.class, entityIdParamName = "commentId")
-    public List<ReplyResponseDto> getRepliesForComment(@NonNull User user,
+    public Page<ReplyResponseDto> getRepliesForComment(@NonNull User user,
             @NonNull Long commentId, Pageable pageable) {
-        return replyRepository.findByParentId(commentId, pageable).stream()
-                .map(messageMapper::toReplyDto)
-                .toList();
+        return replyRepository.findByParentId(commentId, pageable)
+                .map(messageMapper::toReplyDto);
     }
 
     @NonNull
@@ -184,7 +185,7 @@ public class MessageServiceImpl implements MessageService {
         checkMessageBelongsToUser(user, message);
 
         if (message instanceof Comment comment) {
-            List<Reply> replies = replyRepository.findByParentId(messageId, null);
+            Page<Reply> replies = replyRepository.findByParentId(messageId, null);
 
             replyRepository.deleteAll(replies);
             final Task task = comment.getTask();
@@ -196,7 +197,13 @@ public class MessageServiceImpl implements MessageService {
             return;
         }
         Reply reply = (Reply)message;
-        Comment superParent = entityUtil.getSuperParent(reply);
+        Comment superParent;
+        if (reply.getParent() instanceof Comment comment) {
+            superParent = comment;
+        } else {
+            superParent = entityUtil.getSuperParent(reply);
+        }
+        
         int amountOfDeletedReplies = unwindReplies(reply).size();
 
         superParent.setAmountOfReplies(superParent.getAmountOfReplies()

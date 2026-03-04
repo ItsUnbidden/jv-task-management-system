@@ -1,5 +1,12 @@
 package com.unbidden.jvtaskmanagementsystem.service.oauth2.resolver;
 
+import java.util.Optional;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
 import com.dropbox.core.DbxApiException;
 import com.dropbox.core.DbxException;
 import com.dropbox.core.DbxRequestConfig;
@@ -14,18 +21,13 @@ import com.unbidden.jvtaskmanagementsystem.model.User;
 import com.unbidden.jvtaskmanagementsystem.repository.ProjectRoleRepository;
 import com.unbidden.jvtaskmanagementsystem.repository.oauth2.AuthorizedClientRepository;
 import com.unbidden.jvtaskmanagementsystem.util.EntityUtil;
-import java.util.Optional;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 @Component
 public class OAuth2AuthorizedClientDropboxResolver extends OAuth2AuthorizedClientAbstractResolver {
     private static final Logger LOGGER =
             LogManager.getLogger(OAuth2AuthorizedClientDropboxResolver.class);
 
-    private DbxRequestConfig dbxRequestConfig;
+    private final DbxRequestConfig dbxRequestConfig;
 
     public OAuth2AuthorizedClientDropboxResolver(@Autowired EntityUtil entityUtil,
             @Autowired AuthorizedClientRepository authorizedClientRepository,
@@ -51,7 +53,7 @@ public class OAuth2AuthorizedClientDropboxResolver extends OAuth2AuthorizedClien
                 .getExternalAccountId());
         LOGGER.info("Testing whether the external id is taken.");
         if (authClientWithCurrentExtIdOpt.isPresent()
-                && authClientWithCurrentExtIdOpt.get().getUser().getId() != user.getId()) {
+                && !authClientWithCurrentExtIdOpt.get().getUser().getId().equals(user.getId())) {
             authorizedClientRepository.deleteById(authorizedClient.getId());
             throw new OAuth2AuthorizationException("External account id "
                     + authorizedClient.getExternalAccountId()

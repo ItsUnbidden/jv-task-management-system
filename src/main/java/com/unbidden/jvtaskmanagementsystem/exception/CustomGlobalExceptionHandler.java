@@ -1,14 +1,9 @@
 package com.unbidden.jvtaskmanagementsystem.exception;
 
-import com.unbidden.jvtaskmanagementsystem.exception.dropbox.DropboxException;
-import com.unbidden.jvtaskmanagementsystem.exception.dropbox.GeneralDropboxException;
-import com.unbidden.jvtaskmanagementsystem.exception.dropbox.SpecificDropboxException;
-import com.unbidden.jvtaskmanagementsystem.exception.oauth2.OAuth2AuthorizationException;
-import com.unbidden.jvtaskmanagementsystem.exception.oauth2.OAuth2CodeExchangeException;
-import com.unbidden.jvtaskmanagementsystem.exception.oauth2.OAuth2PropertiesParsingException;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.data.mapping.PropertyReferenceException;
@@ -17,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.NonNull;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -24,6 +20,13 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+
+import com.unbidden.jvtaskmanagementsystem.exception.dropbox.DropboxException;
+import com.unbidden.jvtaskmanagementsystem.exception.dropbox.GeneralDropboxException;
+import com.unbidden.jvtaskmanagementsystem.exception.dropbox.SpecificDropboxException;
+import com.unbidden.jvtaskmanagementsystem.exception.oauth2.OAuth2AuthorizationException;
+import com.unbidden.jvtaskmanagementsystem.exception.oauth2.OAuth2CodeExchangeException;
+import com.unbidden.jvtaskmanagementsystem.exception.oauth2.OAuth2PropertiesParsingException;
 
 @ControllerAdvice
 public class CustomGlobalExceptionHandler extends ResponseEntityExceptionHandler {
@@ -39,7 +42,6 @@ public class CustomGlobalExceptionHandler extends ResponseEntityExceptionHandler
         Map<String, Object> body = new LinkedHashMap<>();
 
         body.put("timestamp", LocalDateTime.now());
-        body.put("status", HttpStatus.BAD_REQUEST);
         body.put("errors", ex.getBindingResult().getAllErrors().stream()
                 .map(this::getErrorMessage)
                 .toList());
@@ -52,38 +54,34 @@ public class CustomGlobalExceptionHandler extends ResponseEntityExceptionHandler
             UnsupportedOperationException.class,
             IllegalArgumentException.class})
     protected ResponseEntity<Object> handleInvalidUserInput(
-            @NonNull Exception ex,
-            @NonNull WebRequest request
+            @NonNull Exception ex
     ) {
         LOGGER.error("Some invalid user action was detected.", ex);
-        return handleBadRequest(ex, request);
+        return handleBadRequest(ex);
     }
 
     @ExceptionHandler(ThirdPartyApiException.class)
     protected ResponseEntity<Object> handleThirdPartyApiException(
-            @NonNull ThirdPartyApiException ex,
-            @NonNull WebRequest request
+            @NonNull ThirdPartyApiException ex
     ) {
         LOGGER.error("Some third party service is having trouble.", ex);
-        return handleBadRequest(ex, request);
+        return handleBadRequest(ex);
     }
 
     @ExceptionHandler({OAuth2AuthorizationException.class,
             OAuth2CodeExchangeException.class,
             OAuth2PropertiesParsingException.class})
     protected ResponseEntity<Object> handleOAuth2Exception(
-            @NonNull Exception ex,
-            @NonNull WebRequest request
+            @NonNull Exception ex
     ) {
         LOGGER.error("A part of OAuth2 Service threw an exception.", ex);
-        return handleBadRequest(ex, request);
+        return handleBadRequest(ex);
     } 
 
     @ExceptionHandler({SpecificDropboxException.class,
             GeneralDropboxException.class})
     protected ResponseEntity<Object> handleDropboxException(
-            @NonNull DropboxException ex,
-            @NonNull WebRequest request
+            @NonNull DropboxException ex
     ) {
         if (ex instanceof SpecificDropboxException) {
             LOGGER.error("A method specific exception was thrown by dropbox service.", ex);
@@ -91,35 +89,54 @@ public class CustomGlobalExceptionHandler extends ResponseEntityExceptionHandler
             LOGGER.error("General dropbox exception was thrown by dropbox service. "
                     + "This requires investigation.", ex);
         }
-        return handleBadRequest(ex, request);
+        return handleBadRequest(ex);
     } 
 
     @ExceptionHandler(FileSizeLimitExceededException.class)
     protected ResponseEntity<Object> handleFileSizeExceededException(
-            @NonNull FileSizeLimitExceededException ex,
+            @NonNull FileSizeLimitExceededException ex
+    ) {
+        Map<String, Object> body = new LinkedHashMap<>();
+
+        body.put("timestamp", LocalDateTime.now());
+        body.put("error", ex.getMessage());
+
+        return new ResponseEntity<>(body, HttpStatus.PAYLOAD_TOO_LARGE);
+    } 
+
+    @ExceptionHandler(AuthenticationException.class)
+    protected ResponseEntity<Object> handleAuthenticationException(
+            @NonNull Exception ex,
             @NonNull WebRequest request
     ) {
         Map<String, Object> body = new LinkedHashMap<>();
 
         body.put("timestamp", LocalDateTime.now());
-        body.put("status", HttpStatus.PAYLOAD_TOO_LARGE);
         body.put("error", ex.getMessage());
 
-        return handleExceptionInternal(ex, body, new HttpHeaders(), 
-                HttpStatus.PAYLOAD_TOO_LARGE, request);
+        return new ResponseEntity<>(body, HttpStatus.UNAUTHORIZED);
     } 
 
-    private ResponseEntity<Object> handleBadRequest(
+    @ExceptionHandler(Exception.class)
+    protected ResponseEntity<Object> handleGenericException(
             @NonNull Exception ex,
-            @NonNull WebRequest request) {
+            @NonNull WebRequest request
+    ) {
         Map<String, Object> body = new LinkedHashMap<>();
 
         body.put("timestamp", LocalDateTime.now());
-        body.put("status", HttpStatus.BAD_REQUEST);
         body.put("error", ex.getMessage());
 
-        return handleExceptionInternal(ex, body, new HttpHeaders(), 
-                HttpStatus.BAD_REQUEST, request);
+        return new ResponseEntity<>(body, HttpStatus.INTERNAL_SERVER_ERROR);
+    } 
+
+    private ResponseEntity<Object> handleBadRequest(@NonNull Exception ex) {
+        Map<String, Object> body = new LinkedHashMap<>();
+
+        body.put("timestamp", LocalDateTime.now());
+        body.put("error", ex.getMessage());
+
+        return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
     }
 
     private String getErrorMessage(ObjectError e) {

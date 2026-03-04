@@ -14,6 +14,7 @@ import com.unbidden.jvtaskmanagementsystem.dto.project.ProjectResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.project.UpdateProjectRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.project.UpdateProjectStatusRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.projectrole.UpdateProjectRoleRequestDto;
+import com.unbidden.jvtaskmanagementsystem.exception.EntityNotFoundException;
 import com.unbidden.jvtaskmanagementsystem.mapper.ProjectMapper;
 import com.unbidden.jvtaskmanagementsystem.model.Project;
 import com.unbidden.jvtaskmanagementsystem.model.Project.ProjectStatus;
@@ -22,6 +23,7 @@ import com.unbidden.jvtaskmanagementsystem.model.ProjectRole.ProjectRoleType;
 import com.unbidden.jvtaskmanagementsystem.model.User;
 import com.unbidden.jvtaskmanagementsystem.repository.ProjectRepository;
 import com.unbidden.jvtaskmanagementsystem.repository.ProjectRoleRepository;
+import com.unbidden.jvtaskmanagementsystem.repository.UserRepository;
 import com.unbidden.jvtaskmanagementsystem.security.project.ProjectSecurity;
 import com.unbidden.jvtaskmanagementsystem.service.DropboxService;
 import com.unbidden.jvtaskmanagementsystem.service.GoogleCalendarService;
@@ -36,6 +38,8 @@ public class ProjectServiceImpl implements ProjectService {
     private final ProjectRepository projectRepository;
 
     private final ProjectRoleRepository projectRoleRepository;
+
+    private final UserRepository userRepository;
 
     private final ProjectMapper projectMapper;
 
@@ -125,8 +129,20 @@ public class ProjectServiceImpl implements ProjectService {
                 requestDto.getStartDate(), requestDto.getEndDate());
         project.setName(requestDto.getName());
         project.setDescription(requestDto.getDescription());
-        project.setStartDate(requestDto.getStartDate());
-        project.setEndDate(requestDto.getEndDate());
+        if (requestDto.getStartDate() != null) {
+            if (requestDto.getStartDate().equals(LocalDate.now()) || requestDto.getStartDate().isAfter(LocalDate.now())) {
+                project.setStartDate(requestDto.getStartDate());
+            }
+        }
+        if (requestDto.getEndDate() != null) {
+            if (requestDto.getEndDate().isAfter(project.getStartDate()) && requestDto.getEndDate().isAfter(LocalDate.now())) {
+                project.setEndDate(requestDto.getEndDate());
+            } else {
+                throw new IllegalArgumentException("End date cannot be before start date.");
+            }
+        } else {
+            project.setEndDate(null);
+        }
         project.setPrivate(requestDto.isPrivate());
         updateProjectStatusAccordingToDate(project, false);
         return projectMapper.toProjectDto(projectRepository.save(project));
@@ -148,16 +164,17 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.ADMIN)
     public ProjectResponseDto addUserToProject(@NonNull User user,
-            @NonNull Long projectId, @NonNull Long userId) {
+            @NonNull Long projectId, @NonNull String username) {
         final Project project = entityUtil.getProjectById(projectId);
-        final User newProjectMember = entityUtil.getUserById(userId);
+        final User newProjectMember = userRepository.findByUsername(username)
+                .orElseThrow(() -> new EntityNotFoundException("User with username " + username + " does not exist."));
         final User authorizedUser = (entityUtil.isManager(user))
                 ? entityUtil.getProjectOwner(project) : user;
 
         if (!project.getProjectRoles().stream()
-                .filter(pr -> pr.getUser().getId().equals(userId))
+                .filter(pr -> pr.getUser().getId().equals(newProjectMember.getId()))
                 .toList().isEmpty()) {
-            throw new UnsupportedOperationException("User with id " + userId 
+            throw new UnsupportedOperationException("User " + username 
                     + " is already a member of project with id " + projectId);
         }
 

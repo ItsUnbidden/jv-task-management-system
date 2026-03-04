@@ -30,7 +30,7 @@ public interface ProjectService {
     public void deleteProject(@NonNull User user, @NonNull Long projectId);
 
     public ProjectResponseDto addUserToProject(@NonNull User user, @NonNull Long projectId,
-            @NonNull Long userId);
+            @NonNull String username);
 
     public ProjectResponseDto changeProjectMemberRole(@NonNull User user, @NonNull Long projectId,
             @NonNull Long userId, @NonNull UpdateProjectRoleRequestDto requestDto);

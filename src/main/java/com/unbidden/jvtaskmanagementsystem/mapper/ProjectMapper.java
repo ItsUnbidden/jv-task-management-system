@@ -31,6 +31,7 @@ public interface ProjectMapper {
 
     @AfterMapping
     default void mapUsername(@MappingTarget ProjectRoleDto dto, ProjectRole role) {
+        dto.setUserId(role.getUser().getId());
         dto.setUsername(role.getUser().getUsername());
     }
 }

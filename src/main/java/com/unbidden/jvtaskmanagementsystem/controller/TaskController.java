@@ -1,20 +1,6 @@
 package com.unbidden.jvtaskmanagementsystem.controller;
 
-import com.unbidden.jvtaskmanagementsystem.dto.task.CreateTaskRequestDto;
-import com.unbidden.jvtaskmanagementsystem.dto.task.TaskResponseDto;
-import com.unbidden.jvtaskmanagementsystem.dto.task.UpdateTaskRequestDto;
-import com.unbidden.jvtaskmanagementsystem.dto.task.UpdateTaskStatusRequestDto;
-import com.unbidden.jvtaskmanagementsystem.model.User;
-import com.unbidden.jvtaskmanagementsystem.service.TaskService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
-import java.util.List;
-import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.lang.NonNull;
@@ -29,6 +15,22 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.unbidden.jvtaskmanagementsystem.dto.task.CreateTaskRequestDto;
+import com.unbidden.jvtaskmanagementsystem.dto.task.TaskResponseDto;
+import com.unbidden.jvtaskmanagementsystem.dto.task.UpdateTaskRequestDto;
+import com.unbidden.jvtaskmanagementsystem.dto.task.UpdateTaskStatusRequestDto;
+import com.unbidden.jvtaskmanagementsystem.model.User;
+import com.unbidden.jvtaskmanagementsystem.service.TaskService;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor
@@ -53,7 +55,7 @@ public class TaskController {
                     description = "Unauthorized")
             }
     )
-    public List<TaskResponseDto> getTasksForUser(Authentication authentication,
+    public Page<TaskResponseDto> getTasksForUser(Authentication authentication,
             @Parameter(
                 description = "Pagination and sorting"
             )
@@ -85,7 +87,7 @@ public class TaskController {
                     description = "Forbidden. Possible only if project is private")
             }
     )
-    public List<TaskResponseDto> getTasksForUserInProjectById(Authentication authentication,
+    public Page<TaskResponseDto> getTasksForUserInProjectById(Authentication authentication,
             @Parameter(
                 description = "Project id"
             )
@@ -126,7 +128,7 @@ public class TaskController {
                     description = "Forbidden. Possible only if project is private")
             }
     )
-    public List<TaskResponseDto> getProjectTasks(Authentication authentication,
+    public Page<TaskResponseDto> getProjectTasks(Authentication authentication,
             @Parameter(
                 description = "Project id"
             )
@@ -196,7 +198,7 @@ public class TaskController {
                     description = "Forbidden. Possible only if project is private")
             }
     )
-    public List<TaskResponseDto> getTasksByLabelId(Authentication authentication,
+    public Page<TaskResponseDto> getTasksByLabelId(Authentication authentication,
             @Parameter(
                 description = "Label id"
             )

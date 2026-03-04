@@ -1,5 +1,12 @@
 package com.unbidden.jvtaskmanagementsystem.service.impl;
 
+import java.util.HashSet;
+import java.util.List;
+
+import org.springframework.data.domain.Pageable;
+import org.springframework.lang.NonNull;
+import org.springframework.stereotype.Service;
+
 import com.unbidden.jvtaskmanagementsystem.dto.label.CreateLabelRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.label.LabelResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.label.UpdateLabelRequestDto;
@@ -14,12 +21,8 @@ import com.unbidden.jvtaskmanagementsystem.repository.TaskRepository;
 import com.unbidden.jvtaskmanagementsystem.security.project.ProjectSecurity;
 import com.unbidden.jvtaskmanagementsystem.service.LabelService;
 import com.unbidden.jvtaskmanagementsystem.util.EntityUtil;
-import java.util.HashSet;
-import java.util.List;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Pageable;
-import org.springframework.lang.NonNull;
-import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
@@ -48,6 +51,16 @@ public class LabelServiceImpl implements LabelService {
             entityIdClass = Label.class)
     public LabelResponseDto getLabelById(@NonNull User user, @NonNull Long labelId) {
         return labelMapper.toDto(entityUtil.getLabelById(labelId));
+    }
+
+    @NonNull
+    @Override
+    @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true,
+            entityIdClass = Task.class)
+    public List<LabelResponseDto> getLabelForTask(@NonNull User user, @NonNull Long taskId) {
+        return labelRepository.findByTasksId(taskId).stream()
+                .map(labelMapper::toDto)
+                .toList();
     }
 
     @NonNull

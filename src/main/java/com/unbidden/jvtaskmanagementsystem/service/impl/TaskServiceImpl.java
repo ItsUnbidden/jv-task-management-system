@@ -1,5 +1,14 @@
 package com.unbidden.jvtaskmanagementsystem.service.impl;
 
+import java.time.LocalDate;
+import java.util.List;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.lang.NonNull;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.stereotype.Service;
+
 import com.unbidden.jvtaskmanagementsystem.dto.task.CreateTaskRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.task.TaskResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.task.UpdateTaskRequestDto;
@@ -11,6 +20,7 @@ import com.unbidden.jvtaskmanagementsystem.model.ProjectRole.ProjectRoleType;
 import com.unbidden.jvtaskmanagementsystem.model.Task;
 import com.unbidden.jvtaskmanagementsystem.model.Task.TaskStatus;
 import com.unbidden.jvtaskmanagementsystem.model.User;
+import com.unbidden.jvtaskmanagementsystem.repository.LabelRepository;
 import com.unbidden.jvtaskmanagementsystem.repository.ProjectRepository;
 import com.unbidden.jvtaskmanagementsystem.repository.TaskRepository;
 import com.unbidden.jvtaskmanagementsystem.security.project.ProjectSecurity;
@@ -18,14 +28,8 @@ import com.unbidden.jvtaskmanagementsystem.service.DropboxService;
 import com.unbidden.jvtaskmanagementsystem.service.GoogleCalendarService;
 import com.unbidden.jvtaskmanagementsystem.service.TaskService;
 import com.unbidden.jvtaskmanagementsystem.util.EntityUtil;
-import java.time.LocalDate;
-import java.util.HashSet;
-import java.util.List;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Pageable;
-import org.springframework.lang.NonNull;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
@@ -33,6 +37,8 @@ public class TaskServiceImpl implements TaskService {
     private final ProjectRepository projectRepository;
 
     private final TaskRepository taskRepository;
+
+    private final LabelRepository labelRepository;
 
     private final TaskMapper taskMapper;
 
@@ -44,40 +50,34 @@ public class TaskServiceImpl implements TaskService {
 
     @NonNull
     @Override
-    public List<TaskResponseDto> getTasksForUser(@NonNull User user, Pageable pageable) {
-        List<Task> tasks = taskRepository.findByAssigneeId(user.getId(), pageable);
+    public Page<TaskResponseDto> getTasksForUser(@NonNull User user, Pageable pageable) {
+        Page<Task> tasks = taskRepository.findByAssigneeId(user.getId(), pageable);
 
-        tasks.stream().forEach(t -> updateTaskStatusAccordingToDate(t, true));
-        return tasks.stream()
-                .map(taskMapper::toDto)
-                .toList();
+        tasks.forEach(t -> updateTaskStatusAccordingToDate(t, true));
+        return tasks.map(taskMapper::toDto);
     }
 
     @NonNull
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true)
-    public List<TaskResponseDto> getProjectTasks(@NonNull User user, @NonNull Long projectId,
+    public Page<TaskResponseDto> getProjectTasks(@NonNull User user, @NonNull Long projectId,
             Pageable pageable) {
-        List<Task> tasks = taskRepository.findByProjectId(projectId, pageable);
+        Page<Task> tasks = taskRepository.findByProjectId(projectId, pageable);
 
-        tasks.stream().forEach(t -> updateTaskStatusAccordingToDate(t, true));
-        return tasks.stream()
-                .map(taskMapper::toDto)
-                .toList();
+        tasks.forEach(t -> updateTaskStatusAccordingToDate(t, true));
+        return tasks.map(taskMapper::toDto);
     }
 
     @NonNull
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true)
-    public List<TaskResponseDto> getTasksForUserInProjectById(@NonNull User user,
+    public Page<TaskResponseDto> getTasksForUserInProjectById(@NonNull User user,
             @NonNull Long projectId, @NonNull Long userId, Pageable pageable) {
-        List<Task> tasks = taskRepository
+        Page<Task> tasks = taskRepository
                 .findByAssigneeIdAndByProjectId(userId, projectId, pageable);
         
-        tasks.stream().forEach(t -> updateTaskStatusAccordingToDate(t, true));
-        return tasks.stream()
-                .map(taskMapper::toDto)
-                .toList();
+        tasks.forEach(t -> updateTaskStatusAccordingToDate(t, true));
+        return tasks.map(taskMapper::toDto);
     }
 
     @NonNull
@@ -95,14 +95,12 @@ public class TaskServiceImpl implements TaskService {
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true,
             entityIdClass = Label.class)
-    public List<TaskResponseDto> getTasksByLabelId(@NonNull User user, @NonNull Long labelId,
+    public Page<TaskResponseDto> getTasksByLabelId(@NonNull User user, @NonNull Long labelId,
             Pageable pageable) {
-        List<Task> tasks = taskRepository.findByLabelId(labelId, pageable);
+        Page<Task> tasks = taskRepository.findByLabelId(labelId, pageable);
 
-        tasks.stream().forEach(t -> updateTaskStatusAccordingToDate(t, true));
-        return tasks.stream()
-                .map(taskMapper::toDto)
-                .toList();
+        tasks.forEach(t -> updateTaskStatusAccordingToDate(t, true));
+        return tasks.map(taskMapper::toDto);
     }
 
     @NonNull
@@ -117,9 +115,9 @@ public class TaskServiceImpl implements TaskService {
         Task task = taskMapper.toModel(requestDto);
         project.getTasks().add(task);
         task.setProject(project);
-        checkDateIsLigit(task);
+        checkDateIsLegit(task);
         task.setStatus(TaskStatus.NOT_STARTED);
-        task.setLabels(new HashSet<>());
+        task.setLabels(List.of());
         task.setAssignee((requestDto.getAssigneeId() == null) ? authorizedUser
                 : entityUtil.getUserById(requestDto.getAssigneeId()));
         task.setAmountOfMessages(0);
@@ -145,13 +143,14 @@ public class TaskServiceImpl implements TaskService {
         taskFromDb.setName(requestDto.getName());
         taskFromDb.setDescription(requestDto.getDescription());
         taskFromDb.setDueDate(requestDto.getDueDate());
-        checkDateIsLigit(taskFromDb);
+        checkDateIsLegit(taskFromDb);
         calendarService.changeTaskEventDueDate(authorizedUser, taskFromDb,
                 requestDto.getDueDate());
         taskFromDb.setPriority(requestDto.getPriority());
         if (requestDto.getNewAssigneeId() != null) {
             taskFromDb.setAssignee(entityUtil.getUserById(requestDto.getNewAssigneeId()));
         }
+        taskFromDb.setLabels(labelRepository.findAllById(requestDto.getLabelIds()));
         updateTaskStatusAccordingToDate(taskFromDb, false);
         return taskMapper.toDto(taskRepository.save(taskFromDb));
     }
@@ -177,7 +176,7 @@ public class TaskServiceImpl implements TaskService {
 
         if (!entityUtil.isManager(user) && !task.getAssignee().getId().equals(user.getId())) {
             throw new AccessDeniedException("Only user that is assigned to task " + taskId 
-                    + " can change it's status.");
+                    + " can change its status.");
         }
 
         task.setStatus(requestDto.getNewStatus());
@@ -209,7 +208,7 @@ public class TaskServiceImpl implements TaskService {
         }
     }
 
-    private void checkDateIsLigit(Task task) {
+    private void checkDateIsLegit(Task task) {
         if (task.getDueDate() != null) {
             if (task.getProject().getEndDate() == null) {
                 if (!task.getDueDate().isAfter(task.getProject().getStartDate())) {

@@ -1,14 +1,17 @@
 package com.unbidden.jvtaskmanagementsystem.repository;
 
-import com.unbidden.jvtaskmanagementsystem.model.User;
 import java.util.List;
 import java.util.Optional;
+
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.lang.NonNull;
 
+import com.unbidden.jvtaskmanagementsystem.model.User;
+
 public interface UserRepository extends JpaRepository<User, Long> {
     @NonNull
+    @Override
     @EntityGraph(attributePaths = "roles")
     Optional<User> findById(@NonNull Long id);
 
@@ -21,6 +24,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByEmail(@NonNull String email);
 
     @NonNull
+    @Override
     @EntityGraph(attributePaths = "roles")
     List<User> findAll();
 }

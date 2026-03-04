@@ -1,16 +1,19 @@
 package com.unbidden.jvtaskmanagementsystem.repository;
 
-import com.unbidden.jvtaskmanagementsystem.model.Project;
 import java.util.List;
 import java.util.Optional;
+
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.lang.NonNull;
 
+import com.unbidden.jvtaskmanagementsystem.model.Project;
+
 public interface ProjectRepository extends JpaRepository<Project, Long> {
     @NonNull
+    @Override
     @EntityGraph(attributePaths = {"projectRoles", "tasks", "projectCalendar"})
     Optional<Project> findById(@NonNull Long id);
 

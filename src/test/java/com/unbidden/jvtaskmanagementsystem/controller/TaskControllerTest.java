@@ -1,12 +1,40 @@
 package com.unbidden.jvtaskmanagementsystem.controller;
 
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
+import javax.sql.DataSource;
+
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.MediaType;
+import org.springframework.jdbc.datasource.init.ScriptUtils;
+import org.springframework.security.test.context.support.WithUserDetails;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.context.WebApplicationContext;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.unbidden.jvtaskmanagementsystem.dto.task.CreateTaskRequestDto;
@@ -28,32 +56,6 @@ import com.unbidden.jvtaskmanagementsystem.repository.ProjectRepository;
 import com.unbidden.jvtaskmanagementsystem.repository.RoleRepository;
 import com.unbidden.jvtaskmanagementsystem.repository.TaskRepository;
 import com.unbidden.jvtaskmanagementsystem.repository.UserRepository;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import javax.sql.DataSource;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.http.MediaType;
-import org.springframework.jdbc.datasource.init.ScriptUtils;
-import org.springframework.security.test.context.support.WithUserDetails;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.context.WebApplicationContext;
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 public class TaskControllerTest {
@@ -174,7 +176,7 @@ public class TaskControllerTest {
         task1.setDescription("description1");
         task1.setAssignee(user1);
         task1.setDueDate(LocalDate.now().plusDays(1));
-        task1.setLabels(Set.of(label));
+        task1.setLabels(List.of(label));
         task1.setPriority(TaskPriority.MEDIUM);
         task1.setStatus(TaskStatus.NOT_STARTED);
         task1.setProject(projectA);
@@ -186,7 +188,7 @@ public class TaskControllerTest {
         task2.setDescription("description2");
         task2.setAssignee(user2);
         task2.setDueDate(LocalDate.now().plusDays(2));
-        task2.setLabels(Set.of());
+        task2.setLabels(List.of());
         task2.setPriority(TaskPriority.MEDIUM);
         task2.setStatus(TaskStatus.NOT_STARTED);
         task2.setProject(projectA);
@@ -429,7 +431,7 @@ public class TaskControllerTest {
         task.setDescription("newDescription");
         task.setAssignee(users.get(2));
         task.setDueDate(LocalDate.now().plusDays(2));
-        task.setLabels(Set.of());
+        task.setLabels(List.of());
         task.setPriority(TaskPriority.MEDIUM);
         task.setStatus(TaskStatus.NOT_STARTED);
         task.setProject(projects.get(1));

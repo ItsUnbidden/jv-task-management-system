@@ -1,21 +1,8 @@
 package com.unbidden.jvtaskmanagementsystem.controller;
 
-import com.unbidden.jvtaskmanagementsystem.dto.auth.LoginRequestDto;
-import com.unbidden.jvtaskmanagementsystem.dto.user.UserResponseDto;
-import com.unbidden.jvtaskmanagementsystem.dto.user.UserUpdateDetailsRequestDto;
-import com.unbidden.jvtaskmanagementsystem.model.Role;
-import com.unbidden.jvtaskmanagementsystem.model.User;
-import com.unbidden.jvtaskmanagementsystem.service.UserService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Set;
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.lang.NonNull;
@@ -30,6 +17,22 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.unbidden.jvtaskmanagementsystem.dto.auth.LoginRequestDto;
+import com.unbidden.jvtaskmanagementsystem.dto.user.UserResponseDto;
+import com.unbidden.jvtaskmanagementsystem.dto.user.UserUpdateDetailsRequestDto;
+import com.unbidden.jvtaskmanagementsystem.model.Role;
+import com.unbidden.jvtaskmanagementsystem.model.User;
+import com.unbidden.jvtaskmanagementsystem.service.UserService;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/users")
@@ -48,10 +51,6 @@ public class UserController {
                         schema = @Schema(implementation = UserResponseDto.class)),
                     responseCode = "200",
                     description = "Current user"),
-                @ApiResponse(
-                    content = @Content(schema = @Schema(hidden = true)),
-                    responseCode = "400",
-                    description = "Invalid input"),
                 @ApiResponse(
                     content = @Content(schema = @Schema(hidden = true)),
                     responseCode = "401",

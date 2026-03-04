@@ -1,22 +1,7 @@
 package com.unbidden.jvtaskmanagementsystem.controller;
 
-import com.unbidden.jvtaskmanagementsystem.dto.project.CreateProjectRequestDto;
-import com.unbidden.jvtaskmanagementsystem.dto.project.ProjectResponseDto;
-import com.unbidden.jvtaskmanagementsystem.dto.project.UpdateProjectRequestDto;
-import com.unbidden.jvtaskmanagementsystem.dto.project.UpdateProjectStatusRequestDto;
-import com.unbidden.jvtaskmanagementsystem.dto.projectrole.UpdateProjectRoleRequestDto;
-import com.unbidden.jvtaskmanagementsystem.dto.task.TaskResponseDto;
-import com.unbidden.jvtaskmanagementsystem.model.User;
-import com.unbidden.jvtaskmanagementsystem.service.ProjectService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.lang.NonNull;
@@ -32,6 +17,24 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.unbidden.jvtaskmanagementsystem.dto.project.CreateProjectRequestDto;
+import com.unbidden.jvtaskmanagementsystem.dto.project.ProjectResponseDto;
+import com.unbidden.jvtaskmanagementsystem.dto.project.UpdateProjectRequestDto;
+import com.unbidden.jvtaskmanagementsystem.dto.project.UpdateProjectStatusRequestDto;
+import com.unbidden.jvtaskmanagementsystem.dto.projectrole.UpdateProjectRoleRequestDto;
+import com.unbidden.jvtaskmanagementsystem.dto.task.TaskResponseDto;
+import com.unbidden.jvtaskmanagementsystem.model.User;
+import com.unbidden.jvtaskmanagementsystem.service.ProjectService;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/projects")
@@ -230,7 +233,7 @@ public class ProjectController {
         projectService.deleteProject((User)authentication.getPrincipal(), id);
     }
 
-    @PostMapping("/{projectId}/users/{userId}/add")
+    @PostMapping("/{projectId}/users/{username}/add")
     @Operation(
             summary = "Add new user to project",
             description = "Behavior may depend on whether the user has "
@@ -262,11 +265,11 @@ public class ProjectController {
             )
             @NonNull @PathVariable Long projectId,
             @Parameter(
-                description = "User id"
+                description = "Username"
             )
-            @NonNull @PathVariable Long userId) {
+            @NonNull @PathVariable String username) {
         return projectService.addUserToProject((User)authentication.getPrincipal(),
-                projectId, userId);
+                projectId, username);
     }
 
     @DeleteMapping("/{projectId}/users/{userId}/remove")
@@ -389,7 +392,7 @@ public class ProjectController {
     @Operation(
             summary = "Change project status",
             description = "Only available to project CREATOR. Allowed values are "
-                    + "<IN_PROGRESS> or <COMPLETED>",
+                    + "<NOT_STARTED>, <IN_PROGRESS> and <COMPLETED>",
             responses = {
                 @ApiResponse(
                     content = @Content(

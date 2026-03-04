@@ -1,5 +1,11 @@
 package com.unbidden.jvtaskmanagementsystem.controller;
 
+import org.springframework.lang.NonNull;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.unbidden.jvtaskmanagementsystem.dto.auth.LoginRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.auth.LoginResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.auth.RegistrationRequest;
@@ -7,19 +13,17 @@ import com.unbidden.jvtaskmanagementsystem.dto.user.UserResponseDto;
 import com.unbidden.jvtaskmanagementsystem.exception.RegistrationException;
 import com.unbidden.jvtaskmanagementsystem.security.AuthenticationService;
 import com.unbidden.jvtaskmanagementsystem.service.UserService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.lang.NonNull;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/auth")
@@ -79,11 +83,25 @@ public class AuthController {
                     description = "Unauthorized")
             }
     )
-    public LoginResponseDto login(
+    public void login(
+            @NonNull HttpServletResponse response,
             @Parameter(
                 description = "User credentials"
             )
             @NonNull @Valid @RequestBody LoginRequestDto request) {
-        return authService.authenticate(request);
+        authService.authenticate(request, response);
+    }
+
+    @PostMapping("/refresh")
+    public void refreshAccessToken(
+            @NonNull HttpServletRequest request, @NonNull HttpServletResponse response) {
+        authService.refreshToken(request, response);
+    }
+
+    @PostMapping("/logout")
+    public void logout(
+            @NonNull HttpServletRequest request,
+            @NonNull HttpServletResponse response) {
+        authService.logout(request, response);
     }
 }

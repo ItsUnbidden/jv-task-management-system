@@ -1,9 +1,12 @@
 package com.unbidden.jvtaskmanagementsystem.dto.project;
 
-import com.unbidden.jvtaskmanagementsystem.dto.projectrole.ProjectRoleDto;
-import com.unbidden.jvtaskmanagementsystem.model.Project.ProjectStatus;
 import java.time.LocalDate;
 import java.util.Set;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.unbidden.jvtaskmanagementsystem.dto.projectrole.ProjectRoleDto;
+import com.unbidden.jvtaskmanagementsystem.model.Project.ProjectStatus;
+
 import lombok.Data;
 
 @Data
@@ -22,9 +25,12 @@ public class ProjectResponseDto {
     
     private Set<ProjectRoleDto> projectRoles;
 
+    @JsonProperty("isPrivate")
     private boolean isPrivate;
 
+    @JsonProperty("isDropboxConnected")
     private boolean isDropboxConnected;
 
+    @JsonProperty("isCalendarConnected")
     private boolean isCalendarConnected;
 }
