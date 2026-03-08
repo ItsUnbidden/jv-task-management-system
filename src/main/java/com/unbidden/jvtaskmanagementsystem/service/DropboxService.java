@@ -1,13 +1,15 @@
 package com.unbidden.jvtaskmanagementsystem.service;
 
+import java.io.OutputStream;
+
+import org.springframework.lang.NonNull;
+import org.springframework.web.multipart.MultipartFile;
+
 import com.dropbox.core.v2.check.EchoResult;
 import com.dropbox.core.v2.files.FileMetadata;
 import com.unbidden.jvtaskmanagementsystem.model.Project;
 import com.unbidden.jvtaskmanagementsystem.model.Task;
 import com.unbidden.jvtaskmanagementsystem.model.User;
-import java.io.OutputStream;
-import org.springframework.lang.NonNull;
-import org.springframework.web.multipart.MultipartFile;
 
 public interface DropboxService {
     void createSharedProjectFolder(@NonNull User user, @NonNull Project project);
@@ -31,8 +33,10 @@ public interface DropboxService {
     FileMetadata uploadFileInTaskFolder(@NonNull User user, @NonNull Task task,
             @NonNull MultipartFile file);
 
-    FileMetadata downloadFile(@NonNull User user,@NonNull String dropboxId,
+    FileMetadata downloadFile(@NonNull User user, @NonNull String dropboxId,
             @NonNull OutputStream os);
+
+    void deleteFile(@NonNull User user, @NonNull String dropboxId);
 
     EchoResult testDropboxUserConnection(@NonNull User user);
 

@@ -1,8 +1,25 @@
 package com.unbidden.jvtaskmanagementsystem.controller;
 
+import java.io.IOException;
+import java.util.List;
+
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
 import com.unbidden.jvtaskmanagementsystem.dto.attachment.AttachmentDto;
 import com.unbidden.jvtaskmanagementsystem.model.User;
 import com.unbidden.jvtaskmanagementsystem.service.AttachmentService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -10,19 +27,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.util.List;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/attachments")
@@ -96,7 +102,7 @@ public class AttachmentController {
             @Parameter(
                 description = "File that will be uploaded"
             )
-            @NonNull @RequestParam("file") MultipartFile file) throws IOException {
+            @NonNull @RequestParam() MultipartFile file) throws IOException {
         return attachmentService.upload((User)authentication.getPrincipal(), taskId, file);
     }
     
@@ -126,5 +132,11 @@ public class AttachmentController {
             )
             @NonNull @PathVariable Long attachmentId) {
         attachmentService.download((User)authentication.getPrincipal(), response, attachmentId);
+    }
+
+    @DeleteMapping("/{attachmentId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(Authentication authentication, @NonNull @PathVariable Long attachmentId) {
+        attachmentService.delete((User)authentication.getPrincipal(), attachmentId);
     }
 }

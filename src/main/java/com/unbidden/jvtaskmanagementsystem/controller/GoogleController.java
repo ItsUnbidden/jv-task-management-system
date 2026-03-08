@@ -1,14 +1,5 @@
 package com.unbidden.jvtaskmanagementsystem.controller;
 
-import com.unbidden.jvtaskmanagementsystem.dto.google.GoogleSuccessfulTestResponseDto;
-import com.unbidden.jvtaskmanagementsystem.model.User;
-import com.unbidden.jvtaskmanagementsystem.service.GoogleCalendarService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -17,12 +8,31 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.unbidden.jvtaskmanagementsystem.dto.google.GoogleSuccessfulTestResponseDto;
+import com.unbidden.jvtaskmanagementsystem.dto.oauth2.OAuth2StatusResponseDto;
+import com.unbidden.jvtaskmanagementsystem.model.ClientRegistration;
+import com.unbidden.jvtaskmanagementsystem.model.User;
+import com.unbidden.jvtaskmanagementsystem.service.GoogleCalendarService;
+import com.unbidden.jvtaskmanagementsystem.service.oauth2.OAuth2Service;
+import com.unbidden.jvtaskmanagementsystem.util.EntityUtil;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/google")
 @Tag(name = "Exclusively google related methods")
 public class GoogleController {
     private final GoogleCalendarService calendarService;
+
+    private final OAuth2Service oauth2Service;
+
+    private final EntityUtil entityUtil;
     
     @GetMapping("/test")
     @Operation(
@@ -77,5 +87,12 @@ public class GoogleController {
     )
     public void logout(Authentication authentication) {
         calendarService.logout((User)authentication.getPrincipal());
+    }
+
+    @GetMapping("/status")
+    public OAuth2StatusResponseDto getStatus(Authentication authentication) {
+        final ClientRegistration clientRegistration = entityUtil.getClientRegistrationByName("google");
+
+        return oauth2Service.checkStatus((User)authentication.getPrincipal(), clientRegistration);
     }
 }

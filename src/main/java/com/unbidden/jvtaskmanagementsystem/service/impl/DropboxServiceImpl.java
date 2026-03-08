@@ -107,7 +107,7 @@ public class DropboxServiceImpl implements DropboxService {
                         + "'s folder on dropbox. Project will be deleted regardless. "
                         + "This might have happened because project folder does not exist.", e);
             } catch (DbxException e) {
-                throw new GeneralDropboxException("General dropbox exception was thrown.", e);
+                throw new GeneralDropboxException("A general dropbox exception was thrown.", e);
             }
         }
     }
@@ -133,7 +133,7 @@ public class DropboxServiceImpl implements DropboxService {
                         + task.getId() + ". Task will be deleted regardless. "
                         + "This might have happened because task folder does not exist.", e);
             } catch (DbxException e) {
-                throw new GeneralDropboxException("General dropbox exception was thrown.", e);
+                throw new GeneralDropboxException("A general dropbox exception was thrown.", e);
             }
         }
     }
@@ -185,7 +185,7 @@ public class DropboxServiceImpl implements DropboxService {
                             + "'s folder.", e);
                 }   
             } catch (DbxException e) {
-                throw new GeneralDropboxException("General dropbox exception was thrown.", e);
+                throw new GeneralDropboxException("A general dropbox exception was thrown.", e);
             }
         }
     }
@@ -216,7 +216,7 @@ public class DropboxServiceImpl implements DropboxService {
                 throw new SpecificDropboxException("Unable to transfer project " 
                         + project.getId() + "'s folder to user " + newOwner.getId() + ".", e);
             } catch (DbxException e) {
-                throw new GeneralDropboxException("General dropbox exception was thrown.", e);
+                throw new GeneralDropboxException("A general dropbox exception was thrown.", e);
             }
         }
     }
@@ -272,7 +272,7 @@ public class DropboxServiceImpl implements DropboxService {
                 throw new SpecificDropboxException("Unable to upload a file "
                         + file.getOriginalFilename() + " to dropbox.", e);
             } catch (DbxException e) {
-                throw new GeneralDropboxException("General dropbox exception was thrown.", e);
+                throw new GeneralDropboxException("A general dropbox exception was thrown.", e);
             } catch (IOException e) {
                 throw new ThirdPartyApiException("Dropbox client was unable to read the byte array "
                         + "or it is unaccessable.", e);
@@ -295,10 +295,24 @@ public class DropboxServiceImpl implements DropboxService {
             throw new SpecificDropboxException("Unable to download a file " + dropboxId
                     + " from dropbox.", e);
         } catch (DbxException e) {
-            throw new GeneralDropboxException("General dropbox exception was thrown.", e);
+            throw new GeneralDropboxException("A general dropbox exception was thrown.", e);
         } catch (IOException e) {
             throw new ThirdPartyApiException("Dropbox client was unable to write to "
                     + "the output stream.", e);
+        }
+    }
+
+    @Override
+    @NonNull
+    public void deleteFile(User user, String dropboxId) {
+        final DbxClientV2 dbxClient = getDbxClient(user);
+
+        try {
+            dbxClient.files().deleteV2(dropboxId);
+        } catch (DeleteErrorException e1) {
+            throw new SpecificDropboxException("Unable to delete a file. You might need to manually delete the file from Dropbox.", e1);
+        } catch (DbxException e2) {
+            throw new GeneralDropboxException("A general dropbox exception was thrown.", e2);
         }
     }
 
@@ -313,7 +327,7 @@ public class DropboxServiceImpl implements DropboxService {
         } catch (DbxApiException e) {
             throw new SpecificDropboxException("Unable to test dropbox.", e);
         } catch (DbxException e) {
-            throw new GeneralDropboxException("General dropbox exception was thrown.", e);
+            throw new GeneralDropboxException("A general dropbox exception was thrown.", e);
         }
     }
     
@@ -331,7 +345,7 @@ public class DropboxServiceImpl implements DropboxService {
             } catch (DbxApiException e) {
                 throw new SpecificDropboxException("Unable to logout.", e);
             } catch (DbxException e) {
-                throw new GeneralDropboxException("General dropbox exception was thrown.", e);
+                throw new GeneralDropboxException("A general dropbox exception was thrown.", e);
             }
         } catch (OAuth2AuthorizedClientLoadingException e) {
             throw new UnsupportedOperationException("Unable to logout because user is not "
@@ -398,7 +412,7 @@ public class DropboxServiceImpl implements DropboxService {
             throw new SpecificDropboxException("Unable to create shared folder for project "
                     + project.getId() + ".", e);
         } catch (DbxException e) {
-            throw new GeneralDropboxException("General dropbox exception was thrown.", e);
+            throw new GeneralDropboxException("A general dropbox exception was thrown.", e);
         }
     }
 
@@ -413,7 +427,7 @@ public class DropboxServiceImpl implements DropboxService {
             throw new SpecificDropboxException("Unable to create a folder for task "
                     + task.getId(), e);
         } catch (DbxException e) {
-            throw new GeneralDropboxException("General dropbox exception was thrown.", e);
+            throw new GeneralDropboxException("A general dropbox exception was thrown.", e);
         }
     }
 
@@ -436,7 +450,7 @@ public class DropboxServiceImpl implements DropboxService {
                     + project.getId() + "'s shared folder for newly added user "
                     + authorizedClient.getUser().getId() + ".", e);
         } catch (DbxException e) {
-            throw new GeneralDropboxException("General dropbox exception was thrown.", e);
+            throw new GeneralDropboxException("A general dropbox exception was thrown.", e);
         }    
     }
 

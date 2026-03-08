@@ -1,13 +1,16 @@
 package com.unbidden.jvtaskmanagementsystem.service.oauth2;
 
+import org.springframework.lang.NonNull;
+
+import com.unbidden.jvtaskmanagementsystem.dto.oauth2.OAuth2StatusResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.oauth2.OAuth2SuccessResponse;
 import com.unbidden.jvtaskmanagementsystem.exception.EntityNotFoundException;
 import com.unbidden.jvtaskmanagementsystem.exception.oauth2.OAuth2AuthorizedClientLoadingException;
 import com.unbidden.jvtaskmanagementsystem.model.ClientRegistration;
 import com.unbidden.jvtaskmanagementsystem.model.OAuth2AuthorizedClient;
 import com.unbidden.jvtaskmanagementsystem.model.User;
+
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.lang.NonNull;
 
 public interface OAuth2Service {
     /**
@@ -19,10 +22,10 @@ public interface OAuth2Service {
      * @param user that initiated the request
      * @param response for redirecting
      * @param clientRegistration contains required provider data
-     * @param origin of the initial request if any
+     * @param returnUrl of the initial request
      */
     void authorize(@NonNull User user, @NonNull HttpServletResponse response,
-            @NonNull ClientRegistration clientRegistration);
+            @NonNull ClientRegistration clientRegistration, @NonNull String returnUrl);
 
     /**
      * This method proccesses OAuth2 response from authorization server after
@@ -67,4 +70,6 @@ public interface OAuth2Service {
      */
     OAuth2AuthorizedClient getAuthorizedClientForUser(@NonNull User user,
             @NonNull ClientRegistration clientRegistration);
+
+    OAuth2StatusResponseDto checkStatus(@NonNull User user, @NonNull ClientRegistration clientRegistration);    
 }

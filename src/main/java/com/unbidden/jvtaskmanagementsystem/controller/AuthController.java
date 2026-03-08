@@ -1,6 +1,7 @@
 package com.unbidden.jvtaskmanagementsystem.controller;
 
 import org.springframework.lang.NonNull;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -98,7 +99,7 @@ public class AuthController {
         authService.refreshToken(request, response);
     }
 
-    @PostMapping("/logout")
+    @DeleteMapping("/logout")
     public void logout(
             @NonNull HttpServletRequest request,
             @NonNull HttpServletResponse response) {

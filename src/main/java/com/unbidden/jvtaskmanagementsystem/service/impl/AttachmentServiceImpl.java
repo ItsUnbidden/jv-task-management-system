@@ -1,5 +1,14 @@
 package com.unbidden.jvtaskmanagementsystem.service.impl;
 
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.List;
+
+import org.springframework.data.domain.Pageable;
+import org.springframework.lang.NonNull;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
 import com.dropbox.core.v2.files.FileMetadata;
 import com.unbidden.jvtaskmanagementsystem.dto.attachment.AttachmentDto;
 import com.unbidden.jvtaskmanagementsystem.exception.FileSizeLimitExceededException;
@@ -13,15 +22,11 @@ import com.unbidden.jvtaskmanagementsystem.security.project.ProjectSecurity;
 import com.unbidden.jvtaskmanagementsystem.service.AttachmentService;
 import com.unbidden.jvtaskmanagementsystem.service.DropboxService;
 import com.unbidden.jvtaskmanagementsystem.util.EntityUtil;
+import com.unbidden.jvtaskmanagementsystem.util.HttpClientUtil.HeaderNames;
+import com.unbidden.jvtaskmanagementsystem.util.HttpClientUtil.HeaderValues;
+
 import jakarta.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Pageable;
-import org.springframework.lang.NonNull;
-import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
@@ -56,8 +61,8 @@ public class AttachmentServiceImpl implements AttachmentService {
         final User authorizedUser = (entityUtil.isManager(user)
                 ? entityUtil.getProjectOwner(attachment.getTask().getProject()) : user);
 
-        response.setContentType("application/octet-stream");
-        response.setHeader("Content-Disposition", "attachment; filename="
+        response.setContentType(HeaderValues.OCTET_STREAM);
+        response.setHeader(HeaderNames.CONTENT_DISPOSITION, "attachment; filename="
                 + attachment.getFilename());
         try {
             dropboxService.downloadFile(authorizedUser, attachment.getDropboxId(),
@@ -93,5 +98,16 @@ public class AttachmentServiceImpl implements AttachmentService {
         attachment.setDropboxId(meta.getId());
         attachment.setUploadDate(LocalDateTime.now());
         return attachmentMapper.toDto(attachmentRepository.save(attachment));
+    }
+
+    @Override
+    public void delete(User user, Long attachmentId) {
+        final Attachment attachment = entityUtil.getAttachmentById(attachmentId);
+        final User authorizedUser = (entityUtil.isManager(user)
+                ? entityUtil.getProjectOwner(attachment.getTask().getProject()) : user);
+
+        attachmentRepository.delete(attachment);
+
+        dropboxService.deleteFile(authorizedUser, attachment.getDropboxId());
     }
 }

@@ -20,6 +20,7 @@ import com.unbidden.jvtaskmanagementsystem.util.JwtUtil;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
@@ -38,6 +39,7 @@ public class AuthenticationService {
     @Value("${jwt.refresh-expiration-hours}")
     private Long refreshTokenExpirationHours;
 
+    @Transactional
     public void authenticate(@NonNull LoginRequestDto requestDto, @NonNull HttpServletResponse response) {
         LOGGER.info("User " + requestDto.getUsername() + " is trying to authenticate.");
         final Authentication authentication = authManager.authenticate(
@@ -52,6 +54,7 @@ public class AuthenticationService {
         response.addCookie(jwtUtil.getAccessTokenCookie(jwtUtil.generateToken(authentication.getName())));
     }
 
+    @Transactional
     public void refreshToken(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response) {
         final Optional<String> refreshTokenOpt = jwtUtil.getRefreshTokenFromCookie(request);
 
@@ -91,11 +94,12 @@ public class AuthenticationService {
         response.addCookie(jwtUtil.getRefreshTokenCookie(newRefreshTokenStr));
     }
 
+    @Transactional
     public void logout(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response) {
         final Optional<String> refreshTokenOpt = jwtUtil.getRefreshTokenFromCookie(request);
 
         if (refreshTokenOpt.isPresent()) {
-            refreshJwtRepository.deleteByToken(jwtUtil.hashRefreshToken(refreshTokenOpt.get()));
+            refreshJwtRepository.deleteByToken(refreshTokenOpt.get());
         }
         response.addCookie(jwtUtil.getAccessTokenRemoveCookie());
         response.addCookie(jwtUtil.getRefreshTokenRemoveCookie());
