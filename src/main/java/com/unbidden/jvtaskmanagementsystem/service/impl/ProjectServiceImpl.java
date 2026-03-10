@@ -272,6 +272,20 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
+    public void joinDropbox(User user, Long projectId) {
+        final Project project = entityUtil.getProjectById(projectId);
+        final boolean isProjectMember = !project.getProjectRoles().stream()
+                .filter(pr -> pr.getUser().equals(user))
+                .toList().isEmpty();
+
+        if (!isProjectMember) {
+            throw new UnsupportedOperationException("Only project members "
+                    + "can call this endpoint.");
+        }
+        dropboxService.joinDropbox(user, project);
+    }
+
+    @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR)
     public void joinCalendar(User user, Long projectId) {
         final Project project = entityUtil.getProjectById(projectId);

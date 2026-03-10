@@ -30,6 +30,8 @@ public interface DropboxService {
 
     void connectProjectToDropbox(@NonNull User user, @NonNull Project project);
 
+    void joinDropbox(@NonNull User user, @NonNull Project project);
+
     FileMetadata uploadFileInTaskFolder(@NonNull User user, @NonNull Task task,
             @NonNull MultipartFile file);
 

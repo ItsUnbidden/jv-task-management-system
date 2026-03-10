@@ -49,5 +49,7 @@ public interface ProjectService {
     public ProjectResponseDto connectProjectToCalendar(@NonNull User user,
             @NonNull Long projectId);
 
+    public void joinDropbox(@NonNull User user, @NonNull Long projectId);
+
     public void joinCalendar(@NonNull User user, @NonNull Long projectId);
 }

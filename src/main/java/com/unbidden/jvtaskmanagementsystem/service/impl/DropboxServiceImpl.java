@@ -69,6 +69,8 @@ public class DropboxServiceImpl implements DropboxService {
 
     private final String dropboxRootPath;
 
+    private final EntityUtil entityUtil;
+
     public DropboxServiceImpl(@Autowired EntityUtil entityUtil,
             @Autowired OAuth2Service oauthService,
             @Autowired ProjectRoleRepository projectRoleRepository,
@@ -78,6 +80,7 @@ public class DropboxServiceImpl implements DropboxService {
         this.oauthService = oauthService;
         this.projectRoleRepository = projectRoleRepository;
         this.dbxRequestConfig = dbxRequestConfig;
+        this.entityUtil = entityUtil;
         this.dropboxRootPath = dropboxRootPath;
     }
 
@@ -231,26 +234,39 @@ public class DropboxServiceImpl implements DropboxService {
         final DbxClientV2 dbxClient = getDbxClient(user);
         List<OAuth2AuthorizedClient> authorizedClients = new ArrayList<>();
 
-        for (ProjectRole projectRole : project.getProjectRoles()) {
-            if (!projectRole.getRoleType().equals(ProjectRoleType.CREATOR)) {
+        project.getProjectRoles().forEach(pr -> {
+            if (!pr.getRoleType().equals(ProjectRoleType.CREATOR)) {
                 try {
-                    authorizedClients.add(oauthService.loadAuthorizedClient(projectRole.getUser(),
-                            clientRegistration));
+                    authorizedClients.add(oauthService.loadAuthorizedClient(pr.getUser(), clientRegistration));
+                    pr.setDropboxConnected(true);
                 } catch (OAuth2AuthorizedClientLoadingException e) {
-                    throw new UnsupportedOperationException("User " + projectRole.getUser()
-                            .getId() + " is missing valid authorized client and is a member of "
-                            + "project " + project.getId() + ". Therefore project "
-                            + project.getId() + " cannot be connected to dropbox until the user"
-                            + " logs in or is removed.", e);
+                    LOGGER.warn("Unable to load authorized client for user %s. They will be "
+                            + "excluded from Dropbox integration in this project.".formatted(pr.getUser().getUsername()));
                 }
+            } else {
+                pr.setDropboxConnected(true);
             }
-        }
+        });
         createSharedProjectFolder0(dbxClient, project);
         for (Task task : project.getTasks()) {
             createTaskFolder0(dbxClient, task);
         }
-        for (OAuth2AuthorizedClient authorizedClient : authorizedClients) {
-            addUserByAuthorizedClientToDropboxFolder(dbxClient, authorizedClient, project);
+        authorizedClients.forEach(ac -> addUserByAuthorizedClientToDropboxFolder(dbxClient, ac, project));
+        projectRoleRepository.saveAll(project.getProjectRoles());
+    }
+
+    @Override
+    public void joinDropbox(@NonNull User user, @NonNull Project project) {
+        if (project.isDropboxConnected()) {
+            final ProjectRole projectRole = entityUtil.getProjectRoleByProjectIdAndUserId(project.getId(), user.getId());
+
+            if (projectRole.isDropboxConnected()) {
+                throw new UnsupportedOperationException("No need to join Dropbox in this project, because the user %s is already connected.".formatted(user.getUsername()));
+            }
+            final User projectOwner = entityUtil.getProjectOwner(project);
+            final DbxClientV2 dbxClient = getDbxClient(projectOwner);
+
+            addUserByAuthorizedClientToDropboxFolder(dbxClient, getAuthorizedClient(user), project);
         }
     }
 

@@ -41,6 +41,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @Tag(name = "Project related methods")
 public class ProjectController {
+
     private final ProjectService projectService;
 
     @GetMapping("/{id}")
@@ -461,6 +462,11 @@ public class ProjectController {
             @NonNull @PathVariable Long projectId) {
         return projectService.connectProjectToDropbox((User)authentication.getPrincipal(),
                 projectId);
+    }
+
+    @PatchMapping("/{projectId}/dropbox/join")
+    public void joinDropbox(Authentication authentication, @NonNull @PathVariable Long projectId) {
+        projectService.joinDropbox((User)authentication.getPrincipal(), projectId);
     }
 
     @PatchMapping("/{projectId}/calendar/connect")
