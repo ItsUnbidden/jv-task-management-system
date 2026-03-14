@@ -203,6 +203,7 @@ public class ProjectServiceImpl implements ProjectService {
         removeUserFromProject0(user, projectId, user.getId());
     }
 
+    @NonNull
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.CREATOR)
     public ProjectResponseDto changeStatus(@NonNull User user, @NonNull Long projectId,
@@ -272,6 +273,7 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
+    @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR)
     public void joinDropbox(User user, Long projectId) {
         final Project project = entityUtil.getProjectById(projectId);
         final boolean isProjectMember = !project.getProjectRoles().stream()
@@ -298,6 +300,30 @@ public class ProjectServiceImpl implements ProjectService {
                     + "can call this endpoint.");
         }
         calendarService.joinCalendar(user, project);
+    }
+
+    @NonNull
+    @Override
+    @ProjectSecurity(securityLevel = ProjectRoleType.CREATOR)
+    public ProjectResponseDto disconnectDropbox(User user, Long projectId) {
+        final Project project = entityUtil.getProjectById(projectId);
+
+        dropboxService.deleteProjectFolder(user, project);
+        project.setDropboxProjectFolderId(null);
+        project.setDropboxProjectSharedFolderId(null);
+
+        return projectMapper.toProjectDto(projectRepository.save(project));
+    }
+
+    @NonNull
+    @Override
+    @ProjectSecurity(securityLevel = ProjectRoleType.CREATOR)
+    public ProjectResponseDto disconnectCalendar(User user, Long projectId) {
+        final Project project = entityUtil.getProjectById(projectId);
+
+        calendarService.deleteProjectCalendar(user, project);
+        project.setProjectCalendar(null);
+        return projectMapper.toProjectDto(projectRepository.save(project));
     }
 
     private void updateProjectStatusAccordingToDate(Project project, boolean doSave) {

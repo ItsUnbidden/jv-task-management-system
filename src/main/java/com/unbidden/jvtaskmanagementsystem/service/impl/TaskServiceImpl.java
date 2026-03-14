@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.lang.NonNull;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -13,11 +14,13 @@ import com.unbidden.jvtaskmanagementsystem.dto.task.CreateTaskRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.task.TaskResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.task.UpdateTaskRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.task.UpdateTaskStatusRequestDto;
+import com.unbidden.jvtaskmanagementsystem.dto.task.specification.TaskFilterDto;
 import com.unbidden.jvtaskmanagementsystem.mapper.TaskMapper;
 import com.unbidden.jvtaskmanagementsystem.model.Label;
 import com.unbidden.jvtaskmanagementsystem.model.Project;
 import com.unbidden.jvtaskmanagementsystem.model.ProjectRole.ProjectRoleType;
 import com.unbidden.jvtaskmanagementsystem.model.Task;
+import com.unbidden.jvtaskmanagementsystem.model.Task.TaskPriority;
 import com.unbidden.jvtaskmanagementsystem.model.Task.TaskStatus;
 import com.unbidden.jvtaskmanagementsystem.model.User;
 import com.unbidden.jvtaskmanagementsystem.repository.LabelRepository;
@@ -29,6 +32,7 @@ import com.unbidden.jvtaskmanagementsystem.service.GoogleCalendarService;
 import com.unbidden.jvtaskmanagementsystem.service.TaskService;
 import com.unbidden.jvtaskmanagementsystem.util.EntityUtil;
 
+import jakarta.persistence.criteria.Join;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -101,6 +105,24 @@ public class TaskServiceImpl implements TaskService {
 
         tasks.forEach(t -> updateTaskStatusAccordingToDate(t, true));
         return tasks.map(taskMapper::toDto);
+    }
+
+    @NonNull 
+    @Override
+    @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true)
+    public Page<TaskResponseDto> getTasksInProjectBySpecification(@NonNull User user, @NonNull Long projectId,
+            @NonNull TaskFilterDto filterDto, Pageable pageable) {
+        Specification<Task> specification = Specification.unrestricted();
+
+        specification = specification.and(TaskSpecifications.hasStatus(filterDto.getStatus()))
+                .and(TaskSpecifications.isInProject(projectId))
+                .and(TaskSpecifications.isAssignedTo(filterDto.getAssigneeId()))
+                .and(TaskSpecifications.hasPriority(filterDto.getPriority()))
+                .and(TaskSpecifications.isAfterDueDate(filterDto.getDueDateFrom()))
+                .and(TaskSpecifications.isBeforeDueDate(filterDto.getDueDateTo()))
+                .and(TaskSpecifications.hasAnyLabels(filterDto.getLabelIds()));
+        final Page<TaskResponseDto> tasks = taskRepository.findAll(specification, pageable).map(taskMapper::toDto);
+        return tasks;
     }
 
     @NonNull
@@ -229,6 +251,42 @@ public class TaskServiceImpl implements TaskService {
                             + "start and end dates.");
                 }
             }
+        }
+    }
+
+    private static class TaskSpecifications {
+        public static Specification<Task> isAssignedTo(Long userId) {
+            return (root, query, cb) -> (userId == null) ? null : cb.equal(root.get("assignee").get("id"), userId);
+        }
+
+        public static Specification<Task> isInProject(Long projectId) {
+            return (root, query, cb) -> (projectId == null) ? null : cb.equal(root.get("project").get("id"), projectId);
+        }
+
+        public static Specification<Task> hasStatus(TaskStatus status) {
+            return (root, query, cb) -> (status == null) ? null : cb.equal(root.get("status"), status);
+        }
+
+        public static Specification<Task> hasPriority(TaskPriority priority) {
+            return (root, query, cb) -> (priority == null) ? null : cb.equal(root.get("priority"), priority);
+        }
+
+        public static Specification<Task> isAfterDueDate(LocalDate dueDate) {
+            return (root, query, cb) -> (dueDate == null) ? null : cb.greaterThanOrEqualTo(root.get("dueDate"), dueDate);
+        }
+
+        public static Specification<Task> isBeforeDueDate(LocalDate dueDate) {
+            return (root, query, cb) -> (dueDate == null) ? null : cb.lessThanOrEqualTo(root.get("dueDate"), dueDate);
+        }
+
+        public static Specification<Task> hasAnyLabels(List<Long> labelIds) {
+            return (root, query, cb) -> {
+                if (labelIds == null) return null;
+
+                query.distinct(true);
+                final Join<Task, Label> labelsJoin = root.join("labels");
+                return labelsJoin.get("id").in(labelIds);
+            };
         }
     }
 }

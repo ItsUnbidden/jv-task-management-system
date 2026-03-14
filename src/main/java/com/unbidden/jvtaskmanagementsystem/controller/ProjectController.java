@@ -531,4 +531,14 @@ public class ProjectController {
             @NonNull @PathVariable Long projectId) {
         projectService.joinCalendar((User) authentication.getPrincipal(), projectId);
     }
+
+    @DeleteMapping("/{projectId}/dropbox/disconnect")
+    public ProjectResponseDto disconnectDropbox(Authentication authentication, @NonNull @PathVariable Long projectId) {
+        return projectService.disconnectDropbox((User)authentication.getPrincipal(), projectId);
+    }
+
+    @DeleteMapping("/{projectId}/google/disconnect")
+    public ProjectResponseDto disconnectCalendar(Authentication authentication, @NonNull @PathVariable Long projectId) {
+        return projectService.disconnectCalendar((User)authentication.getPrincipal(), projectId);
+    }
 }

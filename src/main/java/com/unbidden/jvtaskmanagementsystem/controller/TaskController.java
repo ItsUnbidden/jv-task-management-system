@@ -7,6 +7,7 @@ import org.springframework.lang.NonNull;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,6 +21,7 @@ import com.unbidden.jvtaskmanagementsystem.dto.task.CreateTaskRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.task.TaskResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.task.UpdateTaskRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.task.UpdateTaskStatusRequestDto;
+import com.unbidden.jvtaskmanagementsystem.dto.task.specification.TaskFilterDto;
 import com.unbidden.jvtaskmanagementsystem.model.User;
 import com.unbidden.jvtaskmanagementsystem.service.TaskService;
 
@@ -31,6 +33,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+
 
 @RestController
 @RequiredArgsConstructor
@@ -210,6 +213,13 @@ public class TaskController {
         return taskService.getTasksByLabelId((User)authentication.getPrincipal(),
                 labelId, pageable);
     }
+
+    @GetMapping("/projects/{projectId}/filter")
+    public Page<TaskResponseDto> filterTasks(Authentication authentication, @NonNull @PathVariable Long projectId,
+            @ModelAttribute TaskFilterDto filterDto, Pageable pageable) {
+        return taskService.getTasksInProjectBySpecification((User)authentication.getPrincipal(), projectId, filterDto, pageable);
+    }
+    
     
     @PostMapping()
     @Operation(

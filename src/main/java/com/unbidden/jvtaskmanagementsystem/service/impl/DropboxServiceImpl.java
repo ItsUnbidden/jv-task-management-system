@@ -151,7 +151,13 @@ public class DropboxServiceImpl implements DropboxService {
             }
 
             final DbxClientV2 dbxClient = getDbxClient(user);
-            final OAuth2AuthorizedClient authorizedClient = getAuthorizedClient(newMember);        
+            OAuth2AuthorizedClient authorizedClient;
+            try {
+                authorizedClient = oauthService.loadAuthorizedClient(newMember, clientRegistration);
+            } catch (OAuth2AuthorizedClientLoadingException e) {
+                LOGGER.warn("User %s does not have an authorized client. Action skipped.".formatted(newMember.getUsername()));
+                return;
+            }        
             
             addUserByAuthorizedClientToDropboxFolder(dbxClient, authorizedClient, project);
         }
@@ -176,7 +182,7 @@ public class DropboxServiceImpl implements DropboxService {
                     }
                 }
                 OAuth2AuthorizedClient authorizedClientForUserToRemove =
-                        getAuthorizedClient(memberToRemove);
+                        oauthService.loadAuthorizedClient(memberToRemove, clientRegistration);
                 try {
                     dbxClient.sharing().removeFolderMember(
                             project.getDropboxProjectSharedFolderId(),
@@ -189,6 +195,8 @@ public class DropboxServiceImpl implements DropboxService {
                 }   
             } catch (DbxException e) {
                 throw new GeneralDropboxException("A general dropbox exception was thrown.", e);
+            } catch (OAuth2AuthorizedClientLoadingException e1) {
+                LOGGER.warn("User %s does not have an authorized client. Action skipped.".formatted(memberToRemove.getUsername()));
             }
         }
     }
