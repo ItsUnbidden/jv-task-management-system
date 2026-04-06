@@ -31,7 +31,7 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class AttachmentServiceImpl implements AttachmentService {
-    private static final long MAXIMUM_FILE_SIZE = 157_300_000L; 
+    private static final long MAXIMUM_FILE_SIZE = 157_286_400L; 
 
     private final AttachmentRepository attachmentRepository;
 
@@ -85,11 +85,12 @@ public class AttachmentServiceImpl implements AttachmentService {
         Attachment attachment = new Attachment();
         attachment.setTask(task);
 
-        if (file.getOriginalFilename() != null) {
-            attachment.setFilename(file.getOriginalFilename().replace(" ", "_"));
+        final String originalFileName = file.getOriginalFilename();
+        if (originalFileName != null) {
+            attachment.setFilename(originalFileName.replace(" ", "_"));
         }
         
-        if (file.getSize() > MAXIMUM_FILE_SIZE) {
+        if (file.getSize() > MAXIMUM_FILE_SIZE) { 
             throw new FileSizeLimitExceededException("Maximum file size is 150 MiB. "
                     + "Current file size has exceeded this limit.");
         }

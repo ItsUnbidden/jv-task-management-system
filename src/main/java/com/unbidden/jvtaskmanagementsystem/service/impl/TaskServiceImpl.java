@@ -54,10 +54,13 @@ public class TaskServiceImpl implements TaskService {
 
     @NonNull
     @Override
-    public Page<TaskResponseDto> getTasksForUser(@NonNull User user, Pageable pageable) {
-        Page<Task> tasks = taskRepository.findByAssigneeId(user.getId(), pageable);
+    public Page<TaskResponseDto> getTasksForUserAndSearchByTaskName(@NonNull User user, @NonNull String name, Pageable pageable) {
+        Page<Task> tasks = taskRepository.findByAssigneeIdAndSearchByTaskName(user.getId(), name, pageable);
 
-        tasks.forEach(t -> updateTaskStatusAccordingToDate(t, true));
+        tasks.forEach(t -> {
+            updateTaskStatusAccordingToDate(t, true);
+            t.setLabels(labelRepository.findByTaskId(t.getId()));
+        });
         return tasks.map(taskMapper::toDto);
     }
 

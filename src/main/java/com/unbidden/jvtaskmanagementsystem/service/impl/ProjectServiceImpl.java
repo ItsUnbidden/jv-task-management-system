@@ -2,9 +2,9 @@ package com.unbidden.jvtaskmanagementsystem.service.impl;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
@@ -61,35 +61,31 @@ public class ProjectServiceImpl implements ProjectService {
 
     @NonNull
     @Override
-    public List<ProjectResponseDto> findAllProjectsForUser(@NonNull User user, @NonNull Pageable pageable) {
-        List<ProjectRole> projectRoles = projectRoleRepository.findByUserId(user.getId(), pageable);
-        List<Project> projects = projectRoles.stream().map(ProjectRole::getProject).toList();
+    public Page<ProjectResponseDto> findAllProjectsForUserAndSearchByName(@NonNull User user, @NonNull String name, @NonNull Pageable pageable) {
+        final Page<Project> projects = projectRepository.findProjectsForUserAndSearchByName(user.getId(), name, pageable);
 
-        projects.stream().forEach(p -> updateProjectStatusAccordingToDate(p, true));
-        return projects.stream()
-                .map(projectMapper::toProjectDto)
-                .toList();
+        projects.forEach(p -> {
+            updateProjectStatusAccordingToDate(p, true);
+            p.setProjectRoles(projectRoleRepository.findByProjectId(p.getId()));
+        });
+        return projects.map(projectMapper::toProjectDto);
     }
 
     @NonNull
     @Override
-    public List<ProjectResponseDto> searchProjectsByName(@NonNull User user, String name,
+    public Page<ProjectResponseDto> searchProjectsByName(@NonNull User user, @NonNull String name,
             @NonNull Pageable pageable) {
         final boolean isManager = entityUtil.isManager(user);
-        List<Project> projects = (isManager) ? projectRepository
+        final Page<Project> projects = (isManager) ? projectRepository
                 .findByNameContainsAllIgnoreCase(name, pageable) 
                 : projectRepository.findPublicByNameContainsAllIgnoreCase(user.getId(),
                 name, pageable);
 
-        for (Project project : projects) {
-            updateProjectStatusAccordingToDate(project, true);
-            if (!isManager) {
-                project.setProjectRoles(projectRoleRepository.findByProjectId(project.getId()));
-            }
-        }
-        return projects.stream()
-                .map(projectMapper::toProjectDto)
-                .toList();
+        projects.forEach(p -> {
+            updateProjectStatusAccordingToDate(p, true);
+            p.setProjectRoles(projectRoleRepository.findByProjectId(p.getId()));
+        });
+        return projects.map(projectMapper::toProjectDto);
     }
 
     @NonNull

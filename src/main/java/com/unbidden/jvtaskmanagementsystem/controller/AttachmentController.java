@@ -75,7 +75,7 @@ public class AttachmentController {
     @PostMapping("/tasks/{taskId}")
     @Operation(
             summary = "Upload file",
-            description = "Project must be connected to dropbox. File must not be over 50mb, "
+            description = "Project must be connected to dropbox. File must not be over 150mb, "
                     + "otherwise dropbox will reject it",
             responses = {
                 @ApiResponse(

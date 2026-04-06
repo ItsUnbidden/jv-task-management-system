@@ -1,5 +1,14 @@
 package com.unbidden.jvtaskmanagementsystem.service.impl;
 
+import java.util.Set;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.lang.NonNull;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
 import com.unbidden.jvtaskmanagementsystem.dto.auth.LoginRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.auth.RegistrationRequest;
 import com.unbidden.jvtaskmanagementsystem.dto.user.UserResponseDto;
@@ -13,14 +22,8 @@ import com.unbidden.jvtaskmanagementsystem.repository.RoleRepository;
 import com.unbidden.jvtaskmanagementsystem.repository.UserRepository;
 import com.unbidden.jvtaskmanagementsystem.service.UserService;
 import com.unbidden.jvtaskmanagementsystem.util.EntityUtil;
-import java.util.List;
-import java.util.Set;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Pageable;
-import org.springframework.lang.NonNull;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
@@ -84,10 +87,9 @@ public class UserServiceImpl implements UserService {
 
     @NonNull
     @Override
-    public List<UserResponseDto> findAll(@NonNull Pageable pageable) {
-        return userRepository.findAll(pageable).stream()
-                .map(userMapper::toDto)
-                .toList();
+    public Page<UserResponseDto> findAll(@NonNull Pageable pageable) {
+        return userRepository.findAll(pageable)
+                .map(userMapper::toDto);
     }
 
     @Override

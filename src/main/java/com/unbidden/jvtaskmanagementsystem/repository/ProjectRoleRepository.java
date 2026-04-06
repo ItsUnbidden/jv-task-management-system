@@ -14,7 +14,6 @@ import com.unbidden.jvtaskmanagementsystem.model.ProjectRole;
 
 public interface ProjectRoleRepository extends JpaRepository<ProjectRole, Long> {
     @NonNull
-    @EntityGraph(attributePaths = "user")
     @Query("from ProjectRole pr left join fetch pr.project p "
             + "left join fetch pr.user u where p.id = :projectId and u.id = :userId")
     Optional<ProjectRole> findByProjectIdWithUserId(@NonNull Long projectId, @NonNull Long userId);
@@ -24,5 +23,6 @@ public interface ProjectRoleRepository extends JpaRepository<ProjectRole, Long> 
     List<ProjectRole> findByUserId(@NonNull Long userId, @NonNull Pageable pageable);
 
     @NonNull
+    @EntityGraph(attributePaths = "user")
     Set<ProjectRole> findByProjectId(@NonNull Long projectId);
 }

@@ -1,8 +1,8 @@
 package com.unbidden.jvtaskmanagementsystem.controller;
 
-import java.util.List;
 import java.util.Set;
 
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.lang.NonNull;
@@ -65,7 +65,7 @@ public class UserController {
     @PatchMapping("/{id}/roles")
     @Operation(
             summary = "Update roles for a specific user",
-            description = "Requires MANAGER role to access",
+            description = "Requires OWNER role to access",
             responses = {
                 @ApiResponse(
                     content = @Content(
@@ -149,7 +149,7 @@ public class UserController {
                     description = "Forbidden")  
             }
     )
-    public List<UserResponseDto> getAllUsers(
+    public Page<UserResponseDto> getAllUsers(
             @Parameter(
                 description = "Pagination and sorting"
             )

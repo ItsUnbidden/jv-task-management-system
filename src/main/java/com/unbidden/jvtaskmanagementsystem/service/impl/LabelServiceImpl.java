@@ -58,7 +58,7 @@ public class LabelServiceImpl implements LabelService {
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true,
             entityIdClass = Task.class)
     public List<LabelResponseDto> getLabelForTask(@NonNull User user, @NonNull Long taskId) {
-        return labelRepository.findByTasksId(taskId).stream()
+        return labelRepository.findByTaskId(taskId).stream()
                 .map(labelMapper::toDto)
                 .toList();
     }

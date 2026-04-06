@@ -1,7 +1,6 @@
 package com.unbidden.jvtaskmanagementsystem.controller;
 
-import java.util.List;
-
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.lang.NonNull;
@@ -92,12 +91,13 @@ public class ProjectController {
                     description = "Unauthorized")
             }
     )
-    public List<ProjectResponseDto> getAllProjectsForUser(Authentication authentication, 
+    public Page<ProjectResponseDto> getAllProjectsForUserAndSearchByName(Authentication authentication, 
+            @NonNull @RequestParam String name,
             @Parameter(
                 description = "Pagination and sorting"
             )
             Pageable pageable) {
-        return projectService.findAllProjectsForUser((User)authentication.getPrincipal(), pageable);
+        return projectService.findAllProjectsForUserAndSearchByName((User)authentication.getPrincipal(), name, pageable);
     }
 
     @GetMapping("/search")
@@ -121,7 +121,7 @@ public class ProjectController {
                     description = "Unauthorized")
             }
     )
-    public List<ProjectResponseDto> searchProjectsByName(Authentication authentication,
+    public Page<ProjectResponseDto> searchProjectsByName(Authentication authentication,
             @Parameter(
                 description = "Search query"
             )

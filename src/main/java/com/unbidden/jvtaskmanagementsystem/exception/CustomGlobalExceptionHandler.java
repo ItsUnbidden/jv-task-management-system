@@ -39,7 +39,7 @@ public class CustomGlobalExceptionHandler extends ResponseEntityExceptionHandler
             @NonNull HttpStatusCode status, 
             @NonNull WebRequest request
     ) {
-        Map<String, Object> body = new LinkedHashMap<>();
+        final Map<String, Object> body = new LinkedHashMap<>();
 
         body.put("timestamp", LocalDateTime.now());
         body.put("errors", ex.getBindingResult().getAllErrors().stream()
@@ -48,8 +48,7 @@ public class CustomGlobalExceptionHandler extends ResponseEntityExceptionHandler
         return new ResponseEntity<>(body, headers, status);
     }
 
-    @ExceptionHandler({EntityNotFoundException.class, 
-            RegistrationException.class, 
+    @ExceptionHandler({RegistrationException.class, 
             PropertyReferenceException.class,
             UnsupportedOperationException.class,
             IllegalArgumentException.class})
@@ -60,12 +59,17 @@ public class CustomGlobalExceptionHandler extends ResponseEntityExceptionHandler
         return handleBadRequest(ex);
     }
 
-    @ExceptionHandler(ThirdPartyApiException.class)
-    protected ResponseEntity<Object> handleThirdPartyApiException(
-            @NonNull ThirdPartyApiException ex
+    @ExceptionHandler(EntityNotFoundException.class)
+    protected ResponseEntity<Object> handleNotFoundException(
+            @NonNull EntityNotFoundException ex
     ) {
-        LOGGER.error("Some third party service is having trouble.", ex);
-        return handleBadRequest(ex);
+        final Map<String, Object> body = new LinkedHashMap<>();
+
+        LOGGER.error("Failed to find an entity.", ex);
+        body.put("timestamp", LocalDateTime.now());
+        body.put("error", ex.getMessage());
+
+        return new ResponseEntity<>(body, HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler({OAuth2AuthorizationException.class,
@@ -96,7 +100,7 @@ public class CustomGlobalExceptionHandler extends ResponseEntityExceptionHandler
     protected ResponseEntity<Object> handleFileSizeExceededException(
             @NonNull FileSizeLimitExceededException ex
     ) {
-        Map<String, Object> body = new LinkedHashMap<>();
+        final Map<String, Object> body = new LinkedHashMap<>();
 
         body.put("timestamp", LocalDateTime.now());
         body.put("error", ex.getMessage());
@@ -109,7 +113,7 @@ public class CustomGlobalExceptionHandler extends ResponseEntityExceptionHandler
             @NonNull Exception ex,
             @NonNull WebRequest request
     ) {
-        Map<String, Object> body = new LinkedHashMap<>();
+        final Map<String, Object> body = new LinkedHashMap<>();
 
         body.put("timestamp", LocalDateTime.now());
         body.put("error", ex.getMessage());
@@ -122,7 +126,7 @@ public class CustomGlobalExceptionHandler extends ResponseEntityExceptionHandler
             @NonNull Exception ex,
             @NonNull WebRequest request
     ) {
-        Map<String, Object> body = new LinkedHashMap<>();
+        final Map<String, Object> body = new LinkedHashMap<>();
 
         body.put("timestamp", LocalDateTime.now());
         body.put("error", ex.getMessage());
@@ -131,7 +135,7 @@ public class CustomGlobalExceptionHandler extends ResponseEntityExceptionHandler
     } 
 
     private ResponseEntity<Object> handleBadRequest(@NonNull Exception ex) {
-        Map<String, Object> body = new LinkedHashMap<>();
+        final Map<String, Object> body = new LinkedHashMap<>();
 
         body.put("timestamp", LocalDateTime.now());
         body.put("error", ex.getMessage());

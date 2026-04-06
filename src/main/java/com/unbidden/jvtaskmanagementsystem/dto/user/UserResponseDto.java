@@ -1,7 +1,9 @@
 package com.unbidden.jvtaskmanagementsystem.dto.user;
 
-import com.unbidden.jvtaskmanagementsystem.model.Role;
 import java.util.Set;
+
+import com.unbidden.jvtaskmanagementsystem.model.Role.RoleType;
+
 import lombok.Data;
 
 @Data
@@ -18,5 +20,5 @@ public class UserResponseDto {
 
     private boolean isLocked;
 
-    private Set<Role> roles;
+    private Set<RoleType> roles;
 }

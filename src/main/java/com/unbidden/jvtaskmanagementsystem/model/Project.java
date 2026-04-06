@@ -74,6 +74,10 @@ public class Project {
         return dropboxProjectFolderId != null;
     }
 
+    public boolean isCalendarConnected() {
+        return projectCalendar != null;
+    }
+
     public static enum ProjectStatus {
         INITIATED,
         IN_PROGRESS, 

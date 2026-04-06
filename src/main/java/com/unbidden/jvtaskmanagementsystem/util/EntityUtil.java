@@ -188,5 +188,3 @@ public class EntityUtil {
         return message;
     }
 }
-
-/* Error: class com.unbidden.jvtaskmanagementsystem.model.Message$HibernateProxy cannot be cast to class com.unbidden.jvtaskmanagementsystem.model.Comment (com.unbidden.jvtaskmanagementsystem.model.Message$HibernateProxy and com.unbidden.jvtaskmanagementsystem.model.Comment are in unnamed module of loader 'app')*/

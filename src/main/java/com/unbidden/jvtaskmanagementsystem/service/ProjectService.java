@@ -1,10 +1,8 @@
 package com.unbidden.jvtaskmanagementsystem.service;
 
-import java.util.List;
-
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.lang.NonNull;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import com.unbidden.jvtaskmanagementsystem.dto.project.CreateProjectRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.project.ProjectResponseDto;
@@ -18,11 +16,12 @@ public interface ProjectService {
     public ProjectResponseDto findProjectById(@NonNull User user, @NonNull Long projectId);
     
     @NonNull
-    public List<ProjectResponseDto> findAllProjectsForUser(@NonNull User user, @NonNull Pageable pageable);
+    public Page<ProjectResponseDto> findAllProjectsForUserAndSearchByName(@NonNull User user,
+            @NonNull String name, @NonNull Pageable pageable);
 
     @NonNull
-    public List<ProjectResponseDto> searchProjectsByName(@NonNull User user, 
-            @RequestParam String name, @NonNull Pageable pageable);
+    public Page<ProjectResponseDto> searchProjectsByName(@NonNull User user, 
+            @NonNull String name, @NonNull Pageable pageable);
     
     @NonNull
     public ProjectResponseDto createProject(@NonNull User user,

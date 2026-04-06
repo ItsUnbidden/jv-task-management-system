@@ -14,7 +14,7 @@ import com.unbidden.jvtaskmanagementsystem.model.User;
 public interface TaskService {
 
     @NonNull    
-    Page<TaskResponseDto> getTasksForUser(@NonNull User user, Pageable pageable);
+    Page<TaskResponseDto> getTasksForUserAndSearchByTaskName(@NonNull User user, @NonNull String name, Pageable pageable);
 
     @NonNull 
     Page<TaskResponseDto> getProjectTasks(@NonNull User user, @NonNull Long projectId,
