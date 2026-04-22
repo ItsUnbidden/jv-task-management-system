@@ -275,6 +275,10 @@ public class DropboxServiceImpl implements DropboxService {
             final CreatedProjectFolderResult projectFolderResult =
                     createSharedProjectFolder0(dbxClient, project);
             final Map<Long, CreatedTaskFolderResult> taskFolderResults = new HashMap<>();
+
+            // Only set for convenience in this service. Will not be persisted later.
+            project.setDropboxProjectFolderId(projectFolderResult.getProjectFolderId());
+            project.setDropboxProjectSharedFolderId(projectFolderResult.getProjectSharedFolderId());
             for (Task task : project.getTasks()) {
                 taskFolderResults.put(task.getId(), createTaskFolder0(dbxClient, task));
             }
@@ -283,6 +287,7 @@ public class DropboxServiceImpl implements DropboxService {
                     .filter(pr -> !pr.getRoleType().equals(ProjectRoleType.CREATOR))
                     .map(pr -> pr.getUser())
                     .toList());
+            connectedUserIds.add(user.getId());
             return new ProjectConnectedToDropboxResult(projectFolderResult, taskFolderResults, connectedUserIds);
         } catch (OAuth2AuthorizedClientLoadingException e) {
             throw new UnsupportedOperationException("Cannot connect project %s to Dropbox, because user %s does not have Dropbox connected."
@@ -458,9 +463,9 @@ public class DropboxServiceImpl implements DropboxService {
 
     private CreatedTaskFolderResult createTaskFolder0(DbxClientV2 dbxClient, Task task) {
         try {
-            Metadata projectFolderMeta = dbxClient.files()
-                    .getMetadata(task.getProject().getDropboxProjectFolderId());
-            CreateFolderResult taskFolderMeta = dbxClient.files().createFolderV2(
+            final Metadata projectFolderMeta = dbxClient.files().getMetadata(
+                    task.getProject().getDropboxProjectFolderId());
+            final CreateFolderResult taskFolderMeta = dbxClient.files().createFolderV2(
                     projectFolderMeta.getPathLower() + "/" + task.getName(), true);
             return new CreatedTaskFolderResult(taskFolderMeta.getMetadata().getId());
         } catch (CreateFolderErrorException e) {
