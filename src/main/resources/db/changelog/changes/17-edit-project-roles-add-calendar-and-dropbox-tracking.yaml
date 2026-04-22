@@ -1,0 +1,24 @@
+databaseChangeLog:
+  - changeSet:
+      id: edit-project-roles-add-calendar-and-dropbox-tracking
+      author: Unbidden
+      changes:
+        - addColumn:
+            tableName: project_roles
+            columns:
+              - column:
+                  name: is_dropbox_connected
+                  type: boolean
+                  defaultValue: 0
+              - column:
+                  name: is_calendar_connected
+                  type: boolean
+                  defaultValue: 0
+        - addNotNullConstraint:
+            tableName: project_roles
+            columnName: is_dropbox_connected
+            columnDataType: boolean
+        - addNotNullConstraint:
+            tableName: project_roles
+            columnName: is_calendar_connected
+            columnDataType: boolean

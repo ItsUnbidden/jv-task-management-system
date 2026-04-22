@@ -1,22 +1,6 @@
 package com.unbidden.jvtaskmanagementsystem.controller;
 
-import com.unbidden.jvtaskmanagementsystem.dto.project.CreateProjectRequestDto;
-import com.unbidden.jvtaskmanagementsystem.dto.project.ProjectResponseDto;
-import com.unbidden.jvtaskmanagementsystem.dto.project.UpdateProjectRequestDto;
-import com.unbidden.jvtaskmanagementsystem.dto.project.UpdateProjectStatusRequestDto;
-import com.unbidden.jvtaskmanagementsystem.dto.projectrole.UpdateProjectRoleRequestDto;
-import com.unbidden.jvtaskmanagementsystem.dto.task.TaskResponseDto;
-import com.unbidden.jvtaskmanagementsystem.model.User;
-import com.unbidden.jvtaskmanagementsystem.service.ProjectService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
-import java.util.List;
-import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.lang.NonNull;
@@ -33,12 +17,36 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.unbidden.jvtaskmanagementsystem.dto.project.AddNewUserToProjectResponseDto;
+import com.unbidden.jvtaskmanagementsystem.dto.project.CreateProjectRequestDto;
+import com.unbidden.jvtaskmanagementsystem.dto.project.DeleteProjectResponseDto;
+import com.unbidden.jvtaskmanagementsystem.dto.project.ProjectCalendarDisconnectionResponseDto;
+import com.unbidden.jvtaskmanagementsystem.dto.project.ProjectDropboxDisconnectionResponseDto;
+import com.unbidden.jvtaskmanagementsystem.dto.project.ProjectResponseDto;
+import com.unbidden.jvtaskmanagementsystem.dto.project.RemoveUserFromProjectResponseDto;
+import com.unbidden.jvtaskmanagementsystem.dto.project.UpdateProjectRequestDto;
+import com.unbidden.jvtaskmanagementsystem.dto.project.UpdateProjectStatusRequestDto;
+import com.unbidden.jvtaskmanagementsystem.dto.projectrole.UpdateProjectRoleRequestDto;
+import com.unbidden.jvtaskmanagementsystem.dto.task.TaskResponseDto;
+import com.unbidden.jvtaskmanagementsystem.model.User;
+import com.unbidden.jvtaskmanagementsystem.service.orchestration.ProjectOrchestrationService;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @RequestMapping("/projects")
 @RequiredArgsConstructor
 @Tag(name = "Project related methods")
 public class ProjectController {
-    private final ProjectService projectService;
+
+    private final ProjectOrchestrationService projectService;
 
     @GetMapping("/{id}")
     @Operation(
@@ -88,12 +96,13 @@ public class ProjectController {
                     description = "Unauthorized")
             }
     )
-    public List<ProjectResponseDto> getAllProjectsForUser(Authentication authentication, 
+    public Page<ProjectResponseDto> getAllProjectsForUserAndSearchByName(Authentication authentication, 
+            @NonNull @RequestParam String name,
             @Parameter(
                 description = "Pagination and sorting"
             )
             Pageable pageable) {
-        return projectService.findAllProjectsForUser((User)authentication.getPrincipal(), pageable);
+        return projectService.findAllProjectsForUserAndSearchByName((User)authentication.getPrincipal(), name, pageable);
     }
 
     @GetMapping("/search")
@@ -117,7 +126,7 @@ public class ProjectController {
                     description = "Unauthorized")
             }
     )
-    public List<ProjectResponseDto> searchProjectsByName(Authentication authentication,
+    public Page<ProjectResponseDto> searchProjectsByName(Authentication authentication,
             @Parameter(
                 description = "Search query"
             )
@@ -199,7 +208,6 @@ public class ProjectController {
     }
 
     @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(
             summary = "Delete project",
             description = "Behavior may depend on whether the user has "
@@ -222,15 +230,15 @@ public class ProjectController {
                     description = "Forbidden")
             }
     )
-    public void deleteProject(Authentication authentication,
+    public DeleteProjectResponseDto deleteProject(Authentication authentication,
             @Parameter(
                 description = "Project id"
             )
             @NonNull @PathVariable Long id) {
-        projectService.deleteProject((User)authentication.getPrincipal(), id);
+        return projectService.deleteProject((User)authentication.getPrincipal(), id);
     }
 
-    @PostMapping("/{projectId}/users/{userId}/add")
+    @PostMapping("/{projectId}/users/{username}/add")
     @Operation(
             summary = "Add new user to project",
             description = "Behavior may depend on whether the user has "
@@ -256,17 +264,17 @@ public class ProjectController {
                     description = "Forbidden")
             }
     )
-    public ProjectResponseDto addUserToProject(Authentication authentication,
+    public AddNewUserToProjectResponseDto addUserToProject(Authentication authentication,
             @Parameter(
                 description = "Project id"
             )
             @NonNull @PathVariable Long projectId,
             @Parameter(
-                description = "User id"
+                description = "Username"
             )
-            @NonNull @PathVariable Long userId) {
+            @NonNull @PathVariable String username) {
         return projectService.addUserToProject((User)authentication.getPrincipal(),
-                projectId, userId);
+                projectId, username);
     }
 
     @DeleteMapping("/{projectId}/users/{userId}/remove")
@@ -295,7 +303,7 @@ public class ProjectController {
                     description = "Forbidden")
             }
     )
-    public ProjectResponseDto removeUserFromProject(Authentication authentication,
+    public RemoveUserFromProjectResponseDto removeUserFromProject(Authentication authentication,
             @Parameter(
                 description = "Project id"
             )
@@ -309,7 +317,6 @@ public class ProjectController {
     }
 
     @DeleteMapping("/{projectId}/quit")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(
             summary = "Remove current user from project",
             description = "Behavior may depend on whether the user has "
@@ -332,14 +339,14 @@ public class ProjectController {
                     description = "Forbidden. Possible if user is not a part of the project")
             }
     )
-    public void quitProject(Authentication authentication,
+    public RemoveUserFromProjectResponseDto quitProject(Authentication authentication,
             @Parameter(
                 description = "Project id"
             )
             @NonNull @PathVariable Long projectId) {
         final User user = (User)authentication.getPrincipal();
 
-        projectService.quitProject(user, projectId);
+        return projectService.quitProject(user, projectId);
     }
 
     @PatchMapping("/{projectId}/users/{userId}/roles")
@@ -389,7 +396,7 @@ public class ProjectController {
     @Operation(
             summary = "Change project status",
             description = "Only available to project CREATOR. Allowed values are "
-                    + "<IN_PROGRESS> or <COMPLETED>",
+                    + "<NOT_STARTED>, <IN_PROGRESS> and <COMPLETED>",
             responses = {
                 @ApiResponse(
                     content = @Content(
@@ -460,6 +467,11 @@ public class ProjectController {
                 projectId);
     }
 
+    @PatchMapping("/{projectId}/dropbox/join")
+    public void joinDropbox(Authentication authentication, @NonNull @PathVariable Long projectId) {
+        projectService.joinDropbox((User)authentication.getPrincipal(), projectId);
+    }
+
     @PatchMapping("/{projectId}/calendar/connect")
     @Operation(
             summary = "Connect project to google calendar",
@@ -521,5 +533,17 @@ public class ProjectController {
             )
             @NonNull @PathVariable Long projectId) {
         projectService.joinCalendar((User) authentication.getPrincipal(), projectId);
+    }
+
+    @DeleteMapping("/{projectId}/dropbox/disconnect")
+    public ProjectDropboxDisconnectionResponseDto disconnectDropbox(Authentication authentication,
+            @NonNull @PathVariable Long projectId) {
+        return projectService.disconnectDropbox((User)authentication.getPrincipal(), projectId);
+    }
+
+    @DeleteMapping("/{projectId}/google/disconnect")
+    public ProjectCalendarDisconnectionResponseDto disconnectCalendar(Authentication authentication,
+            @NonNull @PathVariable Long projectId) {
+        return projectService.disconnectCalendar((User)authentication.getPrincipal(), projectId);
     }
 }

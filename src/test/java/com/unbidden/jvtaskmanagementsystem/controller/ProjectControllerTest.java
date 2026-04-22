@@ -1,12 +1,40 @@
 package com.unbidden.jvtaskmanagementsystem.controller;
 
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
+import javax.sql.DataSource;
+
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.MediaType;
+import org.springframework.jdbc.datasource.init.ScriptUtils;
+import org.springframework.security.test.context.support.WithUserDetails;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.context.WebApplicationContext;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.unbidden.jvtaskmanagementsystem.dto.project.CreateProjectRequestDto;
@@ -24,32 +52,6 @@ import com.unbidden.jvtaskmanagementsystem.model.User;
 import com.unbidden.jvtaskmanagementsystem.repository.ProjectRepository;
 import com.unbidden.jvtaskmanagementsystem.repository.RoleRepository;
 import com.unbidden.jvtaskmanagementsystem.repository.UserRepository;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import javax.sql.DataSource;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.http.MediaType;
-import org.springframework.jdbc.datasource.init.ScriptUtils;
-import org.springframework.security.test.context.support.WithUserDetails;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.context.WebApplicationContext;
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 public class ProjectControllerTest {
@@ -85,8 +87,6 @@ public class ProjectControllerTest {
         User user1 = new User();
         user1.setEmail("testCreator1@tms.com");
         user1.setUsername("testCreator1");
-        user1.setFirstName("testCreatorName1");
-        user1.setLastName("testCreatorLastName1");
         user1.setPassword("password123");
         user1.setRoles(Set.of(roleRepository.findAll().stream()
                 .filter(r -> r.getRoleType().equals(RoleType.USER))
@@ -97,8 +97,6 @@ public class ProjectControllerTest {
         User user2 = new User();
         user2.setEmail("testCreator2@tms.com");
         user2.setUsername("testCreator2");
-        user2.setFirstName("testCreatorName2");
-        user2.setLastName("testCreatorLastName2");
         user2.setPassword("password321");
         user2.setRoles(Set.of(roleRepository.findAll().stream()
                 .filter(r -> r.getRoleType().equals(RoleType.USER))
@@ -109,8 +107,6 @@ public class ProjectControllerTest {
         User user3 = new User();
         user3.setEmail("testCreator3@tms.com");
         user3.setUsername("testCreator3");
-        user3.setFirstName("testCreatorName3");
-        user3.setLastName("testCreatorLastName3");
         user3.setPassword("password231");
         user3.setRoles(Set.of(roleRepository.findAll().stream()
                 .filter(r -> r.getRoleType().equals(RoleType.USER))
@@ -121,8 +117,6 @@ public class ProjectControllerTest {
         User user4 = new User();
         user4.setEmail("testCreator4@tms.com");
         user4.setUsername("testCreator4");
-        user4.setFirstName("testCreatorName4");
-        user4.setLastName("testCreatorLastName4");
         user4.setPassword("password132");
         user4.setRoles(Set.of(roleRepository.findAll().stream()
                 .filter(r -> r.getRoleType().equals(RoleType.USER))

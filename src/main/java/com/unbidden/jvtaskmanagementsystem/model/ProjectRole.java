@@ -1,5 +1,8 @@
 package com.unbidden.jvtaskmanagementsystem.model;
 
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -10,8 +13,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Data;
-import org.hibernate.annotations.SQLDelete;
-import org.hibernate.annotations.SQLRestriction;
 
 @Entity
 @Data
@@ -33,6 +34,12 @@ public class ProjectRole {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id", nullable = false)
     private Project project;
+
+    @Column(nullable = false, columnDefinition = "TINYINT(1)")
+    private boolean isDropboxConnected;
+
+    @Column(nullable = false, columnDefinition = "TINYINT(1)")
+    private boolean isCalendarConnected;
 
     @Column(nullable = false, columnDefinition = "TINYINT(1)")
     private boolean isDeleted;

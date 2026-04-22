@@ -1,9 +1,10 @@
 package com.unbidden.jvtaskmanagementsystem.validation;
 
-import jakarta.validation.ConstraintValidator;
-import jakarta.validation.ConstraintValidatorContext;
 import java.lang.reflect.Field;
 import java.util.Objects;
+
+import jakarta.validation.ConstraintValidator;
+import jakarta.validation.ConstraintValidatorContext;
 
 public class FieldMatchValidator implements ConstraintValidator<FieldMatch, Object> {
     @Override
@@ -24,7 +25,7 @@ public class FieldMatchValidator implements ConstraintValidator<FieldMatch, Obje
                         Object secondValue = field.get(value);
                         return Objects.equals(firstValue, secondValue);
                     }
-                } catch (Exception e) {
+                } catch (IllegalAccessException | IllegalArgumentException e) {
                     throw new RuntimeException(String.format(
                             "Unable to get field value. Field: %s, Class: %s",
                             field, clazz.toString()), e);

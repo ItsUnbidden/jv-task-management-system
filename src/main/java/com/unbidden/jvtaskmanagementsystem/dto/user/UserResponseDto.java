@@ -1,7 +1,10 @@
 package com.unbidden.jvtaskmanagementsystem.dto.user;
 
-import com.unbidden.jvtaskmanagementsystem.model.Role;
 import java.util.Set;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.unbidden.jvtaskmanagementsystem.model.Role.RoleType;
+
 import lombok.Data;
 
 @Data
@@ -12,11 +15,8 @@ public class UserResponseDto {
 
     private String email;
 
-    private String firstName;
-
-    private String lastName;
-
+    @JsonProperty("isLocked")
     private boolean isLocked;
 
-    private Set<Role> roles;
+    private Set<RoleType> roles;
 }

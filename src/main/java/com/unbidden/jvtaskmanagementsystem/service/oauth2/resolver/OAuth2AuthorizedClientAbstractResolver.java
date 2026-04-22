@@ -1,14 +1,16 @@
 package com.unbidden.jvtaskmanagementsystem.service.oauth2.resolver;
 
+import java.time.LocalDateTime;
+import java.util.Optional;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.unbidden.jvtaskmanagementsystem.dto.oauth2.OAuth2TokenResponseDto;
 import com.unbidden.jvtaskmanagementsystem.model.ClientRegistration;
 import com.unbidden.jvtaskmanagementsystem.model.OAuth2AuthorizedClient;
 import com.unbidden.jvtaskmanagementsystem.model.User;
 import com.unbidden.jvtaskmanagementsystem.repository.oauth2.AuthorizedClientRepository;
-import java.time.LocalDateTime;
-import java.util.Optional;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public abstract class OAuth2AuthorizedClientAbstractResolver
         implements OAuth2AuthorizedClientResolver {

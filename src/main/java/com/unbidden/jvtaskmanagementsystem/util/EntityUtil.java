@@ -1,5 +1,13 @@
 package com.unbidden.jvtaskmanagementsystem.util;
 
+import java.util.Optional;
+
+import org.hibernate.proxy.HibernateProxy;
+import org.springframework.lang.NonNull;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.stereotype.Component;
+
 import com.unbidden.jvtaskmanagementsystem.exception.EntityNotFoundException;
 import com.unbidden.jvtaskmanagementsystem.model.Attachment;
 import com.unbidden.jvtaskmanagementsystem.model.ClientRegistration;
@@ -22,12 +30,8 @@ import com.unbidden.jvtaskmanagementsystem.repository.ReplyRepository;
 import com.unbidden.jvtaskmanagementsystem.repository.TaskRepository;
 import com.unbidden.jvtaskmanagementsystem.repository.UserRepository;
 import com.unbidden.jvtaskmanagementsystem.repository.oauth2.ClientRegistrationRepository;
-import java.util.Optional;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.lang.NonNull;
-import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
@@ -158,10 +162,13 @@ public class EntityUtil {
      */
     @NonNull
     public Comment getSuperParent(@NonNull Reply reply) {
-        Message superParent;
-        do {
-            superParent = reply.getParent();
-        } while (superParent instanceof Reply);
+        Message superParent = unproxyMessage(reply.getParent());
+
+        while (superParent instanceof Reply) {
+            superParent = unproxyMessage(((Reply)superParent).getParent());
+        }
+
+        if (superParent == null) throw new EntityNotFoundException("Ultimate parent not found for a reply.");
 
         return (Comment)superParent;
     }
@@ -174,5 +181,12 @@ public class EntityUtil {
                 .toList()
                 .get(0);
         return ownerProjectRole.getUser();
+    }
+
+    private Message unproxyMessage(Message message) {
+        if (message instanceof HibernateProxy proxy) {
+            return (Message)proxy.getHibernateLazyInitializer().getImplementation();
+        }
+        return message;
     }
 }

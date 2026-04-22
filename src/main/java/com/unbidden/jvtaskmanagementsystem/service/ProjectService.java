@@ -1,53 +1,63 @@
 package com.unbidden.jvtaskmanagementsystem.service;
 
-import java.util.List;
-
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.lang.NonNull;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.lang.Nullable;
 
-import com.unbidden.jvtaskmanagementsystem.dto.project.CreateProjectRequestDto;
-import com.unbidden.jvtaskmanagementsystem.dto.project.ProjectResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.project.UpdateProjectRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.project.UpdateProjectStatusRequestDto;
+import com.unbidden.jvtaskmanagementsystem.dto.project.internal.CreatedProjectFolderResult;
+import com.unbidden.jvtaskmanagementsystem.dto.project.internal.ProjectConnectedToDropboxResult;
 import com.unbidden.jvtaskmanagementsystem.dto.projectrole.UpdateProjectRoleRequestDto;
+import com.unbidden.jvtaskmanagementsystem.model.Project;
 import com.unbidden.jvtaskmanagementsystem.model.User;
 
 public interface ProjectService {
-    public ProjectResponseDto findProjectById(@NonNull User user, @NonNull Long projectId);
+    @NonNull
+    public Project findProjectById(@NonNull Long projectId);
     
-    public List<ProjectResponseDto> findAllProjectsForUser(@NonNull User user, @NonNull Pageable pageable);
+    @NonNull
+    public Page<Project> findAllProjectsForUserAndSearchByName(@NonNull User user,
+            @NonNull String name, @NonNull Pageable pageable);
 
-    public List<ProjectResponseDto> searchProjectsByName(@NonNull User user, 
-            @RequestParam String name, @NonNull Pageable pageable);
+    @NonNull
+    public Page<Project> searchProjectsByName(@NonNull User user, 
+            @NonNull String name, @NonNull Pageable pageable);
     
-    public ProjectResponseDto createProject(@NonNull User user,
-            @NonNull CreateProjectRequestDto requestDto);
+    @NonNull
+    public Project createProject(@NonNull User user, @NonNull Project project, @Nullable CreatedProjectFolderResult dropboxResult);
     
-    public ProjectResponseDto updateProject(@NonNull User user, @NonNull Long projectId,
+    @NonNull
+    public Project updateProject(@NonNull Long projectId,
             @NonNull UpdateProjectRequestDto requestDto);
 
-    public void deleteProject(@NonNull User user, @NonNull Long projectId);
+    public void deleteProject(@NonNull Long projectId);
 
-    public ProjectResponseDto addUserToProject(@NonNull User user, @NonNull Long projectId,
-            @NonNull Long userId);
+    @NonNull
+    public Project addUserToProject(@NonNull Long projectId,
+            @NonNull String username);
 
-    public ProjectResponseDto changeProjectMemberRole(@NonNull User user, @NonNull Long projectId,
-            @NonNull Long userId, @NonNull UpdateProjectRoleRequestDto requestDto);
+    @NonNull
+    public Project changeProjectMemberRole(@NonNull Long projectId, @NonNull Long userId,
+            @NonNull UpdateProjectRoleRequestDto requestDto);
 
-    public ProjectResponseDto removeUserFromProject(@NonNull User user,
-            @NonNull Long projectId, @NonNull Long userId);
+    @NonNull
+    public Project removeUserFromProject(@NonNull Long projectId, @NonNull Long userId);
 
-    public void quitProject(@NonNull User user, @NonNull Long projectId);
+    public Project quitProject(@NonNull User user, @NonNull Long projectId);
 
-    public ProjectResponseDto changeStatus(@NonNull User user, @NonNull Long projectId,
+    @NonNull
+    public Project changeStatus(@NonNull Long projectId,
             @NonNull UpdateProjectStatusRequestDto requestDto);
 
-    public ProjectResponseDto connectProjectToDropbox(@NonNull User user,
-            @NonNull Long projectId);
+    @NonNull
+    public Project connectProjectToDropbox(@NonNull Long projectId,
+            @NonNull ProjectConnectedToDropboxResult dropboxResult);
 
-    public ProjectResponseDto connectProjectToCalendar(@NonNull User user,
-            @NonNull Long projectId);
+    @NonNull
+    public Project disconnectDropbox(@NonNull Long projectId);
 
-    public void joinCalendar(@NonNull User user, @NonNull Long projectId);
+    @NonNull
+    public Project disconnectCalendar(@NonNull Long projectId);
 }

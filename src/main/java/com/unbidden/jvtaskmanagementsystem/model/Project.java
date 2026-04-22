@@ -1,5 +1,12 @@
 package com.unbidden.jvtaskmanagementsystem.model;
 
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Set;
+
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -9,14 +16,9 @@ import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Set;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-import org.hibernate.annotations.SQLDelete;
-import org.hibernate.annotations.SQLRestriction;
 
 @Entity
 @Data
@@ -70,6 +72,10 @@ public class Project {
 
     public boolean isDropboxConnected() {
         return dropboxProjectFolderId != null;
+    }
+
+    public boolean isCalendarConnected() {
+        return projectCalendar != null;
     }
 
     public static enum ProjectStatus {

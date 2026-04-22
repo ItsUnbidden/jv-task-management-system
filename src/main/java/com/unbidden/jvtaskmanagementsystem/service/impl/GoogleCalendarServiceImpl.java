@@ -1,37 +1,5 @@
 package com.unbidden.jvtaskmanagementsystem.service.impl;
 
-import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.gson.GsonFactory;
-import com.google.api.client.util.DateTime;
-import com.google.api.services.calendar.Calendar;
-import com.google.api.services.calendar.model.Acl;
-import com.google.api.services.calendar.model.AclRule;
-import com.google.api.services.calendar.model.AclRule.Scope;
-import com.google.api.services.calendar.model.CalendarListEntry;
-import com.google.api.services.calendar.model.Event;
-import com.google.api.services.calendar.model.EventDateTime;
-import com.google.api.services.calendar.model.EventReminder;
-import com.unbidden.jvtaskmanagementsystem.dto.google.GoogleSuccessfulTestResponseDto;
-import com.unbidden.jvtaskmanagementsystem.exception.ThirdPartyApiException;
-import com.unbidden.jvtaskmanagementsystem.exception.oauth2.OAuth2AuthorizedClientLoadingException;
-import com.unbidden.jvtaskmanagementsystem.model.ClientRegistration;
-import com.unbidden.jvtaskmanagementsystem.model.OAuth2AuthorizedClient;
-import com.unbidden.jvtaskmanagementsystem.model.Project;
-import com.unbidden.jvtaskmanagementsystem.model.ProjectCalendar;
-import com.unbidden.jvtaskmanagementsystem.model.ProjectRole.ProjectRoleType;
-import com.unbidden.jvtaskmanagementsystem.model.Task;
-import com.unbidden.jvtaskmanagementsystem.model.TaskEvent;
-import com.unbidden.jvtaskmanagementsystem.model.User;
-import com.unbidden.jvtaskmanagementsystem.repository.ProjectCalendarRepository;
-import com.unbidden.jvtaskmanagementsystem.repository.TaskEventRepository;
-import com.unbidden.jvtaskmanagementsystem.repository.oauth2.ClientRegistrationRepository;
-import com.unbidden.jvtaskmanagementsystem.service.GoogleCalendarService;
-import com.unbidden.jvtaskmanagementsystem.service.oauth2.OAuth2Service;
-import com.unbidden.jvtaskmanagementsystem.util.BearerAuthentication;
-import com.unbidden.jvtaskmanagementsystem.util.EntityUtil;
-import com.unbidden.jvtaskmanagementsystem.util.HttpClientUtil.HeaderNames;
-import com.unbidden.jvtaskmanagementsystem.util.HttpClientUtil.HeaderValues;
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -45,11 +13,49 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
+
+import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
+import com.google.api.client.util.DateTime;
+import com.google.api.services.calendar.Calendar;
+import com.google.api.services.calendar.model.Acl;
+import com.google.api.services.calendar.model.AclRule;
+import com.google.api.services.calendar.model.AclRule.Scope;
+import com.google.api.services.calendar.model.CalendarListEntry;
+import com.google.api.services.calendar.model.Event;
+import com.google.api.services.calendar.model.EventDateTime;
+import com.google.api.services.calendar.model.EventReminder;
+import com.unbidden.jvtaskmanagementsystem.dto.google.GoogleSuccessfulTestResponseDto;
+import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.ThirdPartyOperationResult;
+import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.ThirdPartyOperationResult.ThirdPartyOperationStatus;
+import com.unbidden.jvtaskmanagementsystem.exception.ThirdPartyApiException;
+import com.unbidden.jvtaskmanagementsystem.exception.oauth2.OAuth2AuthorizedClientLoadingException;
+import com.unbidden.jvtaskmanagementsystem.model.ClientRegistration;
+import com.unbidden.jvtaskmanagementsystem.model.OAuth2AuthorizedClient;
+import com.unbidden.jvtaskmanagementsystem.model.Project;
+import com.unbidden.jvtaskmanagementsystem.model.ProjectCalendar;
+import com.unbidden.jvtaskmanagementsystem.model.ProjectRole;
+import com.unbidden.jvtaskmanagementsystem.model.ProjectRole.ProjectRoleType;
+import com.unbidden.jvtaskmanagementsystem.model.Task;
+import com.unbidden.jvtaskmanagementsystem.model.TaskEvent;
+import com.unbidden.jvtaskmanagementsystem.model.User;
+import com.unbidden.jvtaskmanagementsystem.repository.ProjectCalendarRepository;
+import com.unbidden.jvtaskmanagementsystem.repository.ProjectRoleRepository;
+import com.unbidden.jvtaskmanagementsystem.repository.TaskEventRepository;
+import com.unbidden.jvtaskmanagementsystem.repository.oauth2.ClientRegistrationRepository;
+import com.unbidden.jvtaskmanagementsystem.service.GoogleCalendarService;
+import com.unbidden.jvtaskmanagementsystem.service.oauth2.OAuth2Service;
+import com.unbidden.jvtaskmanagementsystem.util.BearerAuthentication;
+import com.unbidden.jvtaskmanagementsystem.util.EntityUtil;
+import com.unbidden.jvtaskmanagementsystem.util.HttpClientUtil.HeaderNames;
+import com.unbidden.jvtaskmanagementsystem.util.HttpClientUtil.HeaderValues;
 
 @Component
 public class GoogleCalendarServiceImpl implements GoogleCalendarService {
@@ -68,6 +74,8 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
 
     private final ProjectCalendarRepository projectCalendarRepository;
 
+    private final ProjectRoleRepository projectRoleRepository;
+
     private final TaskEventRepository taskEventRepository;
 
     private final EntityUtil entityUtil;
@@ -78,12 +86,14 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
             @Autowired ClientRegistrationRepository clientRegistrationRepository,
             @Autowired OAuth2Service oauthService,
             @Autowired ProjectCalendarRepository projectCalendarRepository,
+            @Autowired ProjectRoleRepository projectRoleRepository,
             @Autowired TaskEventRepository taskEventRepository,
             @Autowired EntityUtil entityUtil,
             @Autowired HttpClient http) {
         this.clientRegistration = clientRegistrationRepository.findByClientName("google").get();
         this.oauthService = oauthService;
         this.projectCalendarRepository = projectCalendarRepository;
+        this.projectRoleRepository = projectRoleRepository;
         this.taskEventRepository = taskEventRepository;
         this.entityUtil = entityUtil;
         this.http = http;
@@ -104,7 +114,7 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
     }
 
     @Override
-    public void deleteProjectCalendar(@NonNull User user, @NonNull Project project) {
+    public ThirdPartyOperationResult deleteProjectCalendar(@NonNull User user, @NonNull Project project) {
         try {
             Optional<ProjectCalendar> projectCalendarOpt =
                     projectCalendarRepository.findByProjectId(project.getId());
@@ -112,6 +122,7 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
                 try {
                     Calendar service = getService(user);
                     service.calendars().delete(projectCalendarOpt.get().getCalendarId()).execute();
+                    return new ThirdPartyOperationResult(ThirdPartyOperationStatus.SUCCESS);
                 } catch (OAuth2AuthorizedClientLoadingException e) {
                     LOGGER.warn("Authorzied client for user " + user.getId() + " and service "
                             + clientRegistration.getClientName() + " is unavailable. To prevent"
@@ -124,6 +135,7 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
                 LOGGER.warn("Calendar for project " + project.getId()
                         + " doesn't exist. Action skipped.");
             }
+            return new ThirdPartyOperationResult(ThirdPartyOperationStatus.SKIPPED);
         } catch (IOException e) {
             throw new ThirdPartyApiException("Unable to delete a calendar for project "
                     + project.getId(), e);
@@ -161,13 +173,13 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
     }
 
     @Override
-    public void addUserToCalendar(@NonNull Project project, @NonNull User newUser) {
+    public ThirdPartyOperationResult addUserToCalendar(@NonNull Project project, @NonNull User newUser) {
         final User user = entityUtil.getProjectOwner(project);
 
         if (isCalendarConnected(project)) {
             try {
                 Calendar service = getService(user);
-                addUserToCalendar0(service, project, newUser);
+                return addUserToCalendar0(service, project, newUser);
             } catch (OAuth2AuthorizedClientLoadingException e) {
                 processAuthClientLoadingException(user);
             }
@@ -175,10 +187,11 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
             LOGGER.warn("Calendar for project " + project.getId()
                             + " doesn't exist. Action skipped.");
         }
+        return new ThirdPartyOperationResult(ThirdPartyOperationStatus.SKIPPED);
     }
 
     @Override
-    public void removeUserFromCalendar(@NonNull Project project, @NonNull User userToRemove) {
+    public ThirdPartyOperationResult removeUserFromCalendar(@NonNull Project project, @NonNull User userToRemove) {
         
         try {
             Optional<ProjectCalendar> projectCalendarOpt =
@@ -194,7 +207,7 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
                             authorizedClient.getExternalAccountId())) {
                         service.acl().delete(projectCalendarOpt.get()
                                 .getCalendarId(), rule.getId()).execute();
-                        break;
+                        return new ThirdPartyOperationResult(ThirdPartyOperationStatus.SUCCESS);
                     }
                 }
             } else {
@@ -208,6 +221,7 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
             LOGGER.warn("Unable to load authorized client for user "
                     + userToRemove.getId() + ". Action skipped.");
         }
+        return new ThirdPartyOperationResult(ThirdPartyOperationStatus.SKIPPED);
     }
 
     @Override
@@ -265,13 +279,18 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
                 Calendar service = getService(user);
                 createCalendarForProject0(service, project);
 
-                List<User> projectMembers = project.getProjectRoles().stream()
-                        .filter(pr -> !pr.getRoleType().equals(ProjectRoleType.CREATOR))
-                        .map(pr -> pr.getUser())
-                        .toList();
-                for (User projectMember : projectMembers) {
-                    addUserToCalendar0(service, project, projectMember);
-                }
+                project.getProjectRoles().forEach(pr -> {
+                    if (!pr.getRoleType().equals(ProjectRoleType.CREATOR)) {
+                        if (addUserToCalendar0(service, project, pr.getUser())
+                                .getStatus().equals(ThirdPartyOperationStatus.SUCCESS)) {
+                            pr.setCalendarConnected(true);
+                            projectRoleRepository.save(pr);
+                        }
+                    } else {
+                        pr.setCalendarConnected(true);
+                        projectRoleRepository.save(pr);
+                    }
+                });
                 for (Task task : project.getTasks()) {
                     createEventForTask0(service, task, task.getDueDate());
                 }
@@ -289,9 +308,19 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
         Optional<ProjectCalendar> projectCalendarOpt =
                 projectCalendarRepository.findByProjectId(project.getId());
         if (projectCalendarOpt.isPresent()) {
+            final ProjectRole projectRole = entityUtil.getProjectRoleByProjectIdAndUserId(project.getId(), user.getId());
+
+            if (projectRole.isCalendarConnected()) {
+                throw new UnsupportedOperationException("No need to conncted user %s to calendar in project %s, "
+                        + "since the user is already connected.".formatted(user.getUsername(), project.getName()));
+            }
             try {
                 Calendar service = getService(entityUtil.getProjectOwner(project));
-                addUserToCalendar0(service, project, user);
+                if (addUserToCalendar0(service, project, user)
+                        .getStatus().equals(ThirdPartyOperationStatus.SUCCESS)) {
+                    projectRole.setCalendarConnected(true);
+                    projectRoleRepository.save(projectRole);
+                }
             } catch (OAuth2AuthorizedClientLoadingException e) {
                 processAuthClientLoadingException(user);
             }
@@ -304,7 +333,7 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
 
     @Override
     public void changeProjectEventsDates(@NonNull User user, @NonNull Project project,
-            @NonNull LocalDate newStart, @NonNull LocalDate newEnd) {
+            @NonNull LocalDate newStart, LocalDate newEnd) {
         Optional<ProjectCalendar> projectCalendarOpt =
                 projectCalendarRepository.findByProjectId(project.getId());
         if (projectCalendarOpt.isPresent()) {
@@ -362,7 +391,7 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
 
     @Override
     public void changeTaskEventDueDate(@NonNull User user, @NonNull Task task,
-            @NonNull LocalDate newDueDate) {
+            LocalDate newDueDate) {
         Optional<ProjectCalendar> projectCalendarOpt =
                 projectCalendarRepository.findByProjectId(task.getProject().getId());
         if (projectCalendarOpt.isPresent()) {
@@ -565,7 +594,7 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
         }
     }
 
-    private void addUserToCalendar0(Calendar service, Project project, User newUser) {
+    private ThirdPartyOperationResult addUserToCalendar0(Calendar service, Project project, User newUser) {
         try {
             final OAuth2AuthorizedClient authorizedClient =
                     oauthService.loadAuthorizedClient(newUser, clientRegistration);
@@ -593,12 +622,14 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
             CalendarListEntry calendarListEntry = new CalendarListEntry();
             calendarListEntry.setId(projectCalendarOpt.get().getCalendarId());
             newUserService.calendarList().insert(calendarListEntry).execute();
+            return new ThirdPartyOperationResult(ThirdPartyOperationStatus.SUCCESS);
         } catch (IOException e) {
             throw new ThirdPartyApiException("Unable to add new user "
                     + newUser.getId() + " to calendar for project " + project.getId(), e);
         } catch (OAuth2AuthorizedClientLoadingException e) {
             LOGGER.warn("Unable to load authorized client for user "
                     + newUser.getId() + ". Action skipped.");
+            return new ThirdPartyOperationResult(ThirdPartyOperationStatus.SKIPPED);
         }
     }
 

@@ -1,9 +1,12 @@
 package com.unbidden.jvtaskmanagementsystem.dto.project;
 
+import java.time.LocalDate;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.unbidden.jvtaskmanagementsystem.validation.DateConsistency;
+
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import java.time.LocalDate;
 import lombok.Data;
 
 @Data
@@ -19,5 +22,6 @@ public class CreateProjectRequestDto {
     
     private LocalDate endDate;
 
+    @JsonProperty("isPrivate")
     private boolean isPrivate;
 }

@@ -1,6 +1,17 @@
 package com.unbidden.jvtaskmanagementsystem.model;
 
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
+
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
 import com.unbidden.jvtaskmanagementsystem.model.Role.RoleType;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -10,16 +21,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
 import lombok.Data;
 import lombok.ToString;
-import org.hibernate.annotations.SQLDelete;
-import org.hibernate.annotations.SQLRestriction;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
 
 @Entity
 @Data
@@ -40,12 +43,6 @@ public class User implements UserDetails {
 
     @Column(nullable = false)
     private String email;
-
-    @Column(nullable = false)
-    private String firstName;
-
-    @Column(nullable = false)
-    private String lastName;
     
     @Column(nullable = false, columnDefinition = "TINYINT(1)")
     private boolean isLocked;

@@ -2,6 +2,8 @@ package com.unbidden.jvtaskmanagementsystem.dto.user;
 
 import com.unbidden.jvtaskmanagementsystem.validation.ApplyMatching;
 import com.unbidden.jvtaskmanagementsystem.validation.FieldMatch;
+
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
@@ -14,16 +16,14 @@ public class UserUpdateDetailsRequestDto {
     private String username;
 
     @NotBlank
-    private String firstName;
+    @Email
+    private String email;
 
-    @NotBlank
-    private String lastName;
-
-    @NotBlank
     @ApplyMatching
+    @Size(min = 8, max = 100)
     private String password;
 
-    @NotBlank
     @ApplyMatching
+    @Size(min = 8, max = 100)
     private String repeatPassword;
 }

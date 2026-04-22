@@ -1,26 +1,13 @@
 package com.unbidden.jvtaskmanagementsystem.controller;
 
-import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.unbidden.jvtaskmanagementsystem.dto.auth.LoginRequestDto;
-import com.unbidden.jvtaskmanagementsystem.dto.user.UserResponseDto;
-import com.unbidden.jvtaskmanagementsystem.dto.user.UserUpdateDetailsRequestDto;
-import com.unbidden.jvtaskmanagementsystem.model.Role;
-import com.unbidden.jvtaskmanagementsystem.model.Role.RoleType;
-import com.unbidden.jvtaskmanagementsystem.model.User;
-import com.unbidden.jvtaskmanagementsystem.repository.RoleRepository;
-import com.unbidden.jvtaskmanagementsystem.repository.UserRepository;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
 import javax.sql.DataSource;
+
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -37,10 +24,26 @@ import org.springframework.http.MediaType;
 import org.springframework.jdbc.datasource.init.ScriptUtils;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.test.context.support.WithUserDetails;
+import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.unbidden.jvtaskmanagementsystem.dto.auth.LoginRequestDto;
+import com.unbidden.jvtaskmanagementsystem.dto.user.UserResponseDto;
+import com.unbidden.jvtaskmanagementsystem.dto.user.UserUpdateDetailsRequestDto;
+import com.unbidden.jvtaskmanagementsystem.model.Role;
+import com.unbidden.jvtaskmanagementsystem.model.Role.RoleType;
+import com.unbidden.jvtaskmanagementsystem.model.User;
+import com.unbidden.jvtaskmanagementsystem.repository.RoleRepository;
+import com.unbidden.jvtaskmanagementsystem.repository.UserRepository;
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 public class UserControllerTest {
@@ -77,10 +80,8 @@ public class UserControllerTest {
         testUserDto = new UserResponseDto();
         testUserDto.setId(testUser.getId());
         testUserDto.setEmail(testUser.getEmail());
-        testUserDto.setFirstName(testUser.getFirstName());
-        testUserDto.setLastName(testUser.getLastName());
         testUserDto.setUsername(testUser.getUsername());
-        testUserDto.setRoles(testUser.getRoles());
+        testUserDto.setRoles(new HashSet<>(testUser.getRoles().stream().map(r -> r.getRoleType()).toList()));
         testUserDto.setLocked(testUser.isLocked());
     }
 
@@ -121,7 +122,7 @@ public class UserControllerTest {
                 .filter(r -> r.getRoleType().equals(RoleType.MANAGER))
                 .toList()
                 .get(0);
-        testUserDto.setRoles(Set.of(managerRole));
+        testUserDto.setRoles(Set.of(managerRole.getRoleType()));
 
         MvcResult result = mockMvc.perform(patch("/users/" + testUser.getId() + "/roles")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -141,13 +142,9 @@ public class UserControllerTest {
     void updateUserDetails_WithUpdatedDetails_UpdatedUser() throws Exception {
         UserUpdateDetailsRequestDto requestDto = new UserUpdateDetailsRequestDto();
         requestDto.setUsername("updatedTestUser");
-        requestDto.setFirstName("updatedFirstName");
-        requestDto.setLastName("updatedLastName");
         requestDto.setPassword("newPassword123");
         requestDto.setRepeatPassword("newPassword123");
         testUserDto.setUsername(requestDto.getUsername());
-        testUserDto.setFirstName(requestDto.getFirstName());
-        testUserDto.setLastName(requestDto.getLastName());
 
         MvcResult result = mockMvc.perform(put("/users/me")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -244,8 +241,6 @@ public class UserControllerTest {
         testUser = new User();
         testUser.setId(id);
         testUser.setEmail("user123@test.com");
-        testUser.setFirstName("testName");
-        testUser.setLastName("testLastName");
         testUser.setPassword(encoder.encode("password123"));
         testUser.setUsername("testUser");
         Role userRole = roleRepository.findAll().stream()

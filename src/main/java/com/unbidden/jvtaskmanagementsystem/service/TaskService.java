@@ -1,38 +1,50 @@
 package com.unbidden.jvtaskmanagementsystem.service;
 
-import com.unbidden.jvtaskmanagementsystem.dto.task.CreateTaskRequestDto;
-import com.unbidden.jvtaskmanagementsystem.dto.task.TaskResponseDto;
-import com.unbidden.jvtaskmanagementsystem.dto.task.UpdateTaskRequestDto;
-import com.unbidden.jvtaskmanagementsystem.dto.task.UpdateTaskStatusRequestDto;
-import com.unbidden.jvtaskmanagementsystem.model.User;
-import java.util.List;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.lang.NonNull;
 
+import com.unbidden.jvtaskmanagementsystem.dto.task.UpdateTaskRequestDto;
+import com.unbidden.jvtaskmanagementsystem.dto.task.UpdateTaskStatusRequestDto;
+import com.unbidden.jvtaskmanagementsystem.dto.task.specification.TaskFilterDto;
+import com.unbidden.jvtaskmanagementsystem.model.Task;
+import com.unbidden.jvtaskmanagementsystem.model.User;
+
 public interface TaskService {
 
-    List<TaskResponseDto> getTasksForUser(@NonNull User user, Pageable pageable);
+    @NonNull    
+    Page<Task> getTasksForUserAndSearchByTaskName(@NonNull User user, @NonNull String name, Pageable pageable);
 
-    List<TaskResponseDto> getProjectTasks(@NonNull User user, @NonNull Long projectId,
+    @NonNull 
+    Page<Task> getProjectTasks(@NonNull User user, @NonNull Long projectId,
             Pageable pageable);
 
-    List<TaskResponseDto> getTasksForUserInProjectById(@NonNull User user,
+    @NonNull     
+    Page<Task> getTasksForUserInProjectById(@NonNull User user,
             @NonNull Long projectId, @NonNull Long userId, Pageable pageable);
 
-    TaskResponseDto getTaskById(@NonNull User user, @NonNull Long taskId);
+    @NonNull         
+    Task getTaskById(@NonNull User user, @NonNull Long taskId);
 
-    TaskResponseDto createTaskInProject(@NonNull User user,
-            @NonNull Long projectId,
-            @NonNull CreateTaskRequestDto requestDto);
+    @NonNull 
+    Page<Task> getTasksInProjectBySpecification(@NonNull User user, @NonNull Long projectId,
+            @NonNull TaskFilterDto filterDto, Pageable pageable);
 
-    TaskResponseDto updateTask(@NonNull User user, @NonNull Long taskId,
+    @NonNull 
+    Task createTaskInProject(@NonNull User user, @NonNull Long projectId,
+            @NonNull Task task);
+
+    @NonNull         
+    Task updateTask(@NonNull User user, @NonNull Long taskId,
             @NonNull UpdateTaskRequestDto requestDto);
 
     void deleteTask(@NonNull User user, @NonNull Long taskId);
 
-    TaskResponseDto changeStatus(@NonNull User user, @NonNull Long taskId,
+    @NonNull 
+    Task changeStatus(@NonNull User user, @NonNull Long taskId,
             @NonNull UpdateTaskStatusRequestDto requestDto);
 
-    List<TaskResponseDto> getTasksByLabelId(@NonNull User user, @NonNull Long labelId,
+    @NonNull 
+    Page<Task> getTasksByLabelId(@NonNull User user, @NonNull Long labelId,
             Pageable pageable);
 }

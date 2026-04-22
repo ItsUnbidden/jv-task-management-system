@@ -7,6 +7,7 @@ import com.unbidden.jvtaskmanagementsystem.dto.message.MessageResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.message.ReplyResponseDto;
 import com.unbidden.jvtaskmanagementsystem.model.User;
 import com.unbidden.jvtaskmanagementsystem.service.MessageService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -14,8 +15,11 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import java.util.List;
+
+import org.springframework.data.domain.Page;
+
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.lang.NonNull;
@@ -61,7 +65,7 @@ public class MessageController {
                     description = "Forbidden. Possible only if project is private")
             }
     )
-    public List<CommentResponseDto> getCommentsForTask(Authentication authentication,
+    public Page<CommentResponseDto> getCommentsForTask(Authentication authentication,
             @Parameter(
                 description = "Task id"
             )
@@ -98,7 +102,7 @@ public class MessageController {
                     description = "Forbidden. Possible only if project is private")
             }
     )
-    public List<CommentWithTaskIdResponseDto> getCommentsForProject(Authentication authentication,
+    public Page<CommentWithTaskIdResponseDto> getCommentsForProject(Authentication authentication,
             @Parameter(
                 description = "Project id"
             )
@@ -199,7 +203,7 @@ public class MessageController {
                     description = "Forbidden. Possible only if project is private")
             }
     )
-    public List<ReplyResponseDto> getRepliesForComment(Authentication authentication,
+    public Page<ReplyResponseDto> getRepliesForComment(Authentication authentication,
             @Parameter(
                 description = "Comment id"
             )

@@ -1,6 +1,7 @@
 package com.unbidden.jvtaskmanagementsystem.util;
 
 import java.util.Base64;
+
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 
@@ -24,10 +25,14 @@ public class HttpClientUtil {
         public static final String LOCATION = "Location";
 
         public static final String CONTENT_TYPE = "Content-Type";
+
+        public static final String CONTENT_DISPOSITION = "Content-Disposition";
     }
 
     public static class HeaderValues {
         public static final String APPLICATION_JSON = "application/json";
+
+        public static final String OCTET_STREAM = "application/octet-stream";
 
         public static final String APPLICATION_OCTET_STREAM = "application/octet-stream";
 

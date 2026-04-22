@@ -1,19 +1,7 @@
 package com.unbidden.jvtaskmanagementsystem.controller;
 
-import com.unbidden.jvtaskmanagementsystem.dto.label.CreateLabelRequestDto;
-import com.unbidden.jvtaskmanagementsystem.dto.label.LabelResponseDto;
-import com.unbidden.jvtaskmanagementsystem.dto.label.UpdateLabelRequestDto;
-import com.unbidden.jvtaskmanagementsystem.model.User;
-import com.unbidden.jvtaskmanagementsystem.service.LabelService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.lang.NonNull;
@@ -27,6 +15,21 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.unbidden.jvtaskmanagementsystem.dto.label.CreateLabelRequestDto;
+import com.unbidden.jvtaskmanagementsystem.dto.label.LabelResponseDto;
+import com.unbidden.jvtaskmanagementsystem.dto.label.UpdateLabelRequestDto;
+import com.unbidden.jvtaskmanagementsystem.model.User;
+import com.unbidden.jvtaskmanagementsystem.service.LabelService;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/labels")
@@ -102,6 +105,38 @@ public class LabelController {
             )
             @NonNull @PathVariable Long labelId) {
         return labelService.getLabelById((User)authentication.getPrincipal(), labelId);
+    }
+
+    @GetMapping("/tasks/{taskId}")
+    @Operation(
+            summary = "Get label for task",
+            responses = {
+                @ApiResponse(
+                    content = @Content(
+                        mediaType = "application/json",
+                        schema = @Schema(implementation = LabelResponseDto.class)),
+                    responseCode = "200",
+                    description = "The labels"),
+                @ApiResponse(
+                    content = @Content(schema = @Schema(hidden = true)),
+                    responseCode = "400",
+                    description = "Invalid id"),
+                @ApiResponse(
+                    content = @Content(schema = @Schema(hidden = true)),
+                    responseCode = "401",
+                    description = "Unauthorized"),
+                @ApiResponse(
+                    content = @Content(schema = @Schema(hidden = true)),
+                    responseCode = "403",
+                    description = "Forbidden. Possible only if project is private")
+            }
+    )
+    public List<LabelResponseDto> getLabelForTask(Authentication authentication,
+            @Parameter(
+                description = "Task id"
+            )
+            @NonNull @PathVariable Long taskId) {
+        return labelService.getLabelForTask((User)authentication.getPrincipal(), taskId);
     }
     
     @PostMapping()

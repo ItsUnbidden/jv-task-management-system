@@ -30,7 +30,7 @@ databaseChangeLog:
                     nullable: false
               - column:
                   name: token
-                  type: varchar(255)
+                  type: TEXT
                   constraints:
                     nullable: false
               - column:
@@ -45,5 +45,5 @@ databaseChangeLog:
                     nullable: false
               - column:
                   name: refresh_token
-                  type: varchar(255)
+                  type: varchar(1000)
     

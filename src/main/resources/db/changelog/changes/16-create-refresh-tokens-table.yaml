@@ -1,0 +1,36 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-refresh-tokens-table
+      author: Unbidden
+      changes:
+        - createTable:
+            tableName: refresh_tokens
+            columns: 
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+              - column:
+                  name: user_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_user_id_refresh_tokens
+                    references: users(id)
+              - column:
+                  name: token
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: expiry_date
+                  type: timestamp
+                  constraints:
+                    nullable: false
+              - column:
+                  name: revoked_at
+                  type: timestamp

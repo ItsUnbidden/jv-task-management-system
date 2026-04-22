@@ -2,7 +2,7 @@ package com.unbidden.jvtaskmanagementsystem.util;
 
 import java.util.HashMap;
 import java.util.Map;
-import lombok.RequiredArgsConstructor;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.aspectj.lang.JoinPoint;
@@ -13,11 +13,13 @@ import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.stereotype.Component;
 
+import lombok.RequiredArgsConstructor;
+
 @Aspect
 @Component
 @RequiredArgsConstructor
 public class LoggingAspect {
-    private Map<Class<?>, Logger> loggers = new HashMap<>();
+    private final Map<Class<?>, Logger> loggers = new HashMap<>();
 
     @Pointcut("execution(public * com.unbidden.jvtaskmanagementsystem.service.impl..*(..))")
     public void serviceMethodAdvice() {
@@ -57,7 +59,7 @@ public class LoggingAspect {
         Logger logger = getLogger(signature.getDeclaringType());
 
         logger.info("Project provider " + signature.getDeclaringType().getSimpleName()
-                + "is trying to load project " + joinPoint.getArgs()[0]);
+                + " is trying to load project using provider's entity id " + joinPoint.getArgs()[0]);
     }
 
     private Logger getLogger(Class<?> clazz) {

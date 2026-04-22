@@ -1,11 +1,13 @@
 package com.unbidden.jvtaskmanagementsystem.validation;
 
-import jakarta.validation.ConstraintValidator;
-import jakarta.validation.ConstraintValidatorContext;
 import java.lang.reflect.Field;
 import java.time.LocalDate;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import jakarta.validation.ConstraintValidator;
+import jakarta.validation.ConstraintValidatorContext;
 
 @SuppressWarnings("null")
 public class DateConsistencyValidator implements ConstraintValidator<DateConsistency, Object> {
@@ -36,8 +38,8 @@ public class DateConsistencyValidator implements ConstraintValidator<DateConsist
                 if (field.getName().equals(startDateFieldName)) {
                     Object potentialStartDate = field.get(value);
                     if (potentialStartDate != null) {
-                        if (potentialStartDate instanceof LocalDate) {
-                            startDate = (LocalDate)potentialStartDate;
+                        if (potentialStartDate instanceof LocalDate localDate) {
+                            startDate = localDate;
                             LOGGER.info("startDate aquired.");
                         } else {
                             throw new UnsupportedOperationException("Field with name "
@@ -51,8 +53,8 @@ public class DateConsistencyValidator implements ConstraintValidator<DateConsist
                 if (field.getName().equals(endDateFieldName)) {
                     Object potentialEndDate = field.get(value);
                     if (potentialEndDate != null) {
-                        if (potentialEndDate instanceof LocalDate) {
-                            endDate = (LocalDate)potentialEndDate;
+                        if (potentialEndDate instanceof LocalDate localDate) {
+                            endDate = localDate;
                             LOGGER.info("endDate aquired.");
                         } else {
                             throw new UnsupportedOperationException("Field with name "
@@ -77,14 +79,14 @@ public class DateConsistencyValidator implements ConstraintValidator<DateConsist
         if (endDate == null) {
             LOGGER.info("End date is not specified.");
             if (startDate.isEqual(LocalDate.now()) || startDate.isAfter(LocalDate.now())) {
-                LOGGER.info("Start date is ligit. Validation successful.");
+                LOGGER.info("Start date is legit. Validation successful.");
                 return true;
             }
         }
         if (startDate == null) {
             LOGGER.info("Start date is not specified.");
             if (endDate.isAfter(LocalDate.now())) {
-                LOGGER.info("End date is ligit. Validation successful.");
+                LOGGER.info("End date is legit. Validation successful.");
                 return true;
             }
         }
@@ -92,7 +94,7 @@ public class DateConsistencyValidator implements ConstraintValidator<DateConsist
             LOGGER.info("Both dates are specified.");
             if ((startDate.isEqual(LocalDate.now()) || startDate.isAfter(LocalDate.now()))
                     && endDate.isAfter(startDate)) {
-                LOGGER.info("Dates are ligit. Validation successful.");
+                LOGGER.info("Dates are legit. Validation successful.");
                 return true;
             }
         }
