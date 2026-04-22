@@ -7,12 +7,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.unbidden.jvtaskmanagementsystem.dto.task.UpdateTaskRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.task.UpdateTaskStatusRequestDto;
+import com.unbidden.jvtaskmanagementsystem.dto.task.internal.CreatedTaskFolderResult;
 import com.unbidden.jvtaskmanagementsystem.dto.task.specification.TaskFilterDto;
 import com.unbidden.jvtaskmanagementsystem.model.Label;
 import com.unbidden.jvtaskmanagementsystem.model.Project;
@@ -120,7 +122,7 @@ public class TaskServiceImpl implements TaskService {
     @Override
     @Transactional
     public Task createTaskInProject(@NonNull User user, @NonNull Long projectId,
-            @NonNull Task task) {
+            @NonNull Task task, @Nullable CreatedTaskFolderResult dropboxResult) {
         final Project project = entityUtil.getProjectById(projectId);
 
         project.getTasks().add(task);
@@ -128,6 +130,9 @@ public class TaskServiceImpl implements TaskService {
         task.setStatus(TaskStatus.NOT_STARTED);
         task.setLabels(List.of());
         task.setAmountOfMessages(0);
+        if (dropboxResult != null) {
+            task.setDropboxTaskFolderId(dropboxResult.getTaskFolderId());
+        }
         checkDateIsLegit(task);
         updateTaskStatusAccordingToDate(task, false);
         projectRepository.save(project);

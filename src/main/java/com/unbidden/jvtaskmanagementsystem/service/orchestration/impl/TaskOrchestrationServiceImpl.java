@@ -6,9 +6,11 @@ import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
 import com.unbidden.jvtaskmanagementsystem.dto.task.CreateTaskRequestDto;
+import com.unbidden.jvtaskmanagementsystem.dto.task.DeleteTaskResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.task.TaskResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.task.UpdateTaskRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.task.UpdateTaskStatusRequestDto;
+import com.unbidden.jvtaskmanagementsystem.dto.task.internal.CreatedTaskFolderResult;
 import com.unbidden.jvtaskmanagementsystem.dto.task.specification.TaskFilterDto;
 import com.unbidden.jvtaskmanagementsystem.mapper.TaskMapper;
 import com.unbidden.jvtaskmanagementsystem.model.Label;
@@ -102,11 +104,12 @@ public class TaskOrchestrationServiceImpl implements TaskOrchestrationService {
         
         task.setAssignee((requestDto.getAssigneeId() == null) ? authorizedUser
                 : entityUtil.getUserById(requestDto.getAssigneeId()));
-        final TaskResponseDto taskDto = taskMapper.toDto(taskService.createTaskInProject(user, projectId, task));
-
-        dropboxService.createTaskFolder(authorizedUser, task);
+        task.setProject(project);
+        final CreatedTaskFolderResult dropboxResult = dropboxService.createTaskFolder(authorizedUser, task);
         calendarService.createEventForTask(authorizedUser, task);
-        return taskDto;
+
+        return taskMapper.toDto(taskService.createTaskInProject(
+                user, projectId, task, dropboxResult));
     }
 
     @NonNull
@@ -125,17 +128,20 @@ public class TaskOrchestrationServiceImpl implements TaskOrchestrationService {
         return taskMapper.toDto(resultTask);
     }
 
+    @NonNull
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.ADMIN, entityIdClass = Task.class)
-    public void deleteTask(@NonNull User user, @NonNull Long taskId) {
+    public DeleteTaskResponseDto deleteTask(@NonNull User user, @NonNull Long taskId) {
         final Task task = entityUtil.getTaskById(taskId);
         final User authorizedUser = (entityUtil.isManager(user))
                 ? entityUtil.getProjectOwner(task.getProject()) : user;
 
-        dropboxService.deleteTaskFolder(authorizedUser, task);
-        calendarService.deleteTaskEvent(authorizedUser, task);
-
+        final DeleteTaskResponseDto response = new DeleteTaskResponseDto(
+                task.getName(),
+                dropboxService.deleteTaskFolder(authorizedUser, task),
+                calendarService.deleteTaskEvent(authorizedUser, task));
         taskService.deleteTask(user, taskId);
+        return response;
     }
 
     @NonNull

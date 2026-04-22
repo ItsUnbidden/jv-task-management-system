@@ -20,16 +20,19 @@ public interface DropboxService {
     @Nullable
     CreatedProjectFolderResult createSharedProjectFolder(@NonNull User user, @NonNull Project project);
 
+    @NonNull
     ThirdPartyOperationResult deleteProjectFolder(@NonNull User user, @NonNull Project project);
 
     @Nullable
     CreatedTaskFolderResult createTaskFolder(@NonNull User user, @NonNull Task task);
 
-    void deleteTaskFolder(@NonNull User user, @NonNull Task task);
+    @NonNull
+    ThirdPartyOperationResult deleteTaskFolder(@NonNull User user, @NonNull Task task);
 
     ThirdPartyOperationResult addProjectMemberToSharedFolder(@NonNull User user, @NonNull User newMember,
             @NonNull Project project);
 
+    @NonNull
     ThirdPartyOperationResult removeMemberFromSharedFolder(@NonNull User user, @NonNull User memberToRemove,
             @NonNull Project project);
 

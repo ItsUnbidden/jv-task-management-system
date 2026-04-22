@@ -3,9 +3,11 @@ package com.unbidden.jvtaskmanagementsystem.service;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 
 import com.unbidden.jvtaskmanagementsystem.dto.task.UpdateTaskRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.task.UpdateTaskStatusRequestDto;
+import com.unbidden.jvtaskmanagementsystem.dto.task.internal.CreatedTaskFolderResult;
 import com.unbidden.jvtaskmanagementsystem.dto.task.specification.TaskFilterDto;
 import com.unbidden.jvtaskmanagementsystem.model.Task;
 import com.unbidden.jvtaskmanagementsystem.model.User;
@@ -32,7 +34,7 @@ public interface TaskService {
 
     @NonNull 
     Task createTaskInProject(@NonNull User user, @NonNull Long projectId,
-            @NonNull Task task);
+            @NonNull Task task, @Nullable  CreatedTaskFolderResult dropboxResult);
 
     @NonNull         
     Task updateTask(@NonNull User user, @NonNull Long taskId,

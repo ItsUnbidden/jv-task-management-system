@@ -129,6 +129,8 @@ public class CustomGlobalExceptionHandler extends ResponseEntityExceptionHandler
     ) {
         final Map<String, Object> body = new LinkedHashMap<>();
 
+        LOGGER.error("Some internal error occured.", ex);
+
         body.put("timestamp", LocalDateTime.now());
         body.put("errors", List.of(ex.getMessage()));
 

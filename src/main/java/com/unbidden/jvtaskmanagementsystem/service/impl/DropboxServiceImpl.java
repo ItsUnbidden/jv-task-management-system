@@ -103,6 +103,7 @@ public class DropboxServiceImpl implements DropboxService {
         return null;
     }
 
+    @NonNull
     @Override
     public ThirdPartyOperationResult deleteProjectFolder(@NonNull User user, @NonNull Project project) {
         if (project.isDropboxConnected()) {
@@ -142,26 +143,35 @@ public class DropboxServiceImpl implements DropboxService {
         return null;
     }
 
+    @NonNull
     @Override
-    public void deleteTaskFolder(@NonNull User user, @NonNull Task task) {
+    public ThirdPartyOperationResult deleteTaskFolder(@NonNull User user, @NonNull Task task) {
         if (task.getProject().isDropboxConnected()) {
             try {
                 final DbxClientV2 dbxClient = getDbxClient(user);
 
+                if (task.getDropboxTaskFolderId() == null) {
+                    LOGGER.error("Task %s does not have a Dropbox folder reference.".formatted(task.getName()));
+                    return new ThirdPartyOperationResult(ThirdPartyOperationStatus.FAILED);
+                }
                 dbxClient.files().deleteV2(task.getDropboxTaskFolderId());
+                return new ThirdPartyOperationResult(ThirdPartyOperationStatus.SUCCESS);
             } catch (CreateFolderErrorException e) {
-                LOGGER.error("Unable to delete a folder for task "
-                        + task.getId() + ". Task will be deleted regardless. "
+                LOGGER.error("Unable to delete a folder for task " + task.getId()
                         + "This might have happened because task folder does not exist.", e);
+                return new ThirdPartyOperationResult(ThirdPartyOperationStatus.FAILED);
             } catch (DbxException e) {
                 throw new GeneralDropboxException("A general dropbox exception was thrown.", e);
             } catch (OAuth2AuthorizedClientLoadingException e) {
                 LOGGER.warn("Cannot load authorized client for user " + user.getUsername()
                         + ". Action skipped.");
+                return new ThirdPartyOperationResult(ThirdPartyOperationStatus.SKIPPED);
             }
         }
+        return new ThirdPartyOperationResult(ThirdPartyOperationStatus.NOT_APPLICABLE);
     }
 
+    @NonNull
     @Override
     public ThirdPartyOperationResult addProjectMemberToSharedFolder(@NonNull User user, @NonNull User newMember,
             Project project) {
@@ -184,6 +194,7 @@ public class DropboxServiceImpl implements DropboxService {
         return new ThirdPartyOperationResult(ThirdPartyOperationStatus.NOT_APPLICABLE);
     }
 
+    @NonNull
     @Override
     public ThirdPartyOperationResult removeMemberFromSharedFolder(@NonNull User user, @NonNull User memberToRemove,
             Project project) {

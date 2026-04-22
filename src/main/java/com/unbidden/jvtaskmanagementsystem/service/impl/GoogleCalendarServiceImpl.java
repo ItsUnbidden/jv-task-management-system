@@ -158,17 +158,19 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
     }
     
     @Override
-    public void deleteTaskEvent(@NonNull User user, @NonNull Task task) {
+    public ThirdPartyOperationResult deleteTaskEvent(@NonNull User user, @NonNull Task task) {
         if (isCalendarConnected(task.getProject())) {
             try {
                 Calendar service = getService(user);
-                deleteTaskEvent0(service, task);
+                return deleteTaskEvent0(service, task);
             } catch (OAuth2AuthorizedClientLoadingException e) {
                 processAuthClientLoadingException(user);
+                return new ThirdPartyOperationResult(ThirdPartyOperationStatus.FAILED);
             }
         } else {
             LOGGER.warn("Calendar for project " + task.getProject().getId()
                             + " doesn't exist. Action skipped.");
+            return new ThirdPartyOperationResult(ThirdPartyOperationStatus.NOT_APPLICABLE);
         }
     }
 
@@ -575,7 +577,7 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
         }
     }
 
-    private void deleteTaskEvent0(Calendar service, Task task) {
+    private ThirdPartyOperationResult deleteTaskEvent0(Calendar service, Task task) {
         try {
             Optional<ProjectCalendar> projectCalendarOpt =
                     projectCalendarRepository.findByProjectId(task.getProject().getId());
@@ -585,12 +587,14 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
                 service.events().delete(projectCalendarOpt.get().getCalendarId(),
                         taskEventOpt.get().getEventId()).execute();
                 taskEventRepository.delete(taskEventOpt.get());
+                return new ThirdPartyOperationResult(ThirdPartyOperationStatus.SUCCESS);
             } else {
                 LOGGER.warn("Event for " + task.getId() + " doesn't exist. Action skipped.");
+                return new ThirdPartyOperationResult(ThirdPartyOperationStatus.NOT_APPLICABLE);
             }
         } catch (IOException e) {
-            throw new ThirdPartyApiException("Unable to delete an event for task "
-                    + task.getId(), e);
+            LOGGER.error("Failed to delete task event.", e);
+            return new ThirdPartyOperationResult(ThirdPartyOperationStatus.FAILED);
         }
     }
 

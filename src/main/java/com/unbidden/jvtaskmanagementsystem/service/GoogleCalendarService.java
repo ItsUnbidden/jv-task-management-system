@@ -13,14 +13,18 @@ import com.unbidden.jvtaskmanagementsystem.model.User;
 public interface GoogleCalendarService {
     void createCalendarForProject(@NonNull User user, @NonNull Project project);
 
+    @NonNull
     ThirdPartyOperationResult deleteProjectCalendar(@NonNull User user, @NonNull Project project);
 
     void createEventForTask(@NonNull User user, @NonNull Task task);
 
-    void deleteTaskEvent(@NonNull User user, @NonNull Task task);
+    @NonNull
+    ThirdPartyOperationResult deleteTaskEvent(@NonNull User user, @NonNull Task task);
 
+    @NonNull
     ThirdPartyOperationResult addUserToCalendar(@NonNull Project project, @NonNull User newUser);
 
+    @NonNull
     ThirdPartyOperationResult removeUserFromCalendar(@NonNull Project project, @NonNull User userToRemove);
 
     void transferOwnership(@NonNull User user, @NonNull Project project, @NonNull User newOwner);
@@ -35,6 +39,7 @@ public interface GoogleCalendarService {
     void changeTaskEventDueDate(@NonNull User user, @NonNull Task task,
             LocalDate newDueDate);
 
+    @NonNull
     GoogleSuccessfulTestResponseDto test(@NonNull User user);
 
     void logout(@NonNull User user);

@@ -1,4 +1,4 @@
-package com.unbidden.jvtaskmanagementsystem.dto.project;
+package com.unbidden.jvtaskmanagementsystem.dto.task;
 
 import org.springframework.lang.NonNull;
 
@@ -7,13 +7,13 @@ import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.ThirdPartyOperationRes
 import lombok.Data;
 
 @Data
-public class DeleteProjectResponseDto {
+public class DeleteTaskResponseDto {
     @NonNull
-    private String projectName;
-    
+    private String taskName;
+
     @NonNull
     private ThirdPartyOperationResult dropboxFolderDeleted;
 
     @NonNull
-    private ThirdPartyOperationResult calendarDeleted;
+    private ThirdPartyOperationResult calendarFolderDeleted;
 }
