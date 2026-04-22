@@ -7,13 +7,10 @@ import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.ThirdPartyOperationRes
 import lombok.Data;
 
 @Data
-public class DeleteProjectResponseDto {
+public class ProjectCalendarDisconnectionResponseDto {
     @NonNull
-    private String projectName;
-    
-    @NonNull
-    private ThirdPartyOperationResult isDropboxFolderDeleted;
+    private ProjectResponseDto project;
 
     @NonNull
-    private ThirdPartyOperationResult isCalendarDeleted;
+    private ThirdPartyOperationResult calendarDeleted;
 }

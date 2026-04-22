@@ -1,5 +1,6 @@
 package com.unbidden.jvtaskmanagementsystem.service.impl;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -143,53 +144,26 @@ public class UserServiceImpl implements UserService {
         if (user.getUsername().equals(requestDto.getUsername()) 
                 && passwordEncoder.matches(requestDto.getPassword(), user.getPassword())) {
             final List<ProjectRole> projectRoles = projectRoleRepository.findByUserId(user.getId());
-            final DeleteUserResponseDto responseDto = new DeleteUserResponseDto();
+            final List<DeleteProjectResponseDto> deletedProjects = new ArrayList<>();
+            final List<RemoveUserFromProjectResponseDto> quittedProjects = new ArrayList<>();
 
-            int totalDeletedProjects = 0;
-            int totalProjectsQuit = 0;
-            int totalOwnProjectsWithDropbox = 0;
-            int totalOwnProjectsWithCalendar = 0;
-            int totalOwnProjectsWithDropboxFullyDeleted = 0;
-            int totalOwnProjectsWithCalendarFullyDeleted = 0;
-            int totalOtherProjectsWithDropbox = 0;
-            int totalOtherProjectsWithCalendar = 0;
-            int totalOtherProjectsWithDropboxQuit = 0;
-            int totalOtherProjectsWithCalendarQuit = 0;
             for (var role : projectRoles) {
                 final Project project = role.getProject();
 
                 if (role.getRoleType().equals(ProjectRoleType.CREATOR)) {
-                    if (project.isDropboxConnected()) ++totalOwnProjectsWithDropbox;
-                    if (project.isCalendarConnected()) ++totalOwnProjectsWithCalendar;
                     final DeleteProjectResponseDto projectResponseDto =
                             projectService.deleteProject(user, project.getId());
                     
-                    if (projectResponseDto.isDropboxFolderDeleted()) ++totalOwnProjectsWithDropboxFullyDeleted;
-                    if (projectResponseDto.isCalendarDeleted()) ++totalOwnProjectsWithCalendarFullyDeleted;
-                    ++totalDeletedProjects;
+                    deletedProjects.add(projectResponseDto);
                 } else {
-                    if (role.isDropboxConnected()) ++totalOtherProjectsWithDropbox;
-                    if (role.isCalendarConnected()) ++totalOtherProjectsWithCalendar;
-
                     final RemoveUserFromProjectResponseDto projectResponseDto =
                             projectService.quitProject(user, project.getId());
 
-                    if (projectResponseDto.isDropboxDisconnected()) ++totalOtherProjectsWithDropboxQuit;
-                    if (projectResponseDto.isCalendarDisconnected()) ++totalOtherProjectsWithCalendarQuit;
-                    ++totalProjectsQuit;
+                    quittedProjects.add(projectResponseDto);
                 }
             }
-            responseDto.setTotalDeletedProjects(totalDeletedProjects);
-            responseDto.setTotalProjectsQuit(totalProjectsQuit);
-            responseDto.setTotalOwnProjectsWithDropbox(totalOwnProjectsWithDropbox);
-            responseDto.setTotalOwnProjectsWithCalendar(totalOwnProjectsWithCalendar);
-            responseDto.setTotalOwnProjectsWithDropboxFullyDeleted(totalOwnProjectsWithDropboxFullyDeleted);
-            responseDto.setTotalOwnProjectsWithCalendarFullyDeleted(totalOwnProjectsWithCalendarFullyDeleted);
-            responseDto.setTotalOtherProjectsWithDropbox(totalOtherProjectsWithDropbox);
-            responseDto.setTotalOtherProjectsWithCalendar(totalOtherProjectsWithCalendar);
-            responseDto.setTotalOtherProjectsWithDropboxQuit(totalOtherProjectsWithDropboxQuit);
-            responseDto.setTotalOtherProjectsWithCalendarQuit(totalOtherProjectsWithCalendarQuit);
-            
+            final DeleteUserResponseDto responseDto = new DeleteUserResponseDto(deletedProjects, quittedProjects);
+                     
             authenticationService.logout(request, response);
             userRepository.deleteById(user.getId());
             return responseDto;

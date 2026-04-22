@@ -7,12 +7,16 @@ import java.util.Set;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.unbidden.jvtaskmanagementsystem.dto.project.UpdateProjectRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.project.UpdateProjectStatusRequestDto;
+import com.unbidden.jvtaskmanagementsystem.dto.project.internal.CreatedProjectFolderResult;
+import com.unbidden.jvtaskmanagementsystem.dto.project.internal.ProjectConnectedToDropboxResult;
 import com.unbidden.jvtaskmanagementsystem.dto.projectrole.UpdateProjectRoleRequestDto;
+import com.unbidden.jvtaskmanagementsystem.dto.task.internal.CreatedTaskFolderResult;
 import com.unbidden.jvtaskmanagementsystem.exception.EntityNotFoundException;
 import com.unbidden.jvtaskmanagementsystem.model.Project;
 import com.unbidden.jvtaskmanagementsystem.model.Project.ProjectStatus;
@@ -48,7 +52,7 @@ public class ProjectServiceImpl implements ProjectService {
     public Project findProjectById(@NonNull Long projectId) {
         final Project project = entityUtil.getProjectById(projectId);
         
-        updateProjectStatusAccordingToDate(project, true);
+        updateProjectStatusAccordingToDate(project);
         return project;
     }
 
@@ -59,7 +63,7 @@ public class ProjectServiceImpl implements ProjectService {
         final Page<Project> projects = projectRepository.findProjectsForUserAndSearchByName(user.getId(), name, pageable);
 
         projects.forEach(p -> {
-            updateProjectStatusAccordingToDate(p, true);
+            updateProjectStatusAccordingToDate(p);
             p.setProjectRoles(projectRoleRepository.findByProjectId(p.getId()));
         });
         return projects;
@@ -77,7 +81,7 @@ public class ProjectServiceImpl implements ProjectService {
                 name, pageable);
 
         projects.forEach(p -> {
-            updateProjectStatusAccordingToDate(p, true);
+            updateProjectStatusAccordingToDate(p);
             p.setProjectRoles(projectRoleRepository.findByProjectId(p.getId()));
         });
         return projects;
@@ -86,8 +90,9 @@ public class ProjectServiceImpl implements ProjectService {
     @NonNull
     @Override
     @Transactional
-    public Project createProject(@NonNull User user, @NonNull Project project) {
-        ProjectRole creatorRole = new ProjectRole();
+    public Project createProject(@NonNull User user, @NonNull Project project,
+            @Nullable CreatedProjectFolderResult dropboxResult) {
+        final ProjectRole creatorRole = new ProjectRole();
         creatorRole.setProject(project);
         creatorRole.setRoleType(ProjectRoleType.CREATOR);
         creatorRole.setUser(user);
@@ -97,8 +102,12 @@ public class ProjectServiceImpl implements ProjectService {
         if (project.getStartDate() == null) {
             project.setStartDate(LocalDate.now());
         }
+        if (dropboxResult != null) {
+            project.setDropboxProjectFolderId(dropboxResult.getProjectFolderId());
+            project.setDropboxProjectSharedFolderId(dropboxResult.getProjectSharedFolderId());
+        }
         
-        updateProjectStatusAccordingToDate(project, false);
+        updateProjectStatusAccordingToDate(project);
         return projectRepository.save(project);
     }
 
@@ -117,25 +126,23 @@ public class ProjectServiceImpl implements ProjectService {
             }
         }
         if (requestDto.getEndDate() != null) {
-            if (requestDto.getEndDate().isAfter(project.getStartDate()) && requestDto.getEndDate().isAfter(LocalDate.now())) {
+            if (requestDto.getEndDate().isAfter(project.getStartDate())) {
                 project.setEndDate(requestDto.getEndDate());
             } else {
-                throw new IllegalArgumentException("End date cannot be before start date.");
+                throw new IllegalArgumentException("The end date cannot be before the start date.");
             }
         } else {
             project.setEndDate(null);
         }
         project.setPrivate(requestDto.isPrivate());
-        updateProjectStatusAccordingToDate(project, false);
-        return projectRepository.save(project);
+        updateProjectStatusAccordingToDate(project);
+        return project;
     }
     
     @Override
     @Transactional
     public void deleteProject(@NonNull Long projectId) {
-        final Project project = entityUtil.getProjectById(projectId);
-        
-        projectRepository.delete(project);
+        projectRepository.deleteById(projectId);
     }
 
     @NonNull
@@ -144,28 +151,28 @@ public class ProjectServiceImpl implements ProjectService {
     public Project addUserToProject(@NonNull Long projectId, @NonNull String username) {
         final Project project = entityUtil.getProjectById(projectId);
         final User newProjectMember = userRepository.findByUsername(username)
-                .orElseThrow(() -> new EntityNotFoundException("User with username " + username + " does not exist."));
+                .orElseThrow(() -> new EntityNotFoundException("User with username "
+                + username + " does not exist."));
     
-        ProjectRole projectRole = new ProjectRole();
+        final ProjectRole projectRole = new ProjectRole();
         projectRole.setProject(project);
         projectRole.setRoleType(ProjectRoleType.CONTRIBUTOR);
         projectRole.setUser(newProjectMember);
         project.getProjectRoles().add(projectRole);
-        updateProjectStatusAccordingToDate(project, false);
-        return projectRepository.save(project);
-    }
-
-    @NonNull
-    @Override
-    @Transactional
-    public void removeUserFromProject(@NonNull Long projectId, @NonNull Long userId) {
-        removeUserFromProject0(projectId, userId);
+        updateProjectStatusAccordingToDate(project);
+        return project;
     }
 
     @Override
     @Transactional
-    public void quitProject(@NonNull User user, @NonNull Long projectId) {
-        removeUserFromProject0(projectId, user.getId());
+    public Project removeUserFromProject(@NonNull Long projectId, @NonNull Long userId) {
+        return removeUserFromProject0(projectId, userId);
+    }
+
+    @Override
+    @Transactional
+    public Project quitProject(@NonNull User user, @NonNull Long projectId) {
+        return removeUserFromProject0(projectId, user.getId());
     }
 
     @NonNull
@@ -176,8 +183,8 @@ public class ProjectServiceImpl implements ProjectService {
         final Project project = entityUtil.getProjectById(projectId);
 
         project.setStatus(requestDto.getNewStatus());
-        updateProjectStatusAccordingToDate(project, false);
-        return projectRepository.save(project);
+        updateProjectStatusAccordingToDate(project);
+        return project;
     }
 
     @NonNull
@@ -187,7 +194,7 @@ public class ProjectServiceImpl implements ProjectService {
             @NonNull Long userId, @NonNull UpdateProjectRoleRequestDto requestDto) {
         final Project project = entityUtil.getProjectById(projectId);
 
-        updateProjectStatusAccordingToDate(project, true);
+        updateProjectStatusAccordingToDate(project);
 
         final ProjectRole creatorRole = project.getProjectRoles().stream()
                 .filter(pr -> pr.getRoleType().equals(ProjectRoleType.CREATOR))
@@ -199,41 +206,59 @@ public class ProjectServiceImpl implements ProjectService {
 
         if (requestDto.getNewRole().equals(ProjectRoleType.CREATOR)) {
             creatorRole.setRoleType(ProjectRoleType.ADMIN);
-            projectRoleRepository.save(creatorRole);
         }
         targetUserProjectRole.setRoleType(requestDto.getNewRole());
-        projectRoleRepository.save(targetUserProjectRole);
-        return entityUtil.getProjectById(projectId);
+        return project;
     }
 
     @NonNull
     @Override
     @Transactional
-    public Project connectProjectToDropbox(@NonNull Project project) {
-        return projectRepository.save(project);
+    public Project connectProjectToDropbox(@NonNull Long projectId,
+            @NonNull ProjectConnectedToDropboxResult dropboxResult) {
+        final Project project = entityUtil.getProjectById(projectId);
+
+        project.setDropboxProjectFolderId(dropboxResult.getProjectFolderResult().getProjectFolderId());
+        project.setDropboxProjectSharedFolderId(dropboxResult.getProjectFolderResult().getProjectSharedFolderId());
+        project.getTasks().forEach(t -> {
+            final CreatedTaskFolderResult result = dropboxResult.getTaskFolderResults().get(t.getId());
+            if (result != null) {
+                t.setDropboxTaskFolderId(result.getTaskFolderId());
+            }
+        });
+        project.getProjectRoles().forEach(pr -> {
+            if (dropboxResult.getConnectedUserIds().contains(pr.getUser().getId())) {
+                pr.setDropboxConnected(true);
+            }
+        });
+        return project;
     }
 
     @NonNull
     @Override
     @Transactional
-    public Project disconnectDropbox(@NonNull Project project) {
+    public Project disconnectDropbox(@NonNull Long projectId) {
+        final Project project = entityUtil.getProjectById(projectId);
+
         project.setDropboxProjectFolderId(null);
         project.setDropboxProjectSharedFolderId(null);
 
-        return projectRepository.save(project);
+        return project;
     }
 
     @NonNull
     @Override
     @Transactional
-    public Project disconnectCalendar(@NonNull Project project) {
+    public Project disconnectCalendar(@NonNull Long projectId) {
+        final Project project = entityUtil.getProjectById(projectId);
+
         project.setProjectCalendar(null);
-        return projectRepository.save(project);
+
+        return project;
     }
 
-    private void updateProjectStatusAccordingToDate(Project project, boolean doSave) {
+    private void updateProjectStatusAccordingToDate(Project project) {
         final LocalDate currentDate = LocalDate.now();
-        final ProjectStatus initialStatus = project.getStatus();
 
         if (project.getStartDate().isAfter(currentDate) 
                 && !project.getStatus().equals(ProjectStatus.INITIATED)
@@ -254,13 +279,9 @@ public class ProjectServiceImpl implements ProjectService {
                 && !project.getStatus().equals(ProjectStatus.OVERDUE)) {
             project.setStatus(ProjectStatus.OVERDUE);
         }
-
-        if (doSave && !initialStatus.equals(project.getStatus())) {
-            projectRepository.save(project);
-        }
     }
 
-    private void removeUserFromProject0(Long projectId, Long userId) {
+    private Project removeUserFromProject0(Long projectId, Long userId) {
         final ProjectRole projectRole = entityUtil
                 .getProjectRoleByProjectIdAndUserId(projectId, userId);
         final Project project = entityUtil.getProjectById(projectId);
@@ -270,9 +291,8 @@ public class ProjectServiceImpl implements ProjectService {
                 .get(0).getUser();
              
         userTasks.forEach(t -> t.setAssignee(projectOwner));
-        project.getProjectRoles().removeIf(pr -> pr.getId().equals(projectRole.getId()));
+        project.getProjectRoles().remove(projectRole);
         projectRoleRepository.delete(projectRole);
-        taskRepository.saveAll(userTasks);
-        projectRepository.save(project);
+        return project;
     }
 }

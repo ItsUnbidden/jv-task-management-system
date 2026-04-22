@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import org.springframework.lang.NonNull;
 
 import com.unbidden.jvtaskmanagementsystem.dto.google.GoogleSuccessfulTestResponseDto;
+import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.ThirdPartyOperationResult;
 import com.unbidden.jvtaskmanagementsystem.model.Project;
 import com.unbidden.jvtaskmanagementsystem.model.Task;
 import com.unbidden.jvtaskmanagementsystem.model.User;
@@ -12,15 +13,15 @@ import com.unbidden.jvtaskmanagementsystem.model.User;
 public interface GoogleCalendarService {
     void createCalendarForProject(@NonNull User user, @NonNull Project project);
 
-    boolean deleteProjectCalendar(@NonNull User user, @NonNull Project project);
+    ThirdPartyOperationResult deleteProjectCalendar(@NonNull User user, @NonNull Project project);
 
     void createEventForTask(@NonNull User user, @NonNull Task task);
 
     void deleteTaskEvent(@NonNull User user, @NonNull Task task);
 
-    void addUserToCalendar(@NonNull Project project, @NonNull User newUser);
+    ThirdPartyOperationResult addUserToCalendar(@NonNull Project project, @NonNull User newUser);
 
-    boolean removeUserFromCalendar(@NonNull Project project, @NonNull User userToRemove);
+    ThirdPartyOperationResult removeUserFromCalendar(@NonNull Project project, @NonNull User userToRemove);
 
     void transferOwnership(@NonNull User user, @NonNull Project project, @NonNull User newOwner);
 

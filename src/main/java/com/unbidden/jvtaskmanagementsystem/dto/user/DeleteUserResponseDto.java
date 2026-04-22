@@ -1,26 +1,19 @@
 package com.unbidden.jvtaskmanagementsystem.dto.user;
 
+import java.util.List;
+
+import org.springframework.lang.NonNull;
+
+import com.unbidden.jvtaskmanagementsystem.dto.project.DeleteProjectResponseDto;
+import com.unbidden.jvtaskmanagementsystem.dto.project.RemoveUserFromProjectResponseDto;
+
 import lombok.Data;
 
 @Data
 public class DeleteUserResponseDto {
-    private Integer totalDeletedProjects;
+    @NonNull
+    private List<DeleteProjectResponseDto> deletedProjects;
 
-    private Integer totalOwnProjectsWithDropbox;
-
-    private Integer totalOwnProjectsWithCalendar;
-
-    private Integer totalOwnProjectsWithDropboxFullyDeleted;
-
-    private Integer totalOwnProjectsWithCalendarFullyDeleted;
-
-    private Integer totalProjectsQuit;
-
-    private Integer totalOtherProjectsWithDropbox;
-
-    private Integer totalOtherProjectsWithCalendar;
-
-    private Integer totalOtherProjectsWithDropboxQuit;
-
-    private Integer totalOtherProjectsWithCalendarQuit;
+    @NonNull
+    private List<RemoveUserFromProjectResponseDto> quittedProjects;
 }

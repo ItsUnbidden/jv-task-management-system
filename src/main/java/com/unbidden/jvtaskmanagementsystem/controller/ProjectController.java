@@ -17,8 +17,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.unbidden.jvtaskmanagementsystem.dto.project.AddNewUserToProjectResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.project.CreateProjectRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.project.DeleteProjectResponseDto;
+import com.unbidden.jvtaskmanagementsystem.dto.project.ProjectCalendarDisconnectionResponseDto;
+import com.unbidden.jvtaskmanagementsystem.dto.project.ProjectDropboxDisconnectionResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.project.ProjectResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.project.RemoveUserFromProjectResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.project.UpdateProjectRequestDto;
@@ -261,7 +264,7 @@ public class ProjectController {
                     description = "Forbidden")
             }
     )
-    public ProjectResponseDto addUserToProject(Authentication authentication,
+    public AddNewUserToProjectResponseDto addUserToProject(Authentication authentication,
             @Parameter(
                 description = "Project id"
             )
@@ -533,12 +536,14 @@ public class ProjectController {
     }
 
     @DeleteMapping("/{projectId}/dropbox/disconnect")
-    public ProjectResponseDto disconnectDropbox(Authentication authentication, @NonNull @PathVariable Long projectId) {
+    public ProjectDropboxDisconnectionResponseDto disconnectDropbox(Authentication authentication,
+            @NonNull @PathVariable Long projectId) {
         return projectService.disconnectDropbox((User)authentication.getPrincipal(), projectId);
     }
 
     @DeleteMapping("/{projectId}/google/disconnect")
-    public ProjectResponseDto disconnectCalendar(Authentication authentication, @NonNull @PathVariable Long projectId) {
+    public ProjectCalendarDisconnectionResponseDto disconnectCalendar(Authentication authentication,
+            @NonNull @PathVariable Long projectId) {
         return projectService.disconnectCalendar((User)authentication.getPrincipal(), projectId);
     }
 }

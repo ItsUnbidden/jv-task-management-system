@@ -5,13 +5,19 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
+import com.unbidden.jvtaskmanagementsystem.dto.project.AddNewUserToProjectResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.project.CreateProjectRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.project.DeleteProjectResponseDto;
+import com.unbidden.jvtaskmanagementsystem.dto.project.ProjectCalendarDisconnectionResponseDto;
+import com.unbidden.jvtaskmanagementsystem.dto.project.ProjectDropboxDisconnectionResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.project.ProjectResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.project.RemoveUserFromProjectResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.project.UpdateProjectRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.project.UpdateProjectStatusRequestDto;
+import com.unbidden.jvtaskmanagementsystem.dto.project.internal.CreatedProjectFolderResult;
+import com.unbidden.jvtaskmanagementsystem.dto.project.internal.ProjectConnectedToDropboxResult;
 import com.unbidden.jvtaskmanagementsystem.dto.projectrole.UpdateProjectRoleRequestDto;
+import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.ThirdPartyOperationResult;
 import com.unbidden.jvtaskmanagementsystem.exception.EntityNotFoundException;
 import com.unbidden.jvtaskmanagementsystem.mapper.ProjectMapper;
 import com.unbidden.jvtaskmanagementsystem.model.Project;
@@ -70,8 +76,9 @@ public class ProjectOrchestrationServiceImpl implements ProjectOrchestrationServ
             @NonNull CreateProjectRequestDto requestDto) {
         final Project project = projectMapper.toProject(requestDto);
         
-        dropboxService.createSharedProjectFolder(user, project);
-        final Project response = projectService.createProject(user, project);
+        final CreatedProjectFolderResult dropboxResult =
+                dropboxService.createSharedProjectFolder(user, project);
+        final Project response = projectService.createProject(user, project, dropboxResult);
         
         calendarService.createCalendarForProject(user, project);
         return projectMapper.toProjectDto(response);
@@ -99,10 +106,10 @@ public class ProjectOrchestrationServiceImpl implements ProjectOrchestrationServ
         final User authorizedUser = (entityUtil.isManager(user))
                 ? entityUtil.getProjectOwner(project) : user;
 
-        final DeleteProjectResponseDto responseDto = new DeleteProjectResponseDto();
-
-        responseDto.setDropboxFolderDeleted(dropboxService.deleteProjectFolder(authorizedUser, project));
-        responseDto.setCalendarDeleted(calendarService.deleteProjectCalendar(authorizedUser, project));
+        final DeleteProjectResponseDto responseDto = new DeleteProjectResponseDto(
+                project.getName(),
+                dropboxService.deleteProjectFolder(authorizedUser, project),
+                calendarService.deleteProjectCalendar(authorizedUser, project));
 
         projectService.deleteProject(projectId);
         return responseDto;
@@ -111,7 +118,7 @@ public class ProjectOrchestrationServiceImpl implements ProjectOrchestrationServ
     @NonNull
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.ADMIN)
-    public ProjectResponseDto addUserToProject(@NonNull User user, @NonNull Long projectId,
+    public AddNewUserToProjectResponseDto addUserToProject(@NonNull User user, @NonNull Long projectId,
             @NonNull String username) {
         final Project project = entityUtil.getProjectById(projectId);
         final User newProjectMember = userRepository.findByUsername(username)
@@ -125,11 +132,12 @@ public class ProjectOrchestrationServiceImpl implements ProjectOrchestrationServ
             throw new UnsupportedOperationException("User " + username 
                     + " is already a member of project with id " + projectId);
         }
+        final AddNewUserToProjectResponseDto responseDto = new AddNewUserToProjectResponseDto(
+                projectMapper.toProjectDto(projectService.addUserToProject(projectId, username)),
+                dropboxService.addProjectMemberToSharedFolder(authorizedUser, newProjectMember, project),
+                calendarService.addUserToCalendar(project, newProjectMember));
 
-        dropboxService.addProjectMemberToSharedFolder(authorizedUser, newProjectMember, project);
-        calendarService.addUserToCalendar(project, newProjectMember);
-
-        return projectMapper.toProjectDto(projectService.addUserToProject(projectId, username));
+        return responseDto;
     }
 
     @NonNull
@@ -167,11 +175,10 @@ public class ProjectOrchestrationServiceImpl implements ProjectOrchestrationServ
             throw new UnsupportedOperationException(
                     "Project creator cannot be removed from the project.");
         }
-        final RemoveUserFromProjectResponseDto responseDto = new RemoveUserFromProjectResponseDto();
-
-        responseDto.setDropboxDisconnected(dropboxService.removeMemberFromSharedFolder(authorizedUser, userToRemove, project));
-        responseDto.setCalendarDisconnected(calendarService.removeUserFromCalendar(project, userToRemove));
-        projectService.removeUserFromProject(projectId, userId);
+        final RemoveUserFromProjectResponseDto responseDto = new RemoveUserFromProjectResponseDto(
+                projectMapper.toProjectDto(projectService.removeUserFromProject(projectId, userId)),
+                dropboxService.removeMemberFromSharedFolder(authorizedUser, userToRemove, project),
+                calendarService.removeUserFromCalendar(project, userToRemove));
 
         return responseDto;
     }
@@ -189,11 +196,10 @@ public class ProjectOrchestrationServiceImpl implements ProjectOrchestrationServ
             throw new UnsupportedOperationException(
                     "Project creator cannot be removed from the project.");
         }
-        final RemoveUserFromProjectResponseDto responseDto = new RemoveUserFromProjectResponseDto();
-
-        responseDto.setDropboxDisconnected(dropboxService.removeMemberFromSharedFolder(authorizedUser, user, project));
-        responseDto.setCalendarDisconnected(calendarService.removeUserFromCalendar(project, user));
-        projectService.removeUserFromProject(projectId, user.getId());
+        final RemoveUserFromProjectResponseDto responseDto = new RemoveUserFromProjectResponseDto(
+                projectMapper.toProjectDto(projectService.removeUserFromProject(projectId, user.getId())),
+                dropboxService.removeMemberFromSharedFolder(authorizedUser, user, project),
+                calendarService.removeUserFromCalendar(project, user));
         
         return responseDto;
     }
@@ -215,8 +221,10 @@ public class ProjectOrchestrationServiceImpl implements ProjectOrchestrationServ
         final User authorizedUser = (entityUtil.isManager(user))
                 ? entityUtil.getProjectOwner(project) : user;
         
-        dropboxService.connectProjectToDropbox(authorizedUser, project);
-        return projectMapper.toProjectDto(projectService.connectProjectToDropbox(project));
+        final ProjectConnectedToDropboxResult dropboxResult =
+                dropboxService.connectProjectToDropbox(authorizedUser, project);
+        return projectMapper.toProjectDto(projectService.connectProjectToDropbox(project.getId(),
+                dropboxResult));
     }
 
     @NonNull
@@ -265,20 +273,22 @@ public class ProjectOrchestrationServiceImpl implements ProjectOrchestrationServ
     @NonNull
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.CREATOR)
-    public ProjectResponseDto disconnectDropbox(@NonNull User user, @NonNull Long projectId) {
+    public ProjectDropboxDisconnectionResponseDto disconnectDropbox(@NonNull User user, @NonNull Long projectId) {
         final Project project = entityUtil.getProjectById(projectId);
-
-        dropboxService.deleteProjectFolder(user, project);
-        return projectMapper.toProjectDto(projectService.disconnectDropbox(project));
+        final ThirdPartyOperationResult dropboxResult = dropboxService.deleteProjectFolder(user, project);
+        
+	return new ProjectDropboxDisconnectionResponseDto(projectMapper.toProjectDto(
+                projectService.disconnectDropbox(project.getId())), dropboxResult);
     }
 
     @NonNull
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.CREATOR)
-    public ProjectResponseDto disconnectCalendar(@NonNull User user, @NonNull Long projectId) {
+    public ProjectCalendarDisconnectionResponseDto disconnectCalendar(@NonNull User user, @NonNull Long projectId) {
         final Project project = entityUtil.getProjectById(projectId);
-
-        calendarService.deleteProjectCalendar(user, project);
-        return projectMapper.toProjectDto(projectService.disconnectCalendar(project));
+        final ThirdPartyOperationResult calendarResult = calendarService.deleteProjectCalendar(user, project);
+        
+        return new ProjectCalendarDisconnectionResponseDto(projectMapper.toProjectDto(
+                projectService.disconnectCalendar(project.getId())), calendarResult);
     }
 }

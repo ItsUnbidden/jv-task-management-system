@@ -4,8 +4,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.lang.NonNull;
 
+import com.unbidden.jvtaskmanagementsystem.dto.project.AddNewUserToProjectResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.project.CreateProjectRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.project.DeleteProjectResponseDto;
+import com.unbidden.jvtaskmanagementsystem.dto.project.ProjectCalendarDisconnectionResponseDto;
+import com.unbidden.jvtaskmanagementsystem.dto.project.ProjectDropboxDisconnectionResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.project.ProjectResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.project.RemoveUserFromProjectResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.project.UpdateProjectRequestDto;
@@ -37,7 +40,7 @@ public interface ProjectOrchestrationService {
     public DeleteProjectResponseDto deleteProject(@NonNull User user, @NonNull Long projectId);
 
     @NonNull
-    public ProjectResponseDto addUserToProject(@NonNull User user, @NonNull Long projectId,
+    public AddNewUserToProjectResponseDto addUserToProject(@NonNull User user, @NonNull Long projectId,
             @NonNull String username);
 
     @NonNull
@@ -67,8 +70,8 @@ public interface ProjectOrchestrationService {
     public void joinCalendar(@NonNull User user, @NonNull Long projectId);
 
     @NonNull
-    public ProjectResponseDto disconnectDropbox(@NonNull User user, @NonNull Long projectId);
+    public ProjectDropboxDisconnectionResponseDto disconnectDropbox(@NonNull User user, @NonNull Long projectId);
 
     @NonNull
-    public ProjectResponseDto disconnectCalendar(@NonNull User user, @NonNull Long projectId);
+    public ProjectCalendarDisconnectionResponseDto disconnectCalendar(@NonNull User user, @NonNull Long projectId);
 }

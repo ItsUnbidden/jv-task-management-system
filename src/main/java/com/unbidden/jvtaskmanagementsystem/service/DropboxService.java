@@ -3,32 +3,40 @@ package com.unbidden.jvtaskmanagementsystem.service;
 import java.io.OutputStream;
 
 import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.dropbox.core.v2.check.EchoResult;
 import com.dropbox.core.v2.files.FileMetadata;
+import com.unbidden.jvtaskmanagementsystem.dto.project.internal.CreatedProjectFolderResult;
+import com.unbidden.jvtaskmanagementsystem.dto.project.internal.ProjectConnectedToDropboxResult;
+import com.unbidden.jvtaskmanagementsystem.dto.task.internal.CreatedTaskFolderResult;
+import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.ThirdPartyOperationResult;
 import com.unbidden.jvtaskmanagementsystem.model.Project;
 import com.unbidden.jvtaskmanagementsystem.model.Task;
 import com.unbidden.jvtaskmanagementsystem.model.User;
 
 public interface DropboxService {
-    void createSharedProjectFolder(@NonNull User user, @NonNull Project project);
+    @Nullable
+    CreatedProjectFolderResult createSharedProjectFolder(@NonNull User user, @NonNull Project project);
 
-    boolean deleteProjectFolder(@NonNull User user, @NonNull Project project);
+    ThirdPartyOperationResult deleteProjectFolder(@NonNull User user, @NonNull Project project);
 
-    void createTaskFolder(@NonNull User user, @NonNull Task task);
+    @Nullable
+    CreatedTaskFolderResult createTaskFolder(@NonNull User user, @NonNull Task task);
 
     void deleteTaskFolder(@NonNull User user, @NonNull Task task);
 
-    void addProjectMemberToSharedFolder(@NonNull User user, @NonNull User newMember,
+    ThirdPartyOperationResult addProjectMemberToSharedFolder(@NonNull User user, @NonNull User newMember,
             @NonNull Project project);
 
-    boolean removeMemberFromSharedFolder(@NonNull User user, @NonNull User memberToRemove,
+    ThirdPartyOperationResult removeMemberFromSharedFolder(@NonNull User user, @NonNull User memberToRemove,
             @NonNull Project project);
 
     void transferOwnership(@NonNull User user, @NonNull User newOwner, @NonNull Project project);
 
-    void connectProjectToDropbox(@NonNull User user, @NonNull Project project);
+    @NonNull
+    ProjectConnectedToDropboxResult connectProjectToDropbox(@NonNull User user, @NonNull Project project);
 
     void joinDropbox(@NonNull User user, @NonNull Project project);
 
