@@ -107,8 +107,6 @@ public class MessageControllerTest {
         User user1 = new User();
         user1.setEmail("alice@example.com");
         user1.setUsername("alice");
-        user1.setFirstName("alice");
-        user1.setLastName("alice");
         user1.setPassword("password123");
         user1.setRoles(Set.of(roleRepository.findAll().stream()
                 .filter(r -> r.getRoleType().equals(RoleType.USER))
@@ -119,8 +117,6 @@ public class MessageControllerTest {
         User user2 = new User();
         user2.setEmail("bob@tms.com");
         user2.setUsername("bob");
-        user2.setFirstName("bob");
-        user2.setLastName("bob");
         user2.setPassword("password321");
         user2.setRoles(Set.of(roleRepository.findAll().stream()
                 .filter(r -> r.getRoleType().equals(RoleType.USER))

@@ -10,7 +10,10 @@ import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.unbidden.jvtaskmanagementsystem.dto.auth.LoginRequestDto;
 import com.unbidden.jvtaskmanagementsystem.model.RefreshToken;
@@ -20,7 +23,6 @@ import com.unbidden.jvtaskmanagementsystem.util.JwtUtil;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
@@ -33,6 +35,8 @@ public class AuthenticationService {
     private final RefreshJwtRepository refreshJwtRepository;
 
     private final UserRepository userRepository;
+
+    private final CookieCsrfTokenRepository csrfTokenRepository;
 
     private final JwtUtil jwtUtil;
 
@@ -103,6 +107,14 @@ public class AuthenticationService {
         }
         response.addCookie(jwtUtil.getAccessTokenRemoveCookie());
         response.addCookie(jwtUtil.getRefreshTokenRemoveCookie());
+    }
+
+    public CsrfToken refreshCsrfToken(HttpServletRequest request, HttpServletResponse response) {
+        csrfTokenRepository.saveToken(null, request, response);
+        final CsrfToken token = csrfTokenRepository.generateToken(request);
+        
+        csrfTokenRepository.saveToken(token, request, response);
+        return token;
     }
 
     private RefreshToken createRefreshTokenForUser(String username, String refreshTokenStr) {

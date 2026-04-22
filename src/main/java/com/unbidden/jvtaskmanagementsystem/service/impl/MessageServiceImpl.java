@@ -9,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.lang.NonNull;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.unbidden.jvtaskmanagementsystem.dto.message.CommentResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.message.CommentWithTaskIdResponseDto;
@@ -46,6 +47,7 @@ public class MessageServiceImpl implements MessageService {
 
     @NonNull
     @Override
+    @Transactional(readOnly = true)
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true,
             entityIdClass = Task.class)
     public Page<CommentResponseDto> getCommentsForTask(@NonNull User user, @NonNull Long taskId,
@@ -56,6 +58,7 @@ public class MessageServiceImpl implements MessageService {
 
     @NonNull
     @Override
+    @Transactional(readOnly = true)
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true)
     public Page<CommentWithTaskIdResponseDto> getCommentsForProject(@NonNull User user,
             @NonNull Long projectId, Pageable pageable) {
@@ -65,6 +68,7 @@ public class MessageServiceImpl implements MessageService {
 
     @NonNull
     @Override
+    @Transactional(readOnly = true)
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true,
             entityIdClass = Message.class, entityIdParamName = "commentId")
     public CommentWithTaskIdResponseDto getCommentById(@NonNull User user,
@@ -75,6 +79,7 @@ public class MessageServiceImpl implements MessageService {
 
     @NonNull
     @Override
+    @Transactional(readOnly = true)
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true,
             entityIdClass = Message.class, entityIdParamName = "commentId")
     public Page<ReplyResponseDto> getRepliesForComment(@NonNull User user,
@@ -85,6 +90,7 @@ public class MessageServiceImpl implements MessageService {
 
     @NonNull
     @Override
+    @Transactional(readOnly = true)
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true,
             entityIdClass = Message.class, entityIdParamName = "replyId")
     public ReplyResponseDto getReplyById(@NonNull User user, @NonNull Long replyId) {
@@ -95,6 +101,7 @@ public class MessageServiceImpl implements MessageService {
 
     @NonNull
     @Override
+    @Transactional
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true,
             entityIdClass = Task.class)
     public CommentResponseDto leaveComment(@NonNull User user, @NonNull Long taskId,
@@ -115,6 +122,7 @@ public class MessageServiceImpl implements MessageService {
 
     @NonNull
     @Override
+    @Transactional
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true,
             entityIdClass = Message.class)
     public ReplyResponseDto replyToMessage(@NonNull User user, @NonNull Long messageId,
@@ -159,6 +167,7 @@ public class MessageServiceImpl implements MessageService {
 
     @NonNull
     @Override
+    @Transactional
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true,
             entityIdClass = Message.class)
     public MessageResponseDto updateMessage(@NonNull User user, @NonNull Long messageId,
@@ -177,6 +186,7 @@ public class MessageServiceImpl implements MessageService {
     }
 
     @Override
+    @Transactional
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true,
             entityIdClass = Message.class)
     public void deleteMessage(@NonNull User user, @NonNull Long messageId) {

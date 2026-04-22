@@ -4,7 +4,6 @@ import java.util.Set;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.lang.NonNull;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -15,10 +14,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.unbidden.jvtaskmanagementsystem.dto.auth.LoginRequestDto;
+import com.unbidden.jvtaskmanagementsystem.dto.user.DeleteUserResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.user.UserResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.user.UserUpdateDetailsRequestDto;
 import com.unbidden.jvtaskmanagementsystem.model.Role;
@@ -31,6 +31,8 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -128,9 +130,9 @@ public class UserController {
     }
 
     @PreAuthorize("hasRole('MANAGER')")
-    @GetMapping()
+    @GetMapping("/search")
     @Operation(
-            summary = "Find all users",
+            summary = "Find all users by username or email.",
             description = "Requires MANAGER role to access",
             responses = {
                 @ApiResponse(
@@ -149,16 +151,31 @@ public class UserController {
                     description = "Forbidden")  
             }
     )
-    public Page<UserResponseDto> getAllUsers(
+    public Page<UserResponseDto> search(
             @Parameter(
-                description = "Pagination and sorting"
+                description = "Type of the search. Possible values are 'username' and 'email'."
+            )
+            @RequestParam String type,
+            @Parameter(
+                description = "Search value."
+            )
+            @RequestParam String search,
+            @Parameter(
+                description = "Pagination and sorting."
             )
             @NonNull Pageable pageable) {
-        return userService.findAll(pageable);
+        switch (type) {
+            case "username" -> {
+                return userService.searchByUsername(search, pageable);
+            }
+            case "email" -> {
+                return userService.searchByEmail(search, pageable);
+            }
+            default -> throw new UnsupportedOperationException("Unknown search type " + type + ".");
+        }
     }
 
     @DeleteMapping("/me")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(
             summary = "Delete current user",
             description = "Requires confirmation through user credentials",
@@ -175,12 +192,15 @@ public class UserController {
                     description = "Unauthorized")
             }
     )
-    public void deleteCurrentUser(Authentication authentication,
+    public DeleteUserResponseDto deleteCurrentUser(Authentication authentication,
             @Parameter(
                 description = "Login request dto for confirmation"
             )
-            @NonNull @RequestBody LoginRequestDto requestDto) {
-        userService.deleteCurrentUser((User)authentication.getPrincipal(), requestDto);
+            @NonNull @RequestBody LoginRequestDto requestDto,
+            @NonNull HttpServletRequest request,
+            @NonNull HttpServletResponse response) {
+        return userService.deleteCurrentUser((User)authentication.getPrincipal(), requestDto,
+                request, response);
     }
 
     @PatchMapping("/{id}/lock")

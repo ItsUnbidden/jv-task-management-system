@@ -102,8 +102,6 @@ public class TaskControllerTest {
         User user1 = new User();
         user1.setEmail("testUser1@tms.com");
         user1.setUsername("testUser1");
-        user1.setFirstName("testUserName1");
-        user1.setLastName("testUserLastName1");
         user1.setPassword("password123");
         user1.setRoles(Set.of(roleRepository.findAll().stream()
                 .filter(r -> r.getRoleType().equals(RoleType.USER))
@@ -114,8 +112,6 @@ public class TaskControllerTest {
         User user2 = new User();
         user2.setEmail("testUser2@tms.com");
         user2.setUsername("testUser2");
-        user2.setFirstName("testUserName2");
-        user2.setLastName("testUserLastName2");
         user2.setPassword("password321");
         user2.setRoles(Set.of(roleRepository.findAll().stream()
                 .filter(r -> r.getRoleType().equals(RoleType.USER))
@@ -126,8 +122,6 @@ public class TaskControllerTest {
         User user3 = new User();
         user3.setEmail("testUser3@tms.com");
         user3.setUsername("testUser3");
-        user3.setFirstName("testUserName3");
-        user3.setLastName("testUserLastName3");
         user3.setPassword("password321");
         user3.setRoles(Set.of(roleRepository.findAll().stream()
                 .filter(r -> r.getRoleType().equals(RoleType.USER))

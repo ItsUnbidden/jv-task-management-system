@@ -1,5 +1,6 @@
 package com.unbidden.jvtaskmanagementsystem.service.impl;
 
+import java.util.List;
 import java.util.Set;
 
 import org.springframework.data.domain.Page;
@@ -8,29 +9,47 @@ import org.springframework.lang.NonNull;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.unbidden.jvtaskmanagementsystem.dto.auth.LoginRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.auth.RegistrationRequest;
+import com.unbidden.jvtaskmanagementsystem.dto.project.DeleteProjectResponseDto;
+import com.unbidden.jvtaskmanagementsystem.dto.project.RemoveUserFromProjectResponseDto;
+import com.unbidden.jvtaskmanagementsystem.dto.user.DeleteUserResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.user.UserResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.user.UserUpdateDetailsRequestDto;
 import com.unbidden.jvtaskmanagementsystem.exception.RegistrationException;
 import com.unbidden.jvtaskmanagementsystem.mapper.UserMapper;
+import com.unbidden.jvtaskmanagementsystem.model.Project;
+import com.unbidden.jvtaskmanagementsystem.model.ProjectRole;
+import com.unbidden.jvtaskmanagementsystem.model.ProjectRole.ProjectRoleType;
 import com.unbidden.jvtaskmanagementsystem.model.Role;
 import com.unbidden.jvtaskmanagementsystem.model.Role.RoleType;
 import com.unbidden.jvtaskmanagementsystem.model.User;
+import com.unbidden.jvtaskmanagementsystem.repository.ProjectRoleRepository;
 import com.unbidden.jvtaskmanagementsystem.repository.RoleRepository;
 import com.unbidden.jvtaskmanagementsystem.repository.UserRepository;
+import com.unbidden.jvtaskmanagementsystem.security.AuthenticationService;
 import com.unbidden.jvtaskmanagementsystem.service.UserService;
+import com.unbidden.jvtaskmanagementsystem.service.orchestration.ProjectOrchestrationService;
 import com.unbidden.jvtaskmanagementsystem.util.EntityUtil;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
+    private final AuthenticationService authenticationService;
+
+    private final ProjectOrchestrationService projectService;
+
     private final UserRepository userRepository;
 
     private final RoleRepository roleRepository;
+
+    private final ProjectRoleRepository projectRoleRepository;
     
     private final UserMapper userMapper;
 
@@ -42,6 +61,7 @@ public class UserServiceImpl implements UserService {
 
     @NonNull
     @Override
+    @Transactional
     public UserResponseDto register(@NonNull RegistrationRequest request)
             throws RegistrationException {
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
@@ -67,38 +87,112 @@ public class UserServiceImpl implements UserService {
 
     @NonNull
     @Override
+    @Transactional
     public UserResponseDto updateRoles(@NonNull Long id, @NonNull Set<Role> roles) {
         User user = entityUtil.getUserById(id);
         checkUserIsNotOwner(user, "Owner's roles are not allowed to be changed.");
+        if (roles.contains(roleRepository.findByRoleType(RoleType.OWNER).get())) {
+            throw new UnsupportedOperationException("OWNER role cannot be assigned.");
+        }
         user.setRoles(roles);
         return userMapper.toDto(userRepository.save(user));
     }
 
     @NonNull
     @Override
+    @Transactional
     public UserResponseDto updateUserDetails(@NonNull User user, 
             @NonNull UserUpdateDetailsRequestDto requestDto) {
         user.setUsername(requestDto.getUsername());
-        user.setFirstName(requestDto.getFirstName());
-        user.setLastName(requestDto.getLastName());
-        user.setPassword(passwordEncoder.encode(requestDto.getPassword()));
+        user.setEmail(requestDto.getEmail());
+        if (requestDto.getPassword() != null) {
+            user.setPassword(passwordEncoder.encode(requestDto.getPassword()));
+        }
         return userMapper.toDto(userRepository.save(user));
     }
 
     @NonNull
     @Override
-    public Page<UserResponseDto> findAll(@NonNull Pageable pageable) {
-        return userRepository.findAll(pageable)
-                .map(userMapper::toDto);
+    @Transactional(readOnly = true)
+    public Page<UserResponseDto> searchByUsername(@NonNull String username, @NonNull Pageable pageable) {
+        final Page<User> users = userRepository.searchByUsername(username, pageable);
+        final List<Long> userIds = users.stream().map(u -> u.getId()).toList();
+
+        if (!userIds.isEmpty()) userRepository.findAllWithRolesByIds(userIds);
+        return users.map(userMapper::toDto);
     }
 
+    @NonNull
     @Override
-    public void deleteCurrentUser(@NonNull User user, @NonNull LoginRequestDto requestDto) {
+    @Transactional(readOnly = true)
+    public Page<UserResponseDto> searchByEmail(@NonNull String email, @NonNull Pageable pageable) {
+        final Page<User> users = userRepository.searchByEmail(email, pageable);
+        final List<Long> userIds = users.stream().map(u -> u.getId()).toList();
+
+        if (!userIds.isEmpty()) userRepository.findAllWithRolesByIds(userIds);
+        return users.map(userMapper::toDto);
+    }
+
+    @NonNull
+    @Override
+    @Transactional
+    public DeleteUserResponseDto deleteCurrentUser(@NonNull User user,
+            @NonNull LoginRequestDto requestDto, @NonNull HttpServletRequest request,
+            @NonNull HttpServletResponse response) {
         checkUserIsNotOwner(user, "Owner cannot be deleted.");
         if (user.getUsername().equals(requestDto.getUsername()) 
                 && passwordEncoder.matches(requestDto.getPassword(), user.getPassword())) {
+            final List<ProjectRole> projectRoles = projectRoleRepository.findByUserId(user.getId());
+            final DeleteUserResponseDto responseDto = new DeleteUserResponseDto();
+
+            int totalDeletedProjects = 0;
+            int totalProjectsQuit = 0;
+            int totalOwnProjectsWithDropbox = 0;
+            int totalOwnProjectsWithCalendar = 0;
+            int totalOwnProjectsWithDropboxFullyDeleted = 0;
+            int totalOwnProjectsWithCalendarFullyDeleted = 0;
+            int totalOtherProjectsWithDropbox = 0;
+            int totalOtherProjectsWithCalendar = 0;
+            int totalOtherProjectsWithDropboxQuit = 0;
+            int totalOtherProjectsWithCalendarQuit = 0;
+            for (var role : projectRoles) {
+                final Project project = role.getProject();
+
+                if (role.getRoleType().equals(ProjectRoleType.CREATOR)) {
+                    if (project.isDropboxConnected()) ++totalOwnProjectsWithDropbox;
+                    if (project.isCalendarConnected()) ++totalOwnProjectsWithCalendar;
+                    final DeleteProjectResponseDto projectResponseDto =
+                            projectService.deleteProject(user, project.getId());
+                    
+                    if (projectResponseDto.isDropboxFolderDeleted()) ++totalOwnProjectsWithDropboxFullyDeleted;
+                    if (projectResponseDto.isCalendarDeleted()) ++totalOwnProjectsWithCalendarFullyDeleted;
+                    ++totalDeletedProjects;
+                } else {
+                    if (role.isDropboxConnected()) ++totalOtherProjectsWithDropbox;
+                    if (role.isCalendarConnected()) ++totalOtherProjectsWithCalendar;
+
+                    final RemoveUserFromProjectResponseDto projectResponseDto =
+                            projectService.quitProject(user, project.getId());
+
+                    if (projectResponseDto.isDropboxDisconnected()) ++totalOtherProjectsWithDropboxQuit;
+                    if (projectResponseDto.isCalendarDisconnected()) ++totalOtherProjectsWithCalendarQuit;
+                    ++totalProjectsQuit;
+                }
+            }
+            responseDto.setTotalDeletedProjects(totalDeletedProjects);
+            responseDto.setTotalProjectsQuit(totalProjectsQuit);
+            responseDto.setTotalOwnProjectsWithDropbox(totalOwnProjectsWithDropbox);
+            responseDto.setTotalOwnProjectsWithCalendar(totalOwnProjectsWithCalendar);
+            responseDto.setTotalOwnProjectsWithDropboxFullyDeleted(totalOwnProjectsWithDropboxFullyDeleted);
+            responseDto.setTotalOwnProjectsWithCalendarFullyDeleted(totalOwnProjectsWithCalendarFullyDeleted);
+            responseDto.setTotalOtherProjectsWithDropbox(totalOtherProjectsWithDropbox);
+            responseDto.setTotalOtherProjectsWithCalendar(totalOtherProjectsWithCalendar);
+            responseDto.setTotalOtherProjectsWithDropboxQuit(totalOtherProjectsWithDropboxQuit);
+            responseDto.setTotalOtherProjectsWithCalendarQuit(totalOtherProjectsWithCalendarQuit);
+            
+            authenticationService.logout(request, response);
             userRepository.deleteById(user.getId());
-            return;
+            return responseDto;
         }
         throw new AccessDeniedException("Provided credentials are invalid. "
                 + "Please provide correct username and password.");
@@ -106,6 +200,7 @@ public class UserServiceImpl implements UserService {
 
     @NonNull
     @Override
+    @Transactional
     public UserResponseDto lockUserById(@NonNull Long id) {
         User user = entityUtil.getUserById(id);
 

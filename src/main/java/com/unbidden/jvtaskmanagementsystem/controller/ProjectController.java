@@ -18,13 +18,15 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.unbidden.jvtaskmanagementsystem.dto.project.CreateProjectRequestDto;
+import com.unbidden.jvtaskmanagementsystem.dto.project.DeleteProjectResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.project.ProjectResponseDto;
+import com.unbidden.jvtaskmanagementsystem.dto.project.RemoveUserFromProjectResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.project.UpdateProjectRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.project.UpdateProjectStatusRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.projectrole.UpdateProjectRoleRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.task.TaskResponseDto;
 import com.unbidden.jvtaskmanagementsystem.model.User;
-import com.unbidden.jvtaskmanagementsystem.service.ProjectService;
+import com.unbidden.jvtaskmanagementsystem.service.orchestration.ProjectOrchestrationService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -41,7 +43,7 @@ import lombok.RequiredArgsConstructor;
 @Tag(name = "Project related methods")
 public class ProjectController {
 
-    private final ProjectService projectService;
+    private final ProjectOrchestrationService projectService;
 
     @GetMapping("/{id}")
     @Operation(
@@ -203,7 +205,6 @@ public class ProjectController {
     }
 
     @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(
             summary = "Delete project",
             description = "Behavior may depend on whether the user has "
@@ -226,12 +227,12 @@ public class ProjectController {
                     description = "Forbidden")
             }
     )
-    public void deleteProject(Authentication authentication,
+    public DeleteProjectResponseDto deleteProject(Authentication authentication,
             @Parameter(
                 description = "Project id"
             )
             @NonNull @PathVariable Long id) {
-        projectService.deleteProject((User)authentication.getPrincipal(), id);
+        return projectService.deleteProject((User)authentication.getPrincipal(), id);
     }
 
     @PostMapping("/{projectId}/users/{username}/add")
@@ -299,7 +300,7 @@ public class ProjectController {
                     description = "Forbidden")
             }
     )
-    public ProjectResponseDto removeUserFromProject(Authentication authentication,
+    public RemoveUserFromProjectResponseDto removeUserFromProject(Authentication authentication,
             @Parameter(
                 description = "Project id"
             )
@@ -313,7 +314,6 @@ public class ProjectController {
     }
 
     @DeleteMapping("/{projectId}/quit")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(
             summary = "Remove current user from project",
             description = "Behavior may depend on whether the user has "
@@ -336,14 +336,14 @@ public class ProjectController {
                     description = "Forbidden. Possible if user is not a part of the project")
             }
     )
-    public void quitProject(Authentication authentication,
+    public RemoveUserFromProjectResponseDto quitProject(Authentication authentication,
             @Parameter(
                 description = "Project id"
             )
             @NonNull @PathVariable Long projectId) {
         final User user = (User)authentication.getPrincipal();
 
-        projectService.quitProject(user, projectId);
+        return projectService.quitProject(user, projectId);
     }
 
     @PatchMapping("/{projectId}/users/{userId}/roles")

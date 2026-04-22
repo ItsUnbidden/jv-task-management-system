@@ -112,7 +112,7 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
     }
 
     @Override
-    public void deleteProjectCalendar(@NonNull User user, @NonNull Project project) {
+    public boolean deleteProjectCalendar(@NonNull User user, @NonNull Project project) {
         try {
             Optional<ProjectCalendar> projectCalendarOpt =
                     projectCalendarRepository.findByProjectId(project.getId());
@@ -120,6 +120,7 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
                 try {
                     Calendar service = getService(user);
                     service.calendars().delete(projectCalendarOpt.get().getCalendarId()).execute();
+                    return true;
                 } catch (OAuth2AuthorizedClientLoadingException e) {
                     LOGGER.warn("Authorzied client for user " + user.getId() + " and service "
                             + clientRegistration.getClientName() + " is unavailable. To prevent"
@@ -132,6 +133,7 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
                 LOGGER.warn("Calendar for project " + project.getId()
                         + " doesn't exist. Action skipped.");
             }
+            return false;
         } catch (IOException e) {
             throw new ThirdPartyApiException("Unable to delete a calendar for project "
                     + project.getId(), e);
@@ -186,7 +188,7 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
     }
 
     @Override
-    public void removeUserFromCalendar(@NonNull Project project, @NonNull User userToRemove) {
+    public boolean removeUserFromCalendar(@NonNull Project project, @NonNull User userToRemove) {
         
         try {
             Optional<ProjectCalendar> projectCalendarOpt =
@@ -202,7 +204,7 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
                             authorizedClient.getExternalAccountId())) {
                         service.acl().delete(projectCalendarOpt.get()
                                 .getCalendarId(), rule.getId()).execute();
-                        break;
+                        return true;
                     }
                 }
             } else {
@@ -216,6 +218,7 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
             LOGGER.warn("Unable to load authorized client for user "
                     + userToRemove.getId() + ". Action skipped.");
         }
+        return false;
     }
 
     @Override

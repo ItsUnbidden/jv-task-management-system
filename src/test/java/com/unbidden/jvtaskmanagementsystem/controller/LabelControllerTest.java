@@ -98,8 +98,6 @@ public class LabelControllerTest {
         User user = new User();
         user.setEmail("testCreator1@tms.com");
         user.setUsername("testCreator1");
-        user.setFirstName("testCreatorName1");
-        user.setLastName("testCreatorLastName1");
         user.setPassword("password123");
         user.setRoles(Set.of(roleRepository.findAll().stream()
                 .filter(r -> r.getRoleType().equals(RoleType.USER))

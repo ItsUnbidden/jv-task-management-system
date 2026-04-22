@@ -14,7 +14,7 @@ import com.unbidden.jvtaskmanagementsystem.model.User;
 public interface DropboxService {
     void createSharedProjectFolder(@NonNull User user, @NonNull Project project);
 
-    void deleteProjectFolder(@NonNull User user, @NonNull Project project);
+    boolean deleteProjectFolder(@NonNull User user, @NonNull Project project);
 
     void createTaskFolder(@NonNull User user, @NonNull Task task);
 
@@ -23,7 +23,7 @@ public interface DropboxService {
     void addProjectMemberToSharedFolder(@NonNull User user, @NonNull User newMember,
             @NonNull Project project);
 
-    void removeMemberFromSharedFolder(@NonNull User user, @NonNull User memberToRemove,
+    boolean removeMemberFromSharedFolder(@NonNull User user, @NonNull User memberToRemove,
             @NonNull Project project);
 
     void transferOwnership(@NonNull User user, @NonNull User newOwner, @NonNull Project project);

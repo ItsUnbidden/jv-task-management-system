@@ -1,0 +1,11 @@
+databaseChangeLog:
+  - changeSet:
+      id: edit-users-drop-name-columns
+      author: Unbidden
+      changes:
+        - dropColumn:
+            tableName: users
+            columnName: first_name
+        - dropColumn:
+            tableName: users
+            columnName: last_name

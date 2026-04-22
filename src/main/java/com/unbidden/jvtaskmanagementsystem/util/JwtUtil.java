@@ -10,8 +10,6 @@ import java.util.function.Function;
 
 import javax.crypto.SecretKey;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.lang.NonNull;
@@ -27,8 +25,6 @@ import jakarta.servlet.http.HttpServletRequest;
 
 @Component
 public class JwtUtil {
-    private static final Logger LOGGER = LogManager.getLogger(JwtUtil.class);
-
     private static final int REFRESH_TOKEN_BYTE_SIZE = 32;
 
     private final SecretKey secret;
@@ -51,7 +47,6 @@ public class JwtUtil {
 
     @NonNull
     public String generateToken(@NonNull String username) {
-        LOGGER.info("Generating JWT for user " + username);
         return Jwts.builder()
                 .subject(username)
                 .issuedAt(new Date(System.currentTimeMillis()))
@@ -62,7 +57,6 @@ public class JwtUtil {
 
     @NonNull    
     public boolean isValidToken(@NonNull String token) {
-        LOGGER.info("Verifying token...");
         try {
             Jws<Claims> claimsJws = Jwts.parser()
                     .verifyWith(secret)

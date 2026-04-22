@@ -4,13 +4,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.lang.NonNull;
 
 import com.unbidden.jvtaskmanagementsystem.model.ProjectRole;
+import com.unbidden.jvtaskmanagementsystem.model.ProjectRole.ProjectRoleType;
 
 public interface ProjectRoleRepository extends JpaRepository<ProjectRole, Long> {
     @NonNull
@@ -20,9 +20,12 @@ public interface ProjectRoleRepository extends JpaRepository<ProjectRole, Long> 
 
     @NonNull
     @EntityGraph(attributePaths = "project")
-    List<ProjectRole> findByUserId(@NonNull Long userId, @NonNull Pageable pageable);
+    List<ProjectRole> findByUserId(@NonNull Long userId);
 
     @NonNull
     @EntityGraph(attributePaths = "user")
     Set<ProjectRole> findByProjectId(@NonNull Long projectId);
+
+    @NonNull
+    List<ProjectRole> findByRoleType(@NonNull ProjectRoleType roleType);
 }

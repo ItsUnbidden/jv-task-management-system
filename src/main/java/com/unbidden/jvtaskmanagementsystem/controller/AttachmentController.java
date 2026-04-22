@@ -1,8 +1,8 @@
 package com.unbidden.jvtaskmanagementsystem.controller;
 
 import java.io.IOException;
-import java.util.List;
 
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -18,7 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.unbidden.jvtaskmanagementsystem.dto.attachment.AttachmentDto;
 import com.unbidden.jvtaskmanagementsystem.model.User;
-import com.unbidden.jvtaskmanagementsystem.service.AttachmentService;
+import com.unbidden.jvtaskmanagementsystem.service.orchestration.AttachmentOrchestrationService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -36,7 +36,7 @@ import lombok.RequiredArgsConstructor;
 @Tag(name = "Attachment related methods",
         description = "All methods in this controller require dropbox connection")
 public class AttachmentController {
-    private final AttachmentService attachmentService;
+    private final AttachmentOrchestrationService attachmentService;
 
     @GetMapping("/tasks/{taskId}")
     @Operation(
@@ -59,7 +59,7 @@ public class AttachmentController {
                     description = "Unauthorized")
             }
     )
-    public List<AttachmentDto> getAvailableAttachmentsForTask(Authentication authentication,
+    public Page<AttachmentDto> getAvailableAttachmentsForTask(Authentication authentication,
             @Parameter(
                 description = "Task id"
             )

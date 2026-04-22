@@ -12,7 +12,7 @@ import com.unbidden.jvtaskmanagementsystem.model.User;
 public interface GoogleCalendarService {
     void createCalendarForProject(@NonNull User user, @NonNull Project project);
 
-    void deleteProjectCalendar(@NonNull User user, @NonNull Project project);
+    boolean deleteProjectCalendar(@NonNull User user, @NonNull Project project);
 
     void createEventForTask(@NonNull User user, @NonNull Task task);
 
@@ -20,7 +20,7 @@ public interface GoogleCalendarService {
 
     void addUserToCalendar(@NonNull Project project, @NonNull User newUser);
 
-    void removeUserFromCalendar(@NonNull Project project, @NonNull User userToRemove);
+    boolean removeUserFromCalendar(@NonNull Project project, @NonNull User userToRemove);
 
     void transferOwnership(@NonNull User user, @NonNull Project project, @NonNull User newOwner);
 

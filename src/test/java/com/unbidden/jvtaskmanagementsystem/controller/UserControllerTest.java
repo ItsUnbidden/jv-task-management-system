@@ -80,8 +80,6 @@ public class UserControllerTest {
         testUserDto = new UserResponseDto();
         testUserDto.setId(testUser.getId());
         testUserDto.setEmail(testUser.getEmail());
-        testUserDto.setFirstName(testUser.getFirstName());
-        testUserDto.setLastName(testUser.getLastName());
         testUserDto.setUsername(testUser.getUsername());
         testUserDto.setRoles(new HashSet<>(testUser.getRoles().stream().map(r -> r.getRoleType()).toList()));
         testUserDto.setLocked(testUser.isLocked());
@@ -144,13 +142,9 @@ public class UserControllerTest {
     void updateUserDetails_WithUpdatedDetails_UpdatedUser() throws Exception {
         UserUpdateDetailsRequestDto requestDto = new UserUpdateDetailsRequestDto();
         requestDto.setUsername("updatedTestUser");
-        requestDto.setFirstName("updatedFirstName");
-        requestDto.setLastName("updatedLastName");
         requestDto.setPassword("newPassword123");
         requestDto.setRepeatPassword("newPassword123");
         testUserDto.setUsername(requestDto.getUsername());
-        testUserDto.setFirstName(requestDto.getFirstName());
-        testUserDto.setLastName(requestDto.getLastName());
 
         MvcResult result = mockMvc.perform(put("/users/me")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -247,8 +241,6 @@ public class UserControllerTest {
         testUser = new User();
         testUser.setId(id);
         testUser.setEmail("user123@test.com");
-        testUser.setFirstName("testName");
-        testUser.setLastName("testLastName");
         testUser.setPassword(encoder.encode("password123"));
         testUser.setUsername("testUser");
         Role userRole = roleRepository.findAll().stream()

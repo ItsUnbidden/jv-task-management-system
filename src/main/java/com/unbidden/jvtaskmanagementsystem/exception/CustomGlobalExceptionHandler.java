@@ -2,6 +2,7 @@ package com.unbidden.jvtaskmanagementsystem.exception;
 
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
@@ -67,7 +68,7 @@ public class CustomGlobalExceptionHandler extends ResponseEntityExceptionHandler
 
         LOGGER.error("Failed to find an entity.", ex);
         body.put("timestamp", LocalDateTime.now());
-        body.put("error", ex.getMessage());
+        body.put("errors", List.of(ex.getMessage()));
 
         return new ResponseEntity<>(body, HttpStatus.NOT_FOUND);
     }
@@ -103,7 +104,7 @@ public class CustomGlobalExceptionHandler extends ResponseEntityExceptionHandler
         final Map<String, Object> body = new LinkedHashMap<>();
 
         body.put("timestamp", LocalDateTime.now());
-        body.put("error", ex.getMessage());
+        body.put("errors", List.of(ex.getMessage()));
 
         return new ResponseEntity<>(body, HttpStatus.PAYLOAD_TOO_LARGE);
     } 
@@ -116,7 +117,7 @@ public class CustomGlobalExceptionHandler extends ResponseEntityExceptionHandler
         final Map<String, Object> body = new LinkedHashMap<>();
 
         body.put("timestamp", LocalDateTime.now());
-        body.put("error", ex.getMessage());
+        body.put("errors", List.of(ex.getMessage()));
 
         return new ResponseEntity<>(body, HttpStatus.UNAUTHORIZED);
     } 
@@ -129,7 +130,7 @@ public class CustomGlobalExceptionHandler extends ResponseEntityExceptionHandler
         final Map<String, Object> body = new LinkedHashMap<>();
 
         body.put("timestamp", LocalDateTime.now());
-        body.put("error", ex.getMessage());
+        body.put("errors", List.of(ex.getMessage()));
 
         return new ResponseEntity<>(body, HttpStatus.INTERNAL_SERVER_ERROR);
     } 
@@ -138,7 +139,7 @@ public class CustomGlobalExceptionHandler extends ResponseEntityExceptionHandler
         final Map<String, Object> body = new LinkedHashMap<>();
 
         body.put("timestamp", LocalDateTime.now());
-        body.put("error", ex.getMessage());
+        body.put("errors", List.of(ex.getMessage()));
 
         return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
     }

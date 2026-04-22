@@ -24,7 +24,7 @@ import com.unbidden.jvtaskmanagementsystem.dto.task.UpdateTaskRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.task.UpdateTaskStatusRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.task.specification.TaskFilterDto;
 import com.unbidden.jvtaskmanagementsystem.model.User;
-import com.unbidden.jvtaskmanagementsystem.service.TaskService;
+import com.unbidden.jvtaskmanagementsystem.service.orchestration.TaskOrchestrationService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -41,7 +41,7 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/tasks")
 @Tag(name = "Task related methods")
 public class TaskController {
-    private final TaskService taskService;
+    private final TaskOrchestrationService taskService;
 
     @GetMapping("/me")
     @Operation(

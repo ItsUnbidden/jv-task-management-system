@@ -6,6 +6,7 @@ import java.util.List;
 import org.springframework.data.domain.Pageable;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.unbidden.jvtaskmanagementsystem.dto.label.CreateLabelRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.label.LabelResponseDto;
@@ -37,6 +38,7 @@ public class LabelServiceImpl implements LabelService {
 
     @NonNull
     @Override
+    @Transactional(readOnly = true)
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true)
     public List<LabelResponseDto> getLablesForProject(@NonNull User user, @NonNull Long projectId,
             Pageable pageable) {
@@ -47,6 +49,7 @@ public class LabelServiceImpl implements LabelService {
 
     @NonNull
     @Override
+    @Transactional(readOnly = true)
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true,
             entityIdClass = Label.class)
     public LabelResponseDto getLabelById(@NonNull User user, @NonNull Long labelId) {
@@ -55,6 +58,7 @@ public class LabelServiceImpl implements LabelService {
 
     @NonNull
     @Override
+    @Transactional(readOnly = true)
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true,
             entityIdClass = Task.class)
     public List<LabelResponseDto> getLabelForTask(@NonNull User user, @NonNull Long taskId) {
@@ -65,6 +69,7 @@ public class LabelServiceImpl implements LabelService {
 
     @NonNull
     @Override
+    @Transactional
     @ProjectSecurity(securityLevel = ProjectRoleType.ADMIN)
     public LabelResponseDto createLabel(@NonNull User user, @NonNull Long projectId,
             @NonNull CreateLabelRequestDto requestDto) {
@@ -80,6 +85,7 @@ public class LabelServiceImpl implements LabelService {
 
     @NonNull
     @Override
+    @Transactional
     @ProjectSecurity(securityLevel = ProjectRoleType.ADMIN,
             entityIdClass = Label.class)
     public LabelResponseDto updateLabel(@NonNull User user, @NonNull Long labelId,
@@ -102,6 +108,7 @@ public class LabelServiceImpl implements LabelService {
     }
 
     @Override
+    @Transactional
     @ProjectSecurity(securityLevel = ProjectRoleType.ADMIN,
             entityIdClass = Label.class)
     public void deleteLabel(@NonNull User user, @NonNull Long labelId) {

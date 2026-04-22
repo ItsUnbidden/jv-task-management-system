@@ -1,8 +1,5 @@
 package com.unbidden.jvtaskmanagementsystem.security.project;
 
-import com.unbidden.jvtaskmanagementsystem.model.ProjectRole;
-import com.unbidden.jvtaskmanagementsystem.util.EntityUtil;
-import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.aspectj.lang.JoinPoint;
@@ -10,6 +7,11 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Component;
+
+import com.unbidden.jvtaskmanagementsystem.model.ProjectRole;
+import com.unbidden.jvtaskmanagementsystem.util.EntityUtil;
+
+import lombok.RequiredArgsConstructor;
 
 @Aspect
 @Component
@@ -21,8 +23,7 @@ public class ProjectSecurityAspect {
 
     private final ProjectSecurityDataParser dataParser;
 
-    @Before("execution(public * com.unbidden.jvtaskmanagementsystem.service.impl..*(..)) && "
-            + "@annotation(com.unbidden.jvtaskmanagementsystem.security.project.ProjectSecurity)")
+    @Before("@annotation(com.unbidden.jvtaskmanagementsystem.security.project.ProjectSecurity)")
     public void projectAccessAdvice(JoinPoint joinPoint) {
         LOGGER.info("Project security aspect commencing...");
         ProjectSecurityDto dataFromJoinPoint = dataParser.parse(joinPoint);

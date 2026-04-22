@@ -1,31 +1,15 @@
 package com.unbidden.jvtaskmanagementsystem.controller;
 
-import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.unbidden.jvtaskmanagementsystem.dto.auth.LoginRequestDto;
-import com.unbidden.jvtaskmanagementsystem.dto.auth.LoginResponseDto;
-import com.unbidden.jvtaskmanagementsystem.dto.auth.RegistrationRequest;
-import com.unbidden.jvtaskmanagementsystem.dto.user.UserResponseDto;
-import com.unbidden.jvtaskmanagementsystem.model.Role.RoleType;
-import com.unbidden.jvtaskmanagementsystem.model.User;
-import com.unbidden.jvtaskmanagementsystem.repository.RoleRepository;
-import com.unbidden.jvtaskmanagementsystem.repository.UserRepository;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jws;
-import io.jsonwebtoken.JwtException;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Date;
 import java.util.Optional;
 import java.util.Set;
+
 import javax.crypto.SecretKey;
 import javax.sql.DataSource;
+
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
@@ -38,10 +22,29 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.datasource.init.ScriptUtils;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.unbidden.jvtaskmanagementsystem.dto.auth.LoginRequestDto;
+import com.unbidden.jvtaskmanagementsystem.dto.auth.LoginResponseDto;
+import com.unbidden.jvtaskmanagementsystem.dto.auth.RegistrationRequest;
+import com.unbidden.jvtaskmanagementsystem.dto.user.UserResponseDto;
+import com.unbidden.jvtaskmanagementsystem.model.Role.RoleType;
+import com.unbidden.jvtaskmanagementsystem.model.User;
+import com.unbidden.jvtaskmanagementsystem.repository.RoleRepository;
+import com.unbidden.jvtaskmanagementsystem.repository.UserRepository;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jws;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 public class AuthControllerTest {
@@ -79,8 +82,6 @@ public class AuthControllerTest {
         user = new User();
         user.setEmail("testUser@tms.com");
         user.setUsername("testUser");
-        user.setFirstName("testUser");
-        user.setLastName("testUser");
         user.setPassword(passwordEncoder.encode("password123"));
         user.setRoles(Set.of(roleRepository.findAll().stream()
                 .filter(r -> r.getRoleType().equals(RoleType.USER))
@@ -93,8 +94,6 @@ public class AuthControllerTest {
     void register_ValidRequest_NewUser() throws Exception {
         RegistrationRequest request = new RegistrationRequest();
         request.setEmail("newUser@tms.com");
-        request.setFirstName("newUser");
-        request.setLastName("newUser");
         request.setPassword("password321");
         request.setRepeatPassword("password321");
         request.setUsername("newUser");
@@ -114,8 +113,6 @@ public class AuthControllerTest {
         Assertions.assertTrue(potentialUser.isPresent());
 
         Assertions.assertEquals(request.getEmail(), request.getEmail());
-        Assertions.assertEquals(request.getFirstName(), request.getFirstName());
-        Assertions.assertEquals(request.getLastName(), request.getLastName());
         Assertions.assertEquals(request.getPassword(), request.getPassword());
         Assertions.assertEquals(request.getUsername(), request.getUsername());
     }

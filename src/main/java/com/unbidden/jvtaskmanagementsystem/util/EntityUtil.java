@@ -168,6 +168,8 @@ public class EntityUtil {
             superParent = unproxyMessage(((Reply)superParent).getParent());
         }
 
+        if (superParent == null) throw new EntityNotFoundException("Ultimate parent not found for a reply.");
+
         return (Comment)superParent;
     }
 

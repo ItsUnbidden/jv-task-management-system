@@ -33,3 +33,5 @@ databaseChangeLog:
       file: /db/changelog/changes/16-create-refresh-tokens-table.yaml
   - include:
       file: /db/changelog/changes/17-edit-project-roles-add-calendar-and-dropbox-tracking.yaml
+  - include:
+      file: /db/changelog/changes/18-edit-users-drop-name-columns.yaml
