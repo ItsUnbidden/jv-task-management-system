@@ -32,10 +32,8 @@ import com.google.api.services.calendar.model.CalendarListEntry;
 import com.google.api.services.calendar.model.Event;
 import com.google.api.services.calendar.model.EventDateTime;
 import com.google.api.services.calendar.model.EventReminder;
-import com.unbidden.jvtaskmanagementsystem.dto.google.GoogleSuccessfulTestResponseDto;
-import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.ThirdPartyOperationResult;
 import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.ThirdPartyOperationResult.ThirdPartyOperationStatus;
-import com.unbidden.jvtaskmanagementsystem.exception.ThirdPartyApiException;
+import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.calendar.CalendarOperationResult;
 import com.unbidden.jvtaskmanagementsystem.exception.oauth2.OAuth2AuthorizedClientLoadingException;
 import com.unbidden.jvtaskmanagementsystem.model.ClientRegistration;
 import com.unbidden.jvtaskmanagementsystem.model.OAuth2AuthorizedClient;
@@ -99,83 +97,98 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
         this.http = http;
     }
     
+    @NonNull
     @Override
-    public void createCalendarForProject(@NonNull User user, @NonNull Project project) {
+    public CalendarOperationResult createCalendarForProject(@NonNull User user, @NonNull Project project) {
         Calendar service;
         try {
             service = getService(user);
-            createCalendarForProject0(service, project);
+            return createCalendarForProject0(service, project);
         } catch (OAuth2AuthorizedClientLoadingException e) {
             LOGGER.warn("Authorzied client for user " + user.getId() + " and service "
                     + clientRegistration.getClientName() + " is unavailable. "
                     + "Action skipped.");
+            return new CalendarOperationResult(ThirdPartyOperationStatus.SKIPPED);
+        } catch (GeneralSecurityException | IOException e) {
+            return new CalendarOperationResult(ThirdPartyOperationStatus.FAILED);
         }
-
     }
 
+    @NonNull
     @Override
-    public ThirdPartyOperationResult deleteProjectCalendar(@NonNull User user, @NonNull Project project) {
+    public CalendarOperationResult deleteProjectCalendar(@NonNull User user, @NonNull Project project) {
         try {
             Optional<ProjectCalendar> projectCalendarOpt =
                     projectCalendarRepository.findByProjectId(project.getId());
             if (projectCalendarOpt.isPresent()) {
+                ThirdPartyOperationStatus status;
                 try {
                     Calendar service = getService(user);
                     service.calendars().delete(projectCalendarOpt.get().getCalendarId()).execute();
-                    return new ThirdPartyOperationResult(ThirdPartyOperationStatus.SUCCESS);
+                    status = ThirdPartyOperationStatus.SUCCESS;
                 } catch (OAuth2AuthorizedClientLoadingException e) {
                     LOGGER.warn("Authorzied client for user " + user.getId() + " and service "
                             + clientRegistration.getClientName() + " is unavailable. To prevent"
                             + " a potential hard-locking of calendar related methods, "
                             + "local project calendar will be deleted but remote calendar will "
                             + "have to be deleted manualy.");
+                    status = ThirdPartyOperationStatus.PARTIAL_SUCCESS;
+                } catch (GeneralSecurityException e) {
+                    return new CalendarOperationResult(ThirdPartyOperationStatus.FAILED);
                 }
                 projectCalendarRepository.delete(projectCalendarOpt.get());
+                return new CalendarOperationResult(status);
             } else {
                 LOGGER.warn("Calendar for project " + project.getId()
                         + " doesn't exist. Action skipped.");
+                return new CalendarOperationResult(ThirdPartyOperationStatus.NOT_APPLICABLE);
             }
-            return new ThirdPartyOperationResult(ThirdPartyOperationStatus.SKIPPED);
         } catch (IOException e) {
-            throw new ThirdPartyApiException("Unable to delete a calendar for project "
-                    + project.getId(), e);
+            return new CalendarOperationResult(ThirdPartyOperationStatus.FAILED);
         }
     }
     
+    @NonNull
     @Override
-    public void createEventForTask(@NonNull User user, @NonNull Task task) {
+    public CalendarOperationResult createEventForTask(@NonNull User user, @NonNull Task task) {
         if (isCalendarConnected(task.getProject())) {
             try {
                 Calendar service = getService(user);
-                createEventForTask0(service, task, task.getDueDate());
+                return createEventForTask0(service, task, task.getDueDate());
             } catch (OAuth2AuthorizedClientLoadingException e) {
-                processAuthClientLoadingException(user);
+                return new CalendarOperationResult(ThirdPartyOperationStatus.SKIPPED);
+            } catch (GeneralSecurityException | IOException e) {
+                return new CalendarOperationResult(ThirdPartyOperationStatus.FAILED);
             }
         } else {
             LOGGER.warn("Calendar for project " + task.getProject().getId()
                             + " doesn't exist. Action skipped.");
+            return new CalendarOperationResult(ThirdPartyOperationStatus.NOT_APPLICABLE);
         }
     }
     
+    @NonNull
     @Override
-    public ThirdPartyOperationResult deleteTaskEvent(@NonNull User user, @NonNull Task task) {
+    public CalendarOperationResult deleteTaskEvent(@NonNull User user, @NonNull Task task) {
         if (isCalendarConnected(task.getProject())) {
             try {
                 Calendar service = getService(user);
                 return deleteTaskEvent0(service, task);
             } catch (OAuth2AuthorizedClientLoadingException e) {
-                processAuthClientLoadingException(user);
-                return new ThirdPartyOperationResult(ThirdPartyOperationStatus.FAILED);
+                return new CalendarOperationResult(ThirdPartyOperationStatus.SKIPPED);
+            } catch (GeneralSecurityException | IOException e) {
+                return new CalendarOperationResult(ThirdPartyOperationStatus.FAILED);
             }
         } else {
             LOGGER.warn("Calendar for project " + task.getProject().getId()
                             + " doesn't exist. Action skipped.");
-            return new ThirdPartyOperationResult(ThirdPartyOperationStatus.NOT_APPLICABLE);
+            return new CalendarOperationResult(ThirdPartyOperationStatus.NOT_APPLICABLE);
         }
     }
 
+    @NonNull
     @Override
-    public ThirdPartyOperationResult addUserToCalendar(@NonNull Project project, @NonNull User newUser) {
+    public CalendarOperationResult addUserToCalendar(@NonNull Project project, @NonNull User newUser) {
         final User user = entityUtil.getProjectOwner(project);
 
         if (isCalendarConnected(project)) {
@@ -183,17 +196,20 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
                 Calendar service = getService(user);
                 return addUserToCalendar0(service, project, newUser);
             } catch (OAuth2AuthorizedClientLoadingException e) {
-                processAuthClientLoadingException(user);
+                return new CalendarOperationResult(ThirdPartyOperationStatus.SKIPPED);
+            } catch (GeneralSecurityException | IOException e) {
+                return new CalendarOperationResult(ThirdPartyOperationStatus.FAILED);
             }
         } else {
             LOGGER.warn("Calendar for project " + project.getId()
                             + " doesn't exist. Action skipped.");
+            return new CalendarOperationResult(ThirdPartyOperationStatus.NOT_APPLICABLE);
         }
-        return new ThirdPartyOperationResult(ThirdPartyOperationStatus.SKIPPED);
     }
 
+    @NonNull
     @Override
-    public ThirdPartyOperationResult removeUserFromCalendar(@NonNull Project project, @NonNull User userToRemove) {
+    public CalendarOperationResult removeUserFromCalendar(@NonNull Project project, @NonNull User userToRemove) {
         
         try {
             Optional<ProjectCalendar> projectCalendarOpt =
@@ -209,25 +225,27 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
                             authorizedClient.getExternalAccountId())) {
                         service.acl().delete(projectCalendarOpt.get()
                                 .getCalendarId(), rule.getId()).execute();
-                        return new ThirdPartyOperationResult(ThirdPartyOperationStatus.SUCCESS);
+                        return new CalendarOperationResult(ThirdPartyOperationStatus.SUCCESS);
                     }
                 }
+                return new CalendarOperationResult(ThirdPartyOperationStatus.FAILED);
             } else {
                 LOGGER.warn("Calendar for project " + project.getId()
                         + " doesn't exist. Action skipped.");
+                return new CalendarOperationResult(ThirdPartyOperationStatus.NOT_APPLICABLE);
             }
-        } catch (IOException e) {
-            throw new ThirdPartyApiException("Unable to remove user "
-                    + userToRemove.getId() + " from calendar for project " + project.getId(), e);
+        } catch (GeneralSecurityException | IOException e) {
+            return new CalendarOperationResult(ThirdPartyOperationStatus.FAILED);
         } catch (OAuth2AuthorizedClientLoadingException e) {
             LOGGER.warn("Unable to load authorized client for user "
                     + userToRemove.getId() + ". Action skipped.");
+            return new CalendarOperationResult(ThirdPartyOperationStatus.SKIPPED);
         }
-        return new ThirdPartyOperationResult(ThirdPartyOperationStatus.SKIPPED);
     }
 
+    @NonNull
     @Override
-    public void transferOwnership(@NonNull User user, @NonNull Project project,
+    public CalendarOperationResult transferOwnership(@NonNull User user, @NonNull Project project,
             @NonNull User newOwner) {
         try {
             Optional<ProjectCalendar> projectCalendarOpt =
@@ -259,21 +277,24 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
                         break;
                     }
                 }
+                return new CalendarOperationResult(ThirdPartyOperationStatus.SUCCESS);
             } else {
                 LOGGER.warn("Calendar for project " + project.getId()
                         + " doesn't exist. Action skipped.");
+                return new CalendarOperationResult(ThirdPartyOperationStatus.NOT_APPLICABLE);
             }
-        } catch (IOException e) {
-            throw new ThirdPartyApiException("Unable to trasfer calendar for project "
-                    + project.getId() + " to user " + newOwner.getId(), e);
+        } catch (GeneralSecurityException | IOException e) {
+            return new CalendarOperationResult(ThirdPartyOperationStatus.FAILED);
         } catch (OAuth2AuthorizedClientLoadingException e) {
             LOGGER.warn("Unable to load authorized client for user "
                     + newOwner.getId() + ". Action skipped.");
+            return new CalendarOperationResult(ThirdPartyOperationStatus.SKIPPED);
         }
     }
 
+    @NonNull
     @Override
-    public void connectProjectToCalendar(@NonNull User user, @NonNull Project project) {
+    public CalendarOperationResult connectProjectToCalendar(@NonNull User user, @NonNull Project project) {
         Optional<ProjectCalendar> projectCalendarOpt =
                 projectCalendarRepository.findByProjectId(project.getId());
         if (!projectCalendarOpt.isPresent()) {
@@ -296,25 +317,27 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
                 for (Task task : project.getTasks()) {
                     createEventForTask0(service, task, task.getDueDate());
                 }
+                return new CalendarOperationResult(ThirdPartyOperationStatus.SUCCESS);
             } catch (OAuth2AuthorizedClientLoadingException e) {
-                processAuthClientLoadingException(user);
+                return new CalendarOperationResult(ThirdPartyOperationStatus.SKIPPED);
+            } catch (GeneralSecurityException | IOException e) {
+                return new CalendarOperationResult(ThirdPartyOperationStatus.FAILED);
             }
         } else {
-            throw new UnsupportedOperationException("No need to connect project "
-                    + project.getId() + " to calendar because it is already connected.");
+            return new CalendarOperationResult(ThirdPartyOperationStatus.NOT_APPLICABLE);
         }
     }
 
+    @NonNull
     @Override
-    public void joinCalendar(@NonNull User user, @NonNull Project project) {
+    public CalendarOperationResult joinCalendar(@NonNull User user, @NonNull Project project) {
         Optional<ProjectCalendar> projectCalendarOpt =
                 projectCalendarRepository.findByProjectId(project.getId());
         if (projectCalendarOpt.isPresent()) {
             final ProjectRole projectRole = entityUtil.getProjectRoleByProjectIdAndUserId(project.getId(), user.getId());
 
             if (projectRole.isCalendarConnected()) {
-                throw new UnsupportedOperationException("No need to conncted user %s to calendar in project %s, "
-                        + "since the user is already connected.".formatted(user.getUsername(), project.getName()));
+                return new CalendarOperationResult(ThirdPartyOperationStatus.NOT_APPLICABLE);
             }
             try {
                 Calendar service = getService(entityUtil.getProjectOwner(project));
@@ -322,19 +345,22 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
                         .getStatus().equals(ThirdPartyOperationStatus.SUCCESS)) {
                     projectRole.setCalendarConnected(true);
                     projectRoleRepository.save(projectRole);
+                    return new CalendarOperationResult(ThirdPartyOperationStatus.SUCCESS);
                 }
+                return new CalendarOperationResult(ThirdPartyOperationStatus.FAILED);
             } catch (OAuth2AuthorizedClientLoadingException e) {
-                processAuthClientLoadingException(user);
+                return new CalendarOperationResult(ThirdPartyOperationStatus.SKIPPED);
+            } catch (GeneralSecurityException | IOException e) {
+                return new CalendarOperationResult(ThirdPartyOperationStatus.FAILED);
             }
         } else {
-            throw new UnsupportedOperationException("Unable to join calendar for project "
-                    + project.getId() + " because project owner has not connected " 
-                    + "project to google calendar.");
+            return new CalendarOperationResult(ThirdPartyOperationStatus.NOT_APPLICABLE);
         }
     }
 
+    @NonNull
     @Override
-    public void changeProjectEventsDates(@NonNull User user, @NonNull Project project,
+    public CalendarOperationResult changeProjectEventsDates(@NonNull User user, @NonNull Project project,
             @NonNull LocalDate newStart, LocalDate newEnd) {
         Optional<ProjectCalendar> projectCalendarOpt =
                 projectCalendarRepository.findByProjectId(project.getId());
@@ -353,7 +379,7 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
                             || (project.getEndDate() != null
                             && project.getEndDate().equals(newEnd))) {
                         LOGGER.info("End date is the same as before. Nothing happens.");
-                        return;
+                        return new CalendarOperationResult(ThirdPartyOperationStatus.SUCCESS);
                     }
                     if (project.getEndDate() != null) {
                         LOGGER.info("Project " + project.getId()
@@ -378,21 +404,25 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
                         projectCalendarOpt.get().setEndEventId(endEvent.getId());
                         projectCalendarRepository.save(projectCalendarOpt.get());
                     }
+                    return new CalendarOperationResult(ThirdPartyOperationStatus.SUCCESS);
                 } catch (IOException e) {
-                    throw new ThirdPartyApiException("Unable to patch events with new project "
-                            + project.getId() + " dates.", e);
+                    return new CalendarOperationResult(ThirdPartyOperationStatus.FAILED);
                 }
             } catch (OAuth2AuthorizedClientLoadingException e) {
-                processAuthClientLoadingException(user);
+                return new CalendarOperationResult(ThirdPartyOperationStatus.SKIPPED);
+            } catch (GeneralSecurityException | IOException e) {
+                return new CalendarOperationResult(ThirdPartyOperationStatus.FAILED);
             }
         } else {
             LOGGER.warn("Calendar for project " + project.getId()
-                        + " doesn't exist. Action skipped.");
+                    + " doesn't exist. Action skipped.");
+            return new CalendarOperationResult(ThirdPartyOperationStatus.NOT_APPLICABLE);
         }
     }
 
+    @NonNull
     @Override
-    public void changeTaskEventDueDate(@NonNull User user, @NonNull Task task,
+    public CalendarOperationResult changeTaskEventDueDate(@NonNull User user, @NonNull Task task,
             LocalDate newDueDate) {
         Optional<ProjectCalendar> projectCalendarOpt =
                 projectCalendarRepository.findByProjectId(task.getProject().getId());
@@ -400,7 +430,7 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
             if ((task.getDueDate() == null && newDueDate == null)
                     || (newDueDate != null && newDueDate.equals(task.getDueDate()))) {
                 LOGGER.info("Due date is the same as before. Nothing happens.");
-                return;
+                return new CalendarOperationResult(ThirdPartyOperationStatus.SUCCESS);
             }
 
             try {
@@ -412,35 +442,39 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
                     if (newDueDate == null) {
                         LOGGER.info("Task " + task.getId() + " doesn't have a due date now. "
                                 + "Deleting event...");
-                        deleteTaskEvent0(service, task);
+                        return deleteTaskEvent0(service, task);
                     } else {
                         LOGGER.info("Updating event date for task " + task.getId());
                         try {
                             service.events().patch(projectCalendarOpt.get().getCalendarId(),
                                     taskEventOpt.get().getEventId(),
                                     getEventWithNewDate(newDueDate)).execute();
+                            return new CalendarOperationResult(ThirdPartyOperationStatus.SUCCESS);
                         } catch (IOException e) {
-                            throw new ThirdPartyApiException("Unable to patch due date event for "
-                                    + "task " + task.getId(), e);
+                            return new CalendarOperationResult(ThirdPartyOperationStatus.FAILED);
                         }
                     }
                 } else {
                     LOGGER.info("Task " + task.getId() + " didn't have a due date. "
                             + " Creating new event...");
-                    createEventForTask0(service, task, newDueDate);
+                    return createEventForTask0(service, task, newDueDate);
                 }
             } catch (OAuth2AuthorizedClientLoadingException e) {
-                processAuthClientLoadingException(user);
+                return new CalendarOperationResult(ThirdPartyOperationStatus.SKIPPED);
+            } catch (GeneralSecurityException | IOException e) {
+                return new CalendarOperationResult(ThirdPartyOperationStatus.FAILED);
             }
         } else {
             LOGGER.warn("Calendar for project " + task.getProject().getId()
                     + " doesn't exist. Action skipped.");
+            return new CalendarOperationResult(ThirdPartyOperationStatus.NOT_APPLICABLE);
         }
     }
 
+    // TODO: This has to be completely reconsidered
     @NonNull
     @Override
-    public GoogleSuccessfulTestResponseDto test(@NonNull User user) {
+    public CalendarOperationResult test(@NonNull User user) {
         try {
             Calendar service = getService(user);
 
@@ -462,18 +496,20 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
                 service.calendars().delete(calendar.getId()).execute();
                 LOGGER.info("Calendar deleted.");
             } catch (IOException e) {
-                throw new ThirdPartyApiException("Some part of the test flow has "
-                        + "thrown an exception. ", e);
+                return new CalendarOperationResult(ThirdPartyOperationStatus.FAILED);
             }
         } catch (OAuth2AuthorizedClientLoadingException e) {
-            processAuthClientLoadingException(user);
+            return new CalendarOperationResult(ThirdPartyOperationStatus.SKIPPED);
+        } catch (GeneralSecurityException | IOException e) {
+            return new CalendarOperationResult(ThirdPartyOperationStatus.FAILED);
         }
-        return new GoogleSuccessfulTestResponseDto("Google Calendar test flow completed. "
-                    + "This means Google Calendar is most likely connected successfully.");
+        return new CalendarOperationResult(ThirdPartyOperationStatus.SUCCESS);
     }
 
+    // TODO: This is a complete piece of hot garbage. Calendars should not be deleted on logout.
+    @NonNull
     @Override
-    public void logout(@NonNull User user) {
+    public CalendarOperationResult logout(@NonNull User user) {
         final List<ProjectCalendar> projectCalendars =
                 projectCalendarRepository.findByCreatorId(user.getId());
         OAuth2AuthorizedClient authorizedClient;
@@ -486,13 +522,13 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
                     + "user's authorized client will be deleted localy, but the actual token "
                     + "will not be properly revoked.");
             authorizedClient = oauthService.getAuthorizedClientForUser(user, clientRegistration);
-            oauthService.deleteAuthorizedClient(authorizedClient);
+            oauthService.deleteAuthorizedClient(authorizedClient.getId());
             LOGGER.info("Authorized client for user " + user.getId() + " and service "
                     + clientRegistration.getClientName() + " has been successfully deleted.");
             projectCalendarRepository.deleteAll(projectCalendars);
             LOGGER.info("Project calendars for user " + user.getId()
                     + " have been successfully deleted localy.");
-            return;
+            return new CalendarOperationResult(ThirdPartyOperationStatus.PARTIAL_SUCCESS);
         }
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(GOOGLE_TOKEN_REVOKE_URL.formatted(authorizedClient.getToken())))
@@ -515,18 +551,16 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
             LOGGER.info("Response recieved.");
 
             if (response.statusCode() != 200) {
-                throw new ThirdPartyApiException("Token revocation for user " + user.getId()
-                        + " and service " + clientRegistration.getClientName() + " failed.");
+                return new CalendarOperationResult(ThirdPartyOperationStatus.FAILED);
             }
-            oauthService.deleteAuthorizedClient(authorizedClient);
+            oauthService.deleteAuthorizedClient(authorizedClient.getId());
+            return new CalendarOperationResult(ThirdPartyOperationStatus.SUCCESS);
         } catch (IOException | InterruptedException e) {
-            throw new ThirdPartyApiException("Unable to send request to revoke user "
-                    + user.getId() + "'s token for service "
-                    + clientRegistration.getClientName(), e);
+            return new CalendarOperationResult(ThirdPartyOperationStatus.FAILED);
         }
     }
 
-    private void createCalendarForProject0(Calendar service, Project project) {
+    private CalendarOperationResult createCalendarForProject0(Calendar service, Project project) {
         com.google.api.services.calendar.model.Calendar calendar =
                 new com.google.api.services.calendar.model.Calendar();
         calendar.setSummary("Project " + project.getName());
@@ -549,13 +583,13 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
                 projectCalendar.setEndEventId(endEvent.getId());
             }
             projectCalendarRepository.save(projectCalendar);
+            return new CalendarOperationResult(ThirdPartyOperationStatus.SUCCESS);
         } catch (IOException e) {
-            throw new ThirdPartyApiException("Unable to create a calendar for project "
-                    + project.getId(), e);
+            return new CalendarOperationResult(ThirdPartyOperationStatus.FAILED);
         }
     }
 
-    private void createEventForTask0(Calendar service, Task task, LocalDate dueDate) {
+    private CalendarOperationResult createEventForTask0(Calendar service, Task task, LocalDate dueDate) {
         if (dueDate != null) {
             try {
                 Optional<ProjectCalendar> projectCalendarOpt =
@@ -567,17 +601,18 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
                 TaskEvent taskEvent = new TaskEvent(task, projectCalendarOpt.get());
                 taskEvent.setEventId(event.getId());
                 taskEventRepository.save(taskEvent);
+                return new CalendarOperationResult(ThirdPartyOperationStatus.SUCCESS);
             } catch (IOException e) {
-                throw new ThirdPartyApiException("Unable to create an event for task "
-                        + task.getId(), e);
+                return new CalendarOperationResult(ThirdPartyOperationStatus.FAILED);
             }
         } else {
             LOGGER.warn("Due date for task " + task.getId()
                     + " is not specified. Action skipped.");
+            return new CalendarOperationResult(ThirdPartyOperationStatus.NOT_APPLICABLE);
         }
     }
 
-    private ThirdPartyOperationResult deleteTaskEvent0(Calendar service, Task task) {
+    private CalendarOperationResult deleteTaskEvent0(Calendar service, Task task) {
         try {
             Optional<ProjectCalendar> projectCalendarOpt =
                     projectCalendarRepository.findByProjectId(task.getProject().getId());
@@ -587,18 +622,18 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
                 service.events().delete(projectCalendarOpt.get().getCalendarId(),
                         taskEventOpt.get().getEventId()).execute();
                 taskEventRepository.delete(taskEventOpt.get());
-                return new ThirdPartyOperationResult(ThirdPartyOperationStatus.SUCCESS);
+                return new CalendarOperationResult(ThirdPartyOperationStatus.SUCCESS);
             } else {
                 LOGGER.warn("Event for " + task.getId() + " doesn't exist. Action skipped.");
-                return new ThirdPartyOperationResult(ThirdPartyOperationStatus.NOT_APPLICABLE);
+                return new CalendarOperationResult(ThirdPartyOperationStatus.NOT_APPLICABLE);
             }
         } catch (IOException e) {
             LOGGER.error("Failed to delete task event.", e);
-            return new ThirdPartyOperationResult(ThirdPartyOperationStatus.FAILED);
+            return new CalendarOperationResult(ThirdPartyOperationStatus.FAILED);
         }
     }
 
-    private ThirdPartyOperationResult addUserToCalendar0(Calendar service, Project project, User newUser) {
+    private CalendarOperationResult addUserToCalendar0(Calendar service, Project project, User newUser) {
         try {
             final OAuth2AuthorizedClient authorizedClient =
                     oauthService.loadAuthorizedClient(newUser, clientRegistration);
@@ -626,29 +661,27 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
             CalendarListEntry calendarListEntry = new CalendarListEntry();
             calendarListEntry.setId(projectCalendarOpt.get().getCalendarId());
             newUserService.calendarList().insert(calendarListEntry).execute();
-            return new ThirdPartyOperationResult(ThirdPartyOperationStatus.SUCCESS);
-        } catch (IOException e) {
-            throw new ThirdPartyApiException("Unable to add new user "
-                    + newUser.getId() + " to calendar for project " + project.getId(), e);
+            return new CalendarOperationResult(ThirdPartyOperationStatus.SUCCESS);
+        } catch (GeneralSecurityException | IOException e) {
+            return new CalendarOperationResult(ThirdPartyOperationStatus.FAILED);
         } catch (OAuth2AuthorizedClientLoadingException e) {
             LOGGER.warn("Unable to load authorized client for user "
                     + newUser.getId() + ". Action skipped.");
-            return new ThirdPartyOperationResult(ThirdPartyOperationStatus.SKIPPED);
+            return new CalendarOperationResult(ThirdPartyOperationStatus.SKIPPED);
         }
     }
 
-    private Calendar getService(User user) throws OAuth2AuthorizedClientLoadingException {
+    private Calendar getService(User user)
+            throws OAuth2AuthorizedClientLoadingException,
+                   GeneralSecurityException,
+                   IOException {
         NetHttpTransport transport;
         OAuth2AuthorizedClient authorizedClient;
 
-        try {
-            LOGGER.info("Getting transport...");
-            transport = GoogleNetHttpTransport.newTrustedTransport();
-            LOGGER.info("Getting authorized client...");
-            authorizedClient = oauthService.loadAuthorizedClient(user, clientRegistration);
-        } catch (GeneralSecurityException | IOException e) {
-            throw new ThirdPartyApiException("Unable to create transport.", e);
-        }
+        LOGGER.info("Getting transport...");
+        transport = GoogleNetHttpTransport.newTrustedTransport();
+        LOGGER.info("Getting authorized client...");
+        authorizedClient = oauthService.loadAuthorizedClient(user, clientRegistration);
 
         LOGGER.info("Creating calendar service...");
         Calendar service = new Calendar.Builder(transport, FACTORY,
@@ -689,11 +722,5 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
 
     private boolean isCalendarConnected(Project project) {
         return projectCalendarRepository.findByProjectId(project.getId()).isPresent();
-    }
-
-    private void processAuthClientLoadingException(User user) {
-        throw new ThirdPartyApiException("Authorized client for user " + user.getId()
-                + " and service " + clientRegistration.getClientName() + " is "
-                + "unavailable.");
     }
 }

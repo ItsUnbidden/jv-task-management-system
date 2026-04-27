@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.dropbox.core.v2.check.EchoResult;
 import com.unbidden.jvtaskmanagementsystem.dto.oauth2.OAuth2StatusResponseDto;
+import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.DropboxOperationResult;
 import com.unbidden.jvtaskmanagementsystem.model.ClientRegistration;
 import com.unbidden.jvtaskmanagementsystem.model.User;
 import com.unbidden.jvtaskmanagementsystem.service.DropboxService;
@@ -56,7 +57,7 @@ public class DropboxController {
                     description = "Unauthorized. Might be some other issue as well")
             }
     )
-    public EchoResult test(Authentication authentication) {
+    public DropboxOperationResult test(Authentication authentication) {
         return dropboxService.testDropboxUserConnection((User)authentication.getPrincipal());
     }
 

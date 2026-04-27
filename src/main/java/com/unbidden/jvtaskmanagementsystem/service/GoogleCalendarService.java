@@ -4,43 +4,50 @@ import java.time.LocalDate;
 
 import org.springframework.lang.NonNull;
 
-import com.unbidden.jvtaskmanagementsystem.dto.google.GoogleSuccessfulTestResponseDto;
-import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.ThirdPartyOperationResult;
+import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.calendar.CalendarOperationResult;
 import com.unbidden.jvtaskmanagementsystem.model.Project;
 import com.unbidden.jvtaskmanagementsystem.model.Task;
 import com.unbidden.jvtaskmanagementsystem.model.User;
 
 public interface GoogleCalendarService {
-    void createCalendarForProject(@NonNull User user, @NonNull Project project);
+    @NonNull
+    CalendarOperationResult createCalendarForProject(@NonNull User user, @NonNull Project project);
 
     @NonNull
-    ThirdPartyOperationResult deleteProjectCalendar(@NonNull User user, @NonNull Project project);
-
-    void createEventForTask(@NonNull User user, @NonNull Task task);
+    CalendarOperationResult deleteProjectCalendar(@NonNull User user, @NonNull Project project);
 
     @NonNull
-    ThirdPartyOperationResult deleteTaskEvent(@NonNull User user, @NonNull Task task);
+    CalendarOperationResult createEventForTask(@NonNull User user, @NonNull Task task);
 
     @NonNull
-    ThirdPartyOperationResult addUserToCalendar(@NonNull Project project, @NonNull User newUser);
+    CalendarOperationResult deleteTaskEvent(@NonNull User user, @NonNull Task task);
 
     @NonNull
-    ThirdPartyOperationResult removeUserFromCalendar(@NonNull Project project, @NonNull User userToRemove);
+    CalendarOperationResult addUserToCalendar(@NonNull Project project, @NonNull User newUser);
 
-    void transferOwnership(@NonNull User user, @NonNull Project project, @NonNull User newOwner);
+    @NonNull
+    CalendarOperationResult removeUserFromCalendar(@NonNull Project project, @NonNull User userToRemove);
 
-    void connectProjectToCalendar(@NonNull User user, @NonNull Project project);
+    @NonNull
+    CalendarOperationResult transferOwnership(@NonNull User user, @NonNull Project project, @NonNull User newOwner);
 
-    void joinCalendar(@NonNull User user, @NonNull Project project);
+    @NonNull
+    CalendarOperationResult connectProjectToCalendar(@NonNull User user, @NonNull Project project);
 
-    void changeProjectEventsDates(@NonNull User user, @NonNull Project project,
+    @NonNull
+    CalendarOperationResult joinCalendar(@NonNull User user, @NonNull Project project);
+
+    @NonNull
+    CalendarOperationResult changeProjectEventsDates(@NonNull User user, @NonNull Project project,
             @NonNull LocalDate newStart, LocalDate newEnd);
 
-    void changeTaskEventDueDate(@NonNull User user, @NonNull Task task,
+    @NonNull
+    CalendarOperationResult changeTaskEventDueDate(@NonNull User user, @NonNull Task task,
             LocalDate newDueDate);
 
     @NonNull
-    GoogleSuccessfulTestResponseDto test(@NonNull User user);
+    CalendarOperationResult test(@NonNull User user);
 
-    void logout(@NonNull User user);
+    @NonNull
+    CalendarOperationResult logout(@NonNull User user);
 }

@@ -1,10 +1,9 @@
 package com.unbidden.jvtaskmanagementsystem.repository.oauth2;
 
-import com.unbidden.jvtaskmanagementsystem.exception.oauth2.OAuth2PropertiesParsingException;
-import com.unbidden.jvtaskmanagementsystem.model.ClientRegistration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,12 +11,15 @@ import org.springframework.core.env.Environment;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Repository;
 
+import com.unbidden.jvtaskmanagementsystem.exception.oauth2.OAuth2PropertiesParsingException;
+import com.unbidden.jvtaskmanagementsystem.model.ClientRegistration;
+
 @Repository
 public class InMemoryClientRegistrationRepository implements ClientRegistrationRepository {
     private static final Logger LOGGER =
             LogManager.getLogger(InMemoryClientRegistrationRepository.class);
 
-    private Map<String, ClientRegistration> registrations = new HashMap<>();
+    private final Map<String, ClientRegistration> registrations = new HashMap<>();
 
     public InMemoryClientRegistrationRepository(@Autowired Environment environment) {
         initializeClientRegistrations(environment);
@@ -57,28 +59,28 @@ public class InMemoryClientRegistrationRepository implements ClientRegistrationR
 
         String clientId = environment.getProperty(basePath + "client-id");
         if (clientId == null) {
-            throw new OAuth2PropertiesParsingException("Client id cannot be null.");
+            throw new OAuth2PropertiesParsingException("Client id cannot be null.", null);
         }
         clientRegistration.setClientId(clientId);
         LOGGER.info("Client id for " + provider + " is set to " + clientId);
         
         String clientSecret = environment.getProperty(basePath + "client-secret");
         if (clientSecret == null) {
-            throw new OAuth2PropertiesParsingException("Client secret cannot be null.");
+            throw new OAuth2PropertiesParsingException("Client secret cannot be null.", null);
         }
         clientRegistration.setClientSecret(clientSecret);
         LOGGER.info("Client secret for " + provider + " is set.");
 
         String redirectUri = environment.getProperty(basePath + "redirect-uri");
         if (redirectUri == null) {
-            throw new OAuth2PropertiesParsingException("Redirect URI cannot be null.");
+            throw new OAuth2PropertiesParsingException("Redirect URI cannot be null.", null);
         }
         clientRegistration.setRedirectUri(redirectUri);
         LOGGER.info("Redirect URI for " + provider + " is set to " + redirectUri);
 
         String tokenUri = environment.getProperty(basePath + "token-uri");
         if (tokenUri == null) {
-            throw new OAuth2PropertiesParsingException("Token URI cannot be null.");
+            throw new OAuth2PropertiesParsingException("Token URI cannot be null.", null);
         }
         clientRegistration.setTokenUri(tokenUri);
         LOGGER.info("Token URI for " + provider + " is set to " + tokenUri);
@@ -86,7 +88,7 @@ public class InMemoryClientRegistrationRepository implements ClientRegistrationR
         String authorizationUri = environment.getProperty(basePath + "authorization-uri");
         if (authorizationUri == null) {
             throw new OAuth2PropertiesParsingException("Authorization URI " 
-                    + "cannot be null.");
+                    + "cannot be null.", null);
         }
         clientRegistration.setAuthorizationUri(authorizationUri);
         LOGGER.info("Authorization URI for " + provider + " is set to " + authorizationUri);
@@ -94,7 +96,7 @@ public class InMemoryClientRegistrationRepository implements ClientRegistrationR
         String scope = environment.getProperty(basePath + "scope");
         if (scope == null) {
             throw new OAuth2PropertiesParsingException("Scope " 
-                    + "cannot be null.");
+                    + "cannot be null.", null);
         }
         clientRegistration.setScope(scope);
         LOGGER.info("Scope for " + provider + " is set to " + scope);

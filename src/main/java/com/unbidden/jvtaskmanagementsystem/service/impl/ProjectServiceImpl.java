@@ -7,17 +7,19 @@ import java.util.Set;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.lang.NonNull;
-import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.unbidden.jvtaskmanagementsystem.dto.project.UpdateProjectRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.project.UpdateProjectStatusRequestDto;
-import com.unbidden.jvtaskmanagementsystem.dto.project.internal.CreatedProjectFolderResult;
-import com.unbidden.jvtaskmanagementsystem.dto.project.internal.ProjectConnectedToDropboxResult;
 import com.unbidden.jvtaskmanagementsystem.dto.projectrole.UpdateProjectRoleRequestDto;
-import com.unbidden.jvtaskmanagementsystem.dto.task.internal.CreatedTaskFolderResult;
+import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.ThirdPartyOperationResult.ThirdPartyOperationStatus;
+import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.AddUserToProjectFolderResult;
+import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.CreatedProjectFolderResult;
+import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.CreatedTaskFolderResult;
+import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.ProjectConnectedToDropboxResult;
 import com.unbidden.jvtaskmanagementsystem.exception.EntityNotFoundException;
+import com.unbidden.jvtaskmanagementsystem.exception.ErrorType;
 import com.unbidden.jvtaskmanagementsystem.model.Project;
 import com.unbidden.jvtaskmanagementsystem.model.Project.ProjectStatus;
 import com.unbidden.jvtaskmanagementsystem.model.ProjectRole;
@@ -91,7 +93,7 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     @Transactional
     public Project createProject(@NonNull User user, @NonNull Project project,
-            @Nullable CreatedProjectFolderResult dropboxResult) {
+            @NonNull CreatedProjectFolderResult dropboxResult) {
         final ProjectRole creatorRole = new ProjectRole();
         creatorRole.setProject(project);
         creatorRole.setRoleType(ProjectRoleType.CREATOR);
@@ -102,7 +104,7 @@ public class ProjectServiceImpl implements ProjectService {
         if (project.getStartDate() == null) {
             project.setStartDate(LocalDate.now());
         }
-        if (dropboxResult != null) {
+        if (dropboxResult.getStatus().equals(ThirdPartyOperationStatus.SUCCESS)) {
             project.setDropboxProjectFolderId(dropboxResult.getProjectFolderId());
             project.setDropboxProjectSharedFolderId(dropboxResult.getProjectSharedFolderId());
         }
@@ -152,7 +154,7 @@ public class ProjectServiceImpl implements ProjectService {
         final Project project = entityUtil.getProjectById(projectId);
         final User newProjectMember = userRepository.findByUsername(username)
                 .orElseThrow(() -> new EntityNotFoundException("User with username "
-                + username + " does not exist."));
+                + username + " does not exist.", ErrorType.USER_NOT_FOUND));
     
         final ProjectRole projectRole = new ProjectRole();
         projectRole.setProject(project);
@@ -218,19 +220,24 @@ public class ProjectServiceImpl implements ProjectService {
             @NonNull ProjectConnectedToDropboxResult dropboxResult) {
         final Project project = entityUtil.getProjectById(projectId);
 
-        project.setDropboxProjectFolderId(dropboxResult.getProjectFolderResult().getProjectFolderId());
-        project.setDropboxProjectSharedFolderId(dropboxResult.getProjectFolderResult().getProjectSharedFolderId());
-        project.getTasks().forEach(t -> {
-            final CreatedTaskFolderResult result = dropboxResult.getTaskFolderResults().get(t.getId());
-            if (result != null) {
-                t.setDropboxTaskFolderId(result.getTaskFolderId());
-            }
-        });
-        project.getProjectRoles().forEach(pr -> {
-            if (dropboxResult.getConnectedUserIds().contains(pr.getUser().getId())) {
-                pr.setDropboxConnected(true);
-            }
-        });
+        if (dropboxResult.getStatus().equals(ThirdPartyOperationStatus.SUCCESS)) {
+            project.setDropboxProjectFolderId(dropboxResult.getProjectFolderResult().getProjectFolderId());
+            project.setDropboxProjectSharedFolderId(dropboxResult.getProjectFolderResult().getProjectSharedFolderId());
+
+            project.getTasks().forEach(t -> {
+                final CreatedTaskFolderResult result = dropboxResult.getTaskFolderResults().get(t.getId());
+                if (result != null && result.getStatus().equals(ThirdPartyOperationStatus.SUCCESS)) {
+                    t.setDropboxTaskFolderId(result.getTaskFolderId());
+                }
+            });
+            project.getProjectRoles().forEach(pr -> {
+                final AddUserToProjectFolderResult result =
+                        dropboxResult.getUserConnectionResults().get(pr.getUser().getId());
+                if (result != null && result.getStatus().equals(ThirdPartyOperationStatus.SUCCESS)) {
+                    pr.setDropboxConnected(true);
+                }
+            });
+        }
         return project;
     }
 

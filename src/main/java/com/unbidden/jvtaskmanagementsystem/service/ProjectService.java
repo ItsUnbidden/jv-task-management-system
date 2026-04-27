@@ -3,13 +3,12 @@ package com.unbidden.jvtaskmanagementsystem.service;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.lang.NonNull;
-import org.springframework.lang.Nullable;
 
 import com.unbidden.jvtaskmanagementsystem.dto.project.UpdateProjectRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.project.UpdateProjectStatusRequestDto;
-import com.unbidden.jvtaskmanagementsystem.dto.project.internal.CreatedProjectFolderResult;
-import com.unbidden.jvtaskmanagementsystem.dto.project.internal.ProjectConnectedToDropboxResult;
 import com.unbidden.jvtaskmanagementsystem.dto.projectrole.UpdateProjectRoleRequestDto;
+import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.CreatedProjectFolderResult;
+import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.ProjectConnectedToDropboxResult;
 import com.unbidden.jvtaskmanagementsystem.model.Project;
 import com.unbidden.jvtaskmanagementsystem.model.User;
 
@@ -26,7 +25,8 @@ public interface ProjectService {
             @NonNull String name, @NonNull Pageable pageable);
     
     @NonNull
-    public Project createProject(@NonNull User user, @NonNull Project project, @Nullable CreatedProjectFolderResult dropboxResult);
+    public Project createProject(@NonNull User user, @NonNull Project project,
+            @NonNull CreatedProjectFolderResult dropboxResult);
     
     @NonNull
     public Project updateProject(@NonNull Long projectId,

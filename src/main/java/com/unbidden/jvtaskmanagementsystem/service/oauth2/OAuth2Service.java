@@ -56,9 +56,9 @@ public interface OAuth2Service {
      * Permanently deletes this {@link OAuth2AuthorizedClient}. This method should be called when
      * user manualy logs out of service or is removed. It should not be called when
      * token expires or in any other case.
-     * @param authorizedClient which needs to be deleted
+     * @param id of the client which needs to be deleted
      */
-    void deleteAuthorizedClient(@NonNull OAuth2AuthorizedClient authorizedClient);
+    void deleteAuthorizedClient(@NonNull Long id);
 
     /**
      * Will fetch authorized client from the database or throw an {@link EntityNotFoundException}.
