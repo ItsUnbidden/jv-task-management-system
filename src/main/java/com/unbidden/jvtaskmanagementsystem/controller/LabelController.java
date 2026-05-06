@@ -1,7 +1,6 @@
 package com.unbidden.jvtaskmanagementsystem.controller;
 
-import java.util.List;
-
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.lang.NonNull;
@@ -62,7 +61,7 @@ public class LabelController {
                     description = "Forbidden. Possible only if project is private")
             }
     )
-    public List<LabelResponseDto> getLabelsForProject(Authentication authentication,
+    public Page<LabelResponseDto> getLabelsForProject(Authentication authentication,
             @Parameter(
                 description = "Project id"
             )
@@ -131,7 +130,7 @@ public class LabelController {
                     description = "Forbidden. Possible only if project is private")
             }
     )
-    public List<LabelResponseDto> getLabelForTask(Authentication authentication,
+    public Page<LabelResponseDto> getLabelForTask(Authentication authentication,
             @Parameter(
                 description = "Task id"
             )

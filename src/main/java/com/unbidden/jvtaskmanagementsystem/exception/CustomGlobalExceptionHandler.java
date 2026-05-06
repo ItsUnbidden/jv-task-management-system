@@ -2,7 +2,6 @@ package com.unbidden.jvtaskmanagementsystem.exception;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
@@ -120,6 +119,7 @@ public class CustomGlobalExceptionHandler extends ResponseEntityExceptionHandler
         body.put("timestamp", LocalDateTime.now());
         body.put("type", ex.getType());
         body.put("message", ex.getMessage());
+        body.put("externalResult", ex.getResult());
 
         return new ResponseEntity<>(body, HttpStatus.SERVICE_UNAVAILABLE);
     } 
@@ -132,7 +132,7 @@ public class CustomGlobalExceptionHandler extends ResponseEntityExceptionHandler
 
         body.put("timestamp", LocalDateTime.now());
         body.put("type", ex.getType());
-        body.put("errors", List.of(ex.getMessage()));
+        body.put("message", ex.getMessage());
 
         return new ResponseEntity<>(body, HttpStatus.PAYLOAD_TOO_LARGE);
     } 
@@ -147,7 +147,7 @@ public class CustomGlobalExceptionHandler extends ResponseEntityExceptionHandler
 
         body.put("timestamp", LocalDateTime.now());
         body.put("type", ErrorType.GENERAL_AUTHENTICATION_FAILURE);
-        body.put("errors", List.of(ex.getMessage()));
+        body.put("message", ex.getMessage());
 
         return new ResponseEntity<>(body, HttpStatus.UNAUTHORIZED);
     } 
@@ -162,7 +162,7 @@ public class CustomGlobalExceptionHandler extends ResponseEntityExceptionHandler
         LOGGER.error("Some internal error occured.", ex);
 
         body.put("timestamp", LocalDateTime.now());      
-        body.put("errors", List.of(ex.getMessage()));
+        body.put("message", ex.getMessage());
 
         if (ex instanceof UnexpectedException unexpectedException && unexpectedException.getType() != null) {
             body.put("type", unexpectedException.getType());

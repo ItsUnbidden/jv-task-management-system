@@ -7,6 +7,8 @@ import lombok.Data;
 
 @Data
 public class ProjectRoleDto {
+    private Long id;
+
     private Long userId;
 
     private String username;

@@ -16,6 +16,8 @@ import org.springframework.stereotype.Component;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.unbidden.jvtaskmanagementsystem.dto.oauth2.GoogleUserInfoResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.oauth2.OAuth2TokenResponseDto;
+import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.ThirdPartyOperationResult;
+import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.ThirdPartyOperationResult.ThirdPartyOperationStatus;
 import com.unbidden.jvtaskmanagementsystem.exception.ErrorType;
 import com.unbidden.jvtaskmanagementsystem.exception.StateCollisionException;
 import com.unbidden.jvtaskmanagementsystem.exception.thirdparty.ThirdPartyApiException;
@@ -98,7 +100,8 @@ public class OAuth2AuthorizedClientGoogleResolver extends OAuth2AuthorizedClient
             throw new ThirdPartyApiException("Unable to send request for user "
                     + authorizedClient.getUser().getId()
                     + "'s profile info from google or unable to process response.",
-                    ErrorType.OAUTH2_INTERNAL_FAILURE, e);
+                    ErrorType.OAUTH2_INTERNAL_FAILURE, e,
+                    new ThirdPartyOperationResult(ThirdPartyOperationStatus.FAILED));
         }
     }
 }

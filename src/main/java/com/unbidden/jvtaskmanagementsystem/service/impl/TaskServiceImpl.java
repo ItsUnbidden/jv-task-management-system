@@ -51,7 +51,7 @@ public class TaskServiceImpl implements TaskService {
 
         tasks.forEach(t -> {
             updateTaskStatusAccordingToDate(t, true);
-            t.setLabels(labelRepository.findByTaskId(t.getId()));
+            t.setLabels(labelRepository.findByTaskId(t.getId(), Pageable.unpaged()).getContent()); // TODO: N + 1. Consider removing the labels field from the task entity entirely, since it's not really used that much.
         });
         return tasks;
     }
@@ -129,7 +129,6 @@ public class TaskServiceImpl implements TaskService {
         project.getTasks().add(task);
         task.setProject(project);
         task.setStatus(TaskStatus.NOT_STARTED);
-        task.setLabels(List.of());
         task.setAmountOfMessages(0);
         if (dropboxResult.getStatus().equals(ThirdPartyOperationStatus.SUCCESS)) {
             task.setDropboxTaskFolderId(dropboxResult.getTaskFolderId());
@@ -152,10 +151,10 @@ public class TaskServiceImpl implements TaskService {
         taskFromDb.setDueDate(requestDto.getDueDate());
         checkDateIsLegit(taskFromDb);
         taskFromDb.setPriority(requestDto.getPriority());
-        if (requestDto.getNewAssigneeId() != null) {
-            taskFromDb.setAssignee(entityUtil.getUserById(requestDto.getNewAssigneeId()));
-        }
-        taskFromDb.setLabels(labelRepository.findAllById(requestDto.getLabelIds()));
+
+        if (requestDto.getNewAssigneeId() != null) taskFromDb.setAssignee(entityUtil.getUserById(requestDto.getNewAssigneeId()));
+        if (requestDto.getLabelIds() != null) taskFromDb.setLabels(labelRepository.findAllById(requestDto.getLabelIds()));
+        
         updateTaskStatusAccordingToDate(taskFromDb, false);
         return taskRepository.save(taskFromDb);
     }

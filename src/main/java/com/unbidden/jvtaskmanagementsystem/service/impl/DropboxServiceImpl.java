@@ -886,7 +886,8 @@ public class DropboxServiceImpl implements DropboxService {
                             Thread.currentThread().interrupt();
                             throw new ThirdPartyApiException("The thread was interrupted "
                                     + "during waiting for a new retry attempt.",
-                                    ErrorType.EXTERNAL_INTERRUPTED, e);
+                                    ErrorType.EXTERNAL_INTERRUPTED, e,
+                                    new DropboxOperationResult(ThirdPartyOperationStatus.FAILED));
                         }
                     }
                     return;

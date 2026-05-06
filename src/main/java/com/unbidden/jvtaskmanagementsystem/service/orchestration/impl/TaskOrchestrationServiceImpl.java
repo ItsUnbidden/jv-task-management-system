@@ -18,6 +18,7 @@ import com.unbidden.jvtaskmanagementsystem.model.Project;
 import com.unbidden.jvtaskmanagementsystem.model.ProjectRole.ProjectRoleType;
 import com.unbidden.jvtaskmanagementsystem.model.Task;
 import com.unbidden.jvtaskmanagementsystem.model.User;
+import com.unbidden.jvtaskmanagementsystem.repository.LabelRepository;
 import com.unbidden.jvtaskmanagementsystem.security.project.ProjectSecurity;
 import com.unbidden.jvtaskmanagementsystem.service.DropboxService;
 import com.unbidden.jvtaskmanagementsystem.service.GoogleCalendarService;
@@ -30,6 +31,8 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class TaskOrchestrationServiceImpl implements TaskOrchestrationService {
+    private final LabelRepository labelRepository;
+
     private final TaskService taskService;
 
     private final TaskMapper taskMapper;
@@ -105,6 +108,7 @@ public class TaskOrchestrationServiceImpl implements TaskOrchestrationService {
         task.setAssignee((requestDto.getAssigneeId() == null) ? authorizedUser
                 : entityUtil.getUserById(requestDto.getAssigneeId()));
         task.setProject(project);
+        if (requestDto.getLabelIds() != null) task.setLabels(labelRepository.findAllById(requestDto.getLabelIds()));
         final CreatedTaskFolderResult dropboxResult = dropboxService.createTaskFolder(authorizedUser, task);
         calendarService.createEventForTask(authorizedUser, task);
 

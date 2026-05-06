@@ -10,11 +10,8 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class FileUploadFailedException extends ThirdPartyApiException {
-    private final FileOperationResult dropboxResult;
-
     public FileUploadFailedException(String message, ErrorType type,
             FileOperationResult dropboxResult) {
-        super(message, type);
-        this.dropboxResult = dropboxResult;
+        super(message, type, dropboxResult);
     }
 }

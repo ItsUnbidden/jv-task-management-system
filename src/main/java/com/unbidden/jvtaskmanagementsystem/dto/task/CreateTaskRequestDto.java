@@ -1,6 +1,7 @@
 package com.unbidden.jvtaskmanagementsystem.dto.task;
 
 import java.time.LocalDate;
+import java.util.Set;
 
 import com.unbidden.jvtaskmanagementsystem.model.Task.TaskPriority;
 
@@ -26,4 +27,6 @@ public class CreateTaskRequestDto {
     private Long projectId;
 
     private Long assigneeId;
+
+    private Set<Long> labelIds;
 }

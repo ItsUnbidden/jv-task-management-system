@@ -1,7 +1,6 @@
 package com.unbidden.jvtaskmanagementsystem.service;
 
-import java.util.List;
-
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.lang.NonNull;
 
@@ -12,12 +11,12 @@ import com.unbidden.jvtaskmanagementsystem.model.User;
 
 public interface LabelService {
 
-    List<LabelResponseDto> getLablesForProject(@NonNull User user,
+    Page<LabelResponseDto> getLablesForProject(@NonNull User user,
             @NonNull Long projectId, Pageable pageable);
 
     LabelResponseDto getLabelById(@NonNull User user, @NonNull Long labelId);
 
-    List<LabelResponseDto> getLabelForTask(@NonNull User user, @NonNull Long taskId);
+    Page<LabelResponseDto> getLabelForTask(@NonNull User user, @NonNull Long taskId);
 
     LabelResponseDto createLabel(@NonNull User user, @NonNull Long projectId,
             @NonNull CreateLabelRequestDto requestDto);
