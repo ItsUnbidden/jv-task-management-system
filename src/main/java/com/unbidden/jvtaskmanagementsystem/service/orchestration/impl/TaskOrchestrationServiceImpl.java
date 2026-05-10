@@ -6,16 +6,19 @@ import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 
 import com.unbidden.jvtaskmanagementsystem.dto.task.CreateTaskRequestDto;
+import com.unbidden.jvtaskmanagementsystem.dto.task.DeleteTaskResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.task.TaskResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.task.UpdateTaskRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.task.UpdateTaskStatusRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.task.specification.TaskFilterDto;
+import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.CreatedTaskFolderResult;
 import com.unbidden.jvtaskmanagementsystem.mapper.TaskMapper;
 import com.unbidden.jvtaskmanagementsystem.model.Label;
 import com.unbidden.jvtaskmanagementsystem.model.Project;
 import com.unbidden.jvtaskmanagementsystem.model.ProjectRole.ProjectRoleType;
 import com.unbidden.jvtaskmanagementsystem.model.Task;
 import com.unbidden.jvtaskmanagementsystem.model.User;
+import com.unbidden.jvtaskmanagementsystem.repository.LabelRepository;
 import com.unbidden.jvtaskmanagementsystem.security.project.ProjectSecurity;
 import com.unbidden.jvtaskmanagementsystem.service.DropboxService;
 import com.unbidden.jvtaskmanagementsystem.service.GoogleCalendarService;
@@ -28,6 +31,8 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class TaskOrchestrationServiceImpl implements TaskOrchestrationService {
+    private final LabelRepository labelRepository;
+
     private final TaskService taskService;
 
     private final TaskMapper taskMapper;
@@ -102,11 +107,13 @@ public class TaskOrchestrationServiceImpl implements TaskOrchestrationService {
         
         task.setAssignee((requestDto.getAssigneeId() == null) ? authorizedUser
                 : entityUtil.getUserById(requestDto.getAssigneeId()));
-        final TaskResponseDto taskDto = taskMapper.toDto(taskService.createTaskInProject(user, projectId, task));
-
-        dropboxService.createTaskFolder(authorizedUser, task);
+        task.setProject(project);
+        if (requestDto.getLabelIds() != null) task.setLabels(labelRepository.findAllById(requestDto.getLabelIds()));
+        final CreatedTaskFolderResult dropboxResult = dropboxService.createTaskFolder(authorizedUser, task);
         calendarService.createEventForTask(authorizedUser, task);
-        return taskDto;
+
+        return taskMapper.toDto(taskService.createTaskInProject(
+                user, projectId, task, dropboxResult));
     }
 
     @NonNull
@@ -125,17 +132,20 @@ public class TaskOrchestrationServiceImpl implements TaskOrchestrationService {
         return taskMapper.toDto(resultTask);
     }
 
+    @NonNull
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.ADMIN, entityIdClass = Task.class)
-    public void deleteTask(@NonNull User user, @NonNull Long taskId) {
+    public DeleteTaskResponseDto deleteTask(@NonNull User user, @NonNull Long taskId) {
         final Task task = entityUtil.getTaskById(taskId);
         final User authorizedUser = (entityUtil.isManager(user))
                 ? entityUtil.getProjectOwner(task.getProject()) : user;
 
-        dropboxService.deleteTaskFolder(authorizedUser, task);
-        calendarService.deleteTaskEvent(authorizedUser, task);
-
+        final DeleteTaskResponseDto response = new DeleteTaskResponseDto(
+                task.getName(),
+                dropboxService.deleteTaskFolder(authorizedUser, task),
+                calendarService.deleteTaskEvent(authorizedUser, task));
         taskService.deleteTask(user, taskId);
+        return response;
     }
 
     @NonNull

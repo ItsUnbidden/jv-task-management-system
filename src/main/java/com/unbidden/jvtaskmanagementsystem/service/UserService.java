@@ -11,7 +11,6 @@ import com.unbidden.jvtaskmanagementsystem.dto.auth.RegistrationRequest;
 import com.unbidden.jvtaskmanagementsystem.dto.user.DeleteUserResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.user.UserResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.user.UserUpdateDetailsRequestDto;
-import com.unbidden.jvtaskmanagementsystem.exception.RegistrationException;
 import com.unbidden.jvtaskmanagementsystem.model.Role;
 import com.unbidden.jvtaskmanagementsystem.model.User;
 
@@ -20,7 +19,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 public interface UserService {
     @NonNull
-    UserResponseDto register(@NonNull RegistrationRequest request) throws RegistrationException;
+    UserResponseDto register(@NonNull RegistrationRequest request);
 
     @NonNull
     UserResponseDto findCurrentUser(@NonNull User user);

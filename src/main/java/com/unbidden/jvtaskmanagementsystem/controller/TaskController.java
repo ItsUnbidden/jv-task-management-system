@@ -2,7 +2,6 @@ package com.unbidden.jvtaskmanagementsystem.controller;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.lang.NonNull;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -15,10 +14,10 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.unbidden.jvtaskmanagementsystem.dto.task.CreateTaskRequestDto;
+import com.unbidden.jvtaskmanagementsystem.dto.task.DeleteTaskResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.task.TaskResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.task.UpdateTaskRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.task.UpdateTaskStatusRequestDto;
@@ -293,7 +292,6 @@ public class TaskController {
     }
 
     @DeleteMapping("/{taskId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(
             summary = "Delete task by id",
             responses = {               
@@ -314,12 +312,12 @@ public class TaskController {
                     description = "Forbidden")
             }
     )
-    public void deleteTask(Authentication authentication,
+    public DeleteTaskResponseDto deleteTask(Authentication authentication,
             @Parameter(
                 description = "Task id"
             )
             @NonNull @PathVariable Long taskId) {
-        taskService.deleteTask((User)authentication.getPrincipal(), taskId);
+        return taskService.deleteTask((User)authentication.getPrincipal(), taskId);
     }
 
     @PatchMapping("/{taskId}/status")

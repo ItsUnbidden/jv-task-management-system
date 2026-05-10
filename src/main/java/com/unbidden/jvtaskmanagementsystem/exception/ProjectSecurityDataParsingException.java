@@ -1,7 +1,7 @@
 package com.unbidden.jvtaskmanagementsystem.exception;
 
-public class ProjectSecurityDataParsingException extends RuntimeException {
-    public ProjectSecurityDataParsingException(String msg) {
-        super(msg);
+public class ProjectSecurityDataParsingException extends UnexpectedException {
+    public ProjectSecurityDataParsingException(String msg, ErrorType type) {
+        super(msg, type);
     }
 }

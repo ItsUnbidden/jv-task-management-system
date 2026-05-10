@@ -14,11 +14,12 @@ import com.unbidden.jvtaskmanagementsystem.dto.project.ProjectResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.project.RemoveUserFromProjectResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.project.UpdateProjectRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.project.UpdateProjectStatusRequestDto;
-import com.unbidden.jvtaskmanagementsystem.dto.project.internal.CreatedProjectFolderResult;
-import com.unbidden.jvtaskmanagementsystem.dto.project.internal.ProjectConnectedToDropboxResult;
 import com.unbidden.jvtaskmanagementsystem.dto.projectrole.UpdateProjectRoleRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.ThirdPartyOperationResult;
+import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.CreatedProjectFolderResult;
+import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.ProjectConnectedToDropboxResult;
 import com.unbidden.jvtaskmanagementsystem.exception.EntityNotFoundException;
+import com.unbidden.jvtaskmanagementsystem.exception.ErrorType;
 import com.unbidden.jvtaskmanagementsystem.mapper.ProjectMapper;
 import com.unbidden.jvtaskmanagementsystem.model.Project;
 import com.unbidden.jvtaskmanagementsystem.model.ProjectRole;
@@ -122,7 +123,8 @@ public class ProjectOrchestrationServiceImpl implements ProjectOrchestrationServ
             @NonNull String username) {
         final Project project = entityUtil.getProjectById(projectId);
         final User newProjectMember = userRepository.findByUsername(username)
-                .orElseThrow(() -> new EntityNotFoundException("User with username " + username + " does not exist."));
+                .orElseThrow(() -> new EntityNotFoundException("User with username " + username + " does not exist.",
+                ErrorType.USER_NOT_FOUND));
         final User authorizedUser = (entityUtil.isManager(user))
                 ? entityUtil.getProjectOwner(project) : user;
 

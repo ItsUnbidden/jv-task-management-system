@@ -19,7 +19,8 @@ import com.unbidden.jvtaskmanagementsystem.dto.project.RemoveUserFromProjectResp
 import com.unbidden.jvtaskmanagementsystem.dto.user.DeleteUserResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.user.UserResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.user.UserUpdateDetailsRequestDto;
-import com.unbidden.jvtaskmanagementsystem.exception.RegistrationException;
+import com.unbidden.jvtaskmanagementsystem.exception.ErrorType;
+import com.unbidden.jvtaskmanagementsystem.exception.StateCollisionException;
 import com.unbidden.jvtaskmanagementsystem.mapper.UserMapper;
 import com.unbidden.jvtaskmanagementsystem.model.Project;
 import com.unbidden.jvtaskmanagementsystem.model.ProjectRole;
@@ -63,14 +64,15 @@ public class UserServiceImpl implements UserService {
     @NonNull
     @Override
     @Transactional
-    public UserResponseDto register(@NonNull RegistrationRequest request)
-            throws RegistrationException {
+    public UserResponseDto register(@NonNull RegistrationRequest request) {
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-            throw new RegistrationException(
-                    "Cannot register user because user with this email is already registred.");
+            throw new StateCollisionException(
+                    "Cannot register user because user with this email is already registred.",
+                    ErrorType.REGISTRATION_EMAIL_TAKEN);
         } else if (userRepository.findByUsername(request.getUsername()).isPresent()) {
-            throw new RegistrationException(
-                "Cannot register user because this username has already been used.");
+            throw new StateCollisionException(
+                "Cannot register user because this username has already been used.",
+                ErrorType.REGISTRATION_USERNAME_TAKEN);
         }
         Role role = roleRepository.findByRoleType(RoleType.USER).get();
         User user = userMapper.toModel(request);

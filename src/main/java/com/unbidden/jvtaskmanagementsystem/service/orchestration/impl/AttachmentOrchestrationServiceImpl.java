@@ -9,9 +9,13 @@ import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.dropbox.core.v2.files.FileMetadata;
 import com.unbidden.jvtaskmanagementsystem.dto.attachment.AttachmentDto;
+import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.ThirdPartyOperationResult.ThirdPartyOperationStatus;
+import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.FileOperationResult;
+import com.unbidden.jvtaskmanagementsystem.exception.ErrorType;
 import com.unbidden.jvtaskmanagementsystem.exception.FileSizeLimitExceededException;
+import com.unbidden.jvtaskmanagementsystem.exception.UnexpectedException;
+import com.unbidden.jvtaskmanagementsystem.exception.thirdparty.dropbox.FileUploadFailedException;
 import com.unbidden.jvtaskmanagementsystem.mapper.AttachmentMapper;
 import com.unbidden.jvtaskmanagementsystem.model.Attachment;
 import com.unbidden.jvtaskmanagementsystem.model.ProjectRole.ProjectRoleType;
@@ -50,6 +54,7 @@ public class AttachmentOrchestrationServiceImpl implements AttachmentOrchestrati
                 .map(attachmentMapper::toDto);
     }
 
+    // TODO: need to finish this by dealing with the Dropbox result
     @NonNull
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, entityIdClass = Attachment.class)
@@ -63,14 +68,15 @@ public class AttachmentOrchestrationServiceImpl implements AttachmentOrchestrati
         response.setHeader(HeaderNames.CONTENT_DISPOSITION, "attachment; filename="
                 + attachment.getFilename());
         try {
-            dropboxService.downloadFile(authorizedUser, attachment.getDropboxId(),
-                    response.getOutputStream());
+            final FileOperationResult dropboxResult = dropboxService.downloadFile(
+                authorizedUser, attachment.getDropboxId(), response.getOutputStream());
         } catch (IOException e) {
-            throw new RuntimeException("Exception occured during an "
-                    + "attempt to get output stream.");
+            throw new UnexpectedException("Exception occured during an "
+                    + "attempt to get output stream.", ErrorType.INTERNAL);
         }
     }
 
+    // TODO: need to finish this by dealing with the Dropbox result
     @NonNull
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, entityIdClass = Task.class)
@@ -90,15 +96,22 @@ public class AttachmentOrchestrationServiceImpl implements AttachmentOrchestrati
         
         if (file.getSize() > MAXIMUM_FILE_SIZE) { 
             throw new FileSizeLimitExceededException("Maximum file size is 150 MiB. "
-                    + "Current file size has exceeded this limit.");
+                    + "Current file size has exceeded this limit.",
+                    ErrorType.ATTACHMENT_FILE_TOO_LARGE);
         }
 
-        FileMetadata meta = dropboxService.uploadFileInTaskFolder(authorizedUser, task, file);
-        attachment.setDropboxId(meta.getId());
+        final FileOperationResult dropboxResult = dropboxService.uploadFileInTaskFolder(
+                authorizedUser, task, file);
+        if (!dropboxResult.getStatus().equals(ThirdPartyOperationStatus.SUCCESS)) {
+            throw new FileUploadFailedException("Filed to upload the file.",
+                    ErrorType.ATTACHMENT_UPLOAD_FAILURE, dropboxResult);
+        }
+        attachment.setDropboxId(dropboxResult.getMeta().getId());
         attachment.setUploadDate(LocalDateTime.now());
         return attachmentMapper.toDto(attachmentService.upload(attachment));
     }
 
+    // TODO: need to finish this by dealing with the Dropbox result
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, entityIdClass = Attachment.class)
     public void delete(@NonNull User user, @NonNull Long attachmentId) {

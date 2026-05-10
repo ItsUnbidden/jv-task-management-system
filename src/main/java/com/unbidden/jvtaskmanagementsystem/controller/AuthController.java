@@ -13,7 +13,6 @@ import com.unbidden.jvtaskmanagementsystem.dto.auth.LoginRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.auth.LoginResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.auth.RegistrationRequest;
 import com.unbidden.jvtaskmanagementsystem.dto.user.UserResponseDto;
-import com.unbidden.jvtaskmanagementsystem.exception.RegistrationException;
 import com.unbidden.jvtaskmanagementsystem.security.AuthenticationService;
 import com.unbidden.jvtaskmanagementsystem.service.UserService;
 
@@ -62,8 +61,7 @@ public class AuthController {
             @Parameter(
                 description = "Registration request"
             )
-            @NonNull @Valid @RequestBody RegistrationRequest request)
-            throws RegistrationException {
+            @NonNull @Valid @RequestBody RegistrationRequest request) {
         return userService.register(request);
     }
 

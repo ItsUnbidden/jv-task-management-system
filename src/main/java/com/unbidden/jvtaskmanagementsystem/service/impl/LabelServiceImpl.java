@@ -3,6 +3,7 @@ package com.unbidden.jvtaskmanagementsystem.service.impl;
 import java.util.HashSet;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
@@ -40,11 +41,9 @@ public class LabelServiceImpl implements LabelService {
     @Override
     @Transactional(readOnly = true)
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true)
-    public List<LabelResponseDto> getLablesForProject(@NonNull User user, @NonNull Long projectId,
+    public Page<LabelResponseDto> getLablesForProject(@NonNull User user, @NonNull Long projectId,
             Pageable pageable) {
-        return labelRepository.findByProjectId(projectId).stream()
-                .map(labelMapper::toDto)
-                .toList();
+        return labelRepository.findByProjectId(projectId, Pageable.unpaged()).map(labelMapper::toDto);
     }
 
     @NonNull
@@ -61,10 +60,8 @@ public class LabelServiceImpl implements LabelService {
     @Transactional(readOnly = true)
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true,
             entityIdClass = Task.class)
-    public List<LabelResponseDto> getLabelForTask(@NonNull User user, @NonNull Long taskId) {
-        return labelRepository.findByTaskId(taskId).stream()
-                .map(labelMapper::toDto)
-                .toList();
+    public Page<LabelResponseDto> getLabelForTask(@NonNull User user, @NonNull Long taskId) {
+        return labelRepository.findByTaskId(taskId, Pageable.unpaged()).map(labelMapper::toDto);
     }
 
     @NonNull

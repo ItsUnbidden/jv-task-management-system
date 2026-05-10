@@ -73,7 +73,7 @@ public class MessageServiceImpl implements MessageService {
             entityIdClass = Message.class, entityIdParamName = "commentId")
     public CommentWithTaskIdResponseDto getCommentById(@NonNull User user,
             @NonNull Long commentId) {
-        final Comment comment = (Comment)entityUtil.getMessageById(commentId, Comment.class);
+        final Comment comment = entityUtil.getMessageById(commentId, Comment.class);
         return messageMapper.toCommentWithTaskIdDto(comment);
     }
 
@@ -94,7 +94,7 @@ public class MessageServiceImpl implements MessageService {
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true,
             entityIdClass = Message.class, entityIdParamName = "replyId")
     public ReplyResponseDto getReplyById(@NonNull User user, @NonNull Long replyId) {
-        final Reply reply = (Reply)entityUtil.getMessageById(replyId, Reply.class);
+        final Reply reply = entityUtil.getMessageById(replyId, Reply.class);
 
         return messageMapper.toReplyDto(reply);
     }

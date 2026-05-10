@@ -14,6 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.unbidden.jvtaskmanagementsystem.dto.task.UpdateTaskRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.task.UpdateTaskStatusRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.task.specification.TaskFilterDto;
+import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.ThirdPartyOperationResult.ThirdPartyOperationStatus;
+import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.CreatedTaskFolderResult;
 import com.unbidden.jvtaskmanagementsystem.model.Label;
 import com.unbidden.jvtaskmanagementsystem.model.Project;
 import com.unbidden.jvtaskmanagementsystem.model.Task;
@@ -43,12 +45,13 @@ public class TaskServiceImpl implements TaskService {
     @NonNull
     @Override
     @Transactional
-    public Page<Task> getTasksForUserAndSearchByTaskName(@NonNull User user, @NonNull String name, Pageable pageable) {
+    public Page<Task> getTasksForUserAndSearchByTaskName(@NonNull User user, @NonNull String name,
+            @NonNull Pageable pageable) {
         Page<Task> tasks = taskRepository.findByAssigneeIdAndSearchByTaskName(user.getId(), name, pageable);
 
         tasks.forEach(t -> {
             updateTaskStatusAccordingToDate(t, true);
-            t.setLabels(labelRepository.findByTaskId(t.getId()));
+            t.setLabels(labelRepository.findByTaskId(t.getId(), Pageable.unpaged()).getContent()); // TODO: N + 1. Consider removing the labels field from the task entity entirely, since it's not really used that much.
         });
         return tasks;
     }
@@ -57,7 +60,7 @@ public class TaskServiceImpl implements TaskService {
     @Override
     @Transactional
     public Page<Task> getProjectTasks(@NonNull User user, @NonNull Long projectId,
-            Pageable pageable) {
+            @NonNull Pageable pageable) {
         Page<Task> tasks = taskRepository.findByProjectId(projectId, pageable);
 
         tasks.forEach(t -> updateTaskStatusAccordingToDate(t, true));
@@ -68,7 +71,7 @@ public class TaskServiceImpl implements TaskService {
     @Override
     @Transactional
     public Page<Task> getTasksForUserInProjectById(@NonNull User user,
-            @NonNull Long projectId, @NonNull Long userId, Pageable pageable) {
+            @NonNull Long projectId, @NonNull Long userId, @NonNull Pageable pageable) {
         Page<Task> tasks = taskRepository
                 .findByAssigneeIdAndByProjectId(userId, projectId, pageable);
         
@@ -90,7 +93,7 @@ public class TaskServiceImpl implements TaskService {
     @Override
     @Transactional
     public Page<Task> getTasksByLabelId(@NonNull User user, @NonNull Long labelId,
-            Pageable pageable) {
+            @NonNull Pageable pageable) {
         Page<Task> tasks = taskRepository.findByLabelId(labelId, pageable);
 
         tasks.forEach(t -> updateTaskStatusAccordingToDate(t, true));
@@ -101,7 +104,7 @@ public class TaskServiceImpl implements TaskService {
     @Override
     @Transactional
     public Page<Task> getTasksInProjectBySpecification(@NonNull User user, @NonNull Long projectId,
-            @NonNull TaskFilterDto filterDto, Pageable pageable) {
+            @NonNull TaskFilterDto filterDto, @NonNull Pageable pageable) {
         Specification<Task> specification = Specification.unrestricted();
 
         specification = specification.and(TaskSpecifications.hasStatus(filterDto.getStatus()))
@@ -120,14 +123,16 @@ public class TaskServiceImpl implements TaskService {
     @Override
     @Transactional
     public Task createTaskInProject(@NonNull User user, @NonNull Long projectId,
-            @NonNull Task task) {
+            @NonNull Task task, @NonNull CreatedTaskFolderResult dropboxResult) {
         final Project project = entityUtil.getProjectById(projectId);
 
         project.getTasks().add(task);
         task.setProject(project);
         task.setStatus(TaskStatus.NOT_STARTED);
-        task.setLabels(List.of());
         task.setAmountOfMessages(0);
+        if (dropboxResult.getStatus().equals(ThirdPartyOperationStatus.SUCCESS)) {
+            task.setDropboxTaskFolderId(dropboxResult.getTaskFolderId());
+        }
         checkDateIsLegit(task);
         updateTaskStatusAccordingToDate(task, false);
         projectRepository.save(project);
@@ -146,10 +151,10 @@ public class TaskServiceImpl implements TaskService {
         taskFromDb.setDueDate(requestDto.getDueDate());
         checkDateIsLegit(taskFromDb);
         taskFromDb.setPriority(requestDto.getPriority());
-        if (requestDto.getNewAssigneeId() != null) {
-            taskFromDb.setAssignee(entityUtil.getUserById(requestDto.getNewAssigneeId()));
-        }
-        taskFromDb.setLabels(labelRepository.findAllById(requestDto.getLabelIds()));
+
+        if (requestDto.getNewAssigneeId() != null) taskFromDb.setAssignee(entityUtil.getUserById(requestDto.getNewAssigneeId()));
+        if (requestDto.getLabelIds() != null) taskFromDb.setLabels(labelRepository.findAllById(requestDto.getLabelIds()));
+        
         updateTaskStatusAccordingToDate(taskFromDb, false);
         return taskRepository.save(taskFromDb);
     }
@@ -181,8 +186,7 @@ public class TaskServiceImpl implements TaskService {
     private void updateTaskStatusAccordingToDate(Task task, boolean doSave) {
         final TaskStatus initialStatus = task.getStatus();
 
-        if (task.getStatus().equals(TaskStatus.COMPLETED) 
-                || task.getStatus().equals(TaskStatus.OVERDUE)) {
+        if (task.getStatus().equals(TaskStatus.COMPLETED)) {
             return;
         }
 

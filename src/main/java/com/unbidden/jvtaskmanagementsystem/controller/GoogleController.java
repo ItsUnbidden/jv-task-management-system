@@ -8,8 +8,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.unbidden.jvtaskmanagementsystem.dto.google.GoogleSuccessfulTestResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.oauth2.OAuth2StatusResponseDto;
+import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.calendar.CalendarOperationResult;
 import com.unbidden.jvtaskmanagementsystem.model.ClientRegistration;
 import com.unbidden.jvtaskmanagementsystem.model.User;
 import com.unbidden.jvtaskmanagementsystem.service.GoogleCalendarService;
@@ -44,7 +44,7 @@ public class GoogleController {
                 @ApiResponse(
                     content = @Content(
                         mediaType = "application/json",
-                        schema = @Schema(implementation = GoogleSuccessfulTestResponseDto.class)),
+                        schema = @Schema(implementation = CalendarOperationResult.class)),
                     responseCode = "200",
                     description = "Success message"),
                 @ApiResponse(
@@ -58,7 +58,7 @@ public class GoogleController {
                     description = "Unauthorized. Might be some other issue as well")
             }
     )
-    public GoogleSuccessfulTestResponseDto test(Authentication authentication) {
+    public CalendarOperationResult test(Authentication authentication) {
         return calendarService.test((User)authentication.getPrincipal());
     }
 

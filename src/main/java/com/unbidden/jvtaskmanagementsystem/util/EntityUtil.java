@@ -9,6 +9,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
 
 import com.unbidden.jvtaskmanagementsystem.exception.EntityNotFoundException;
+import com.unbidden.jvtaskmanagementsystem.exception.ErrorType;
 import com.unbidden.jvtaskmanagementsystem.model.Attachment;
 import com.unbidden.jvtaskmanagementsystem.model.ClientRegistration;
 import com.unbidden.jvtaskmanagementsystem.model.Comment;
@@ -58,35 +59,35 @@ public class EntityUtil {
     public Project getProjectById(@NonNull Long projectId) {
         return projectRepository.findById(projectId).orElseThrow(() ->
                 new EntityNotFoundException("Was not able to find a project with id "
-                + projectId));
+                + projectId, ErrorType.PROJECT_NOT_FOUND));
     }
 
     @NonNull
     public User getUserById(@NonNull Long userId) {
         return userRepository.findById(userId).orElseThrow(() ->
                 new EntityNotFoundException("Was not able to find a user with id " 
-                + userId));
+                + userId, ErrorType.USER_NOT_FOUND));
     }
 
     @NonNull 
     public Task getTaskById(@NonNull Long taskId) {
         return taskRepository.findById(taskId).orElseThrow(() ->
                 new EntityNotFoundException("Was not able to find a task with id " 
-                + taskId));
+                + taskId, ErrorType.TASK_NOT_FOUND));
     }
 
     @NonNull
     public Label getLabelById(@NonNull Long labelId) {
         return labelRepository.findById(labelId).orElseThrow(() ->
                 new EntityNotFoundException("Was not able to find a label with id " 
-                + labelId));
+                + labelId, ErrorType.LABEL_NOT_FOUND));
     }
 
     @NonNull
     public Attachment getAttachmentById(@NonNull Long attachmentId) {
         return attachmentRepository.findById(attachmentId).orElseThrow(() ->
                 new EntityNotFoundException("Was not able to find an attachment with id "
-                + attachmentId));
+                + attachmentId, ErrorType.ATTACHMENT_NOT_FOUND));
     }
 
     /**
@@ -106,28 +107,29 @@ public class EntityUtil {
 
         Optional<Reply> replyOptional = replyRepository.findById(messageId);
         return replyOptional.orElseThrow(() -> new EntityNotFoundException(
-                "There is neither a comment nor a reply with id " + messageId));
+                "There is neither a comment nor a reply with id " + messageId,
+                ErrorType.MESSAGE_NOT_FOUND));
     }
 
     /**
      * This method finds an instance of {@link Message} entity in the database. 
-     * It is guaranteed that only a desired type of message will be returned.
      * @throws EntityNotFoundException if no entity was found
      * @param messageId of either a comment or a reply
-     * @param clazz of desired message type
-     * @return <b>message</b> which can be an instance of either a comment or a reply
+     * @param clazz of the desired message type
+     * @return the message
      */
     @NonNull
-    public Message getMessageById(@NonNull Long messageId,
-            @NonNull Class<? extends Message> clazz) {
+    @SuppressWarnings("unchecked")
+    public <M extends Message> M getMessageById(@NonNull Long messageId,
+            @NonNull Class<M> clazz) {
         if (clazz.equals(Comment.class)) {
-            return commentRepository.findById(messageId).orElseThrow(() -> 
+            return (M)commentRepository.findById(messageId).orElseThrow(() -> 
                     new EntityNotFoundException("Was not able to find a comment with id "
-                    + messageId));
+                    + messageId, ErrorType.MESSAGE_COMMENT_NOT_FOUND));
         }
-        return replyRepository.findById(messageId).orElseThrow(() -> 
+        return (M)replyRepository.findById(messageId).orElseThrow(() -> 
                 new EntityNotFoundException("Was not able to find a reply with id "
-                + messageId));
+                + messageId, ErrorType.MESSAGE_REPLY_NOT_FOUND));
     }
 
     @NonNull
@@ -143,7 +145,7 @@ public class EntityUtil {
             @NonNull String clientRegistrationName) {
         return clientRegistrationRepository.findByClientName(clientRegistrationName)
                 .orElseThrow(() -> new EntityNotFoundException("There is no client registration "
-                + "with name " + clientRegistrationName));
+                + "with name " + clientRegistrationName, ErrorType.OAUTH2_INTERNAL_FAILURE));
     }
 
     public boolean isManager(@NonNull User user) {
@@ -168,7 +170,8 @@ public class EntityUtil {
             superParent = unproxyMessage(((Reply)superParent).getParent());
         }
 
-        if (superParent == null) throw new EntityNotFoundException("Ultimate parent not found for a reply.");
+        if (superParent == null) throw new EntityNotFoundException(
+                "The ultimate parent not found for a reply.", ErrorType.INTERNAL);
 
         return (Comment)superParent;
     }

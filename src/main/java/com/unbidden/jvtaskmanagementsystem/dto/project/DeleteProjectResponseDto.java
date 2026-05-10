@@ -12,8 +12,8 @@ public class DeleteProjectResponseDto {
     private String projectName;
     
     @NonNull
-    private ThirdPartyOperationResult isDropboxFolderDeleted;
+    private ThirdPartyOperationResult dropboxFolderDeleted;
 
     @NonNull
-    private ThirdPartyOperationResult isCalendarDeleted;
+    private ThirdPartyOperationResult calendarDeleted;
 }

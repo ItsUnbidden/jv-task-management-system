@@ -1,9 +1,5 @@
 package com.unbidden.jvtaskmanagementsystem.security.project;
 
-import com.unbidden.jvtaskmanagementsystem.exception.ProjectSecurityDataParsingException;
-import com.unbidden.jvtaskmanagementsystem.model.Project;
-import com.unbidden.jvtaskmanagementsystem.model.User;
-import lombok.RequiredArgsConstructor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.aspectj.lang.JoinPoint;
@@ -13,8 +9,15 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import com.unbidden.jvtaskmanagementsystem.exception.ProjectSecurityDataParsingException;
+import com.unbidden.jvtaskmanagementsystem.model.Project;
+import com.unbidden.jvtaskmanagementsystem.model.User;
+
+import lombok.RequiredArgsConstructor;
+
 @Component
 @RequiredArgsConstructor
+@SuppressWarnings("null")
 public class ProjectSecurityDataParserImpl implements ProjectSecurityDataParser {
     private static final Logger LOGGER =
             LogManager.getLogger(ProjectSecurityDataParserImpl.class);
@@ -56,39 +59,41 @@ public class ProjectSecurityDataParserImpl implements ProjectSecurityDataParser 
         if (entityIdIndex == -1) {
             throw new ProjectSecurityDataParsingException("Method " + signature.getName() 
                     + " does not have a parameter with name " 
-                    + entityParamName + '.');
+                    + entityParamName + '.', null);
         }
         if (userIndex == -1) {
             throw new ProjectSecurityDataParsingException("Method " + signature.getName() 
                     + " does not have a parameter with name " 
-                    + userParamName + '.');
+                    + userParamName + '.', null);
         }
         
         Project project = null;
         Object entityArg = data.getArgs()[entityIdIndex];
-        if (entityArg instanceof Long) {
+        if (entityArg instanceof Long argLong) {
             project = projectProviderManager.getProvider(entityIdClass)
-                    .getProject((Long)entityArg);
+                    .getProject(argLong);
             LOGGER.info("Project " + project.getId() + " has been aquired.");
         } else {
             throw new ProjectSecurityDataParsingException(
                     "Entity id class type must be " + Long.class.getName()
-                    + " but currently is " + entityArg.getClass().getName());
+                    + " but currently is " + entityArg.getClass().getName(), null);
         }
 
         User user = null;
         Object userArg = data.getArgs()[userIndex];
-        if (userArg instanceof User) {
-            user = (User)userArg;
-            LOGGER.info("User " + user.getId() + " has been aquired.");
-        } else if (userArg instanceof Authentication) {
-            user = (User)((Authentication)userArg).getPrincipal();
-            LOGGER.info("User " + user.getId() + " has been aquired from authentication object.");
-        } else {
-            throw new ProjectSecurityDataParsingException(
+        switch (userArg) {
+            case User castUser -> {
+                user = castUser;
+                LOGGER.info("User " + user.getId() + " has been aquired.");
+            }
+            case Authentication auth -> {
+                user = (User)auth.getPrincipal();
+                LOGGER.info("User " + user.getId() + " has been aquired from authentication object.");
+            }
+            default -> throw new ProjectSecurityDataParsingException(
                     "User class type must be either " + User.class.getName()
-                    + " or " + Authentication.class.getName() + " but currently is "
-                    + data.getArgs()[userIndex].getClass().getName());
+                            + " or " + Authentication.class.getName() + " but currently is "
+                            + data.getArgs()[userIndex].getClass().getName(), null);
         }
 
         LOGGER.info("Data successfuly parsed. User id: " + user.getId()

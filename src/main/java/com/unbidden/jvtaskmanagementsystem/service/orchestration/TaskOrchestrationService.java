@@ -5,6 +5,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.lang.NonNull;
 
 import com.unbidden.jvtaskmanagementsystem.dto.task.CreateTaskRequestDto;
+import com.unbidden.jvtaskmanagementsystem.dto.task.DeleteTaskResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.task.TaskResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.task.UpdateTaskRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.task.UpdateTaskStatusRequestDto;
@@ -39,7 +40,8 @@ public interface TaskOrchestrationService {
     TaskResponseDto updateTask(@NonNull User user, @NonNull Long taskId,
             @NonNull UpdateTaskRequestDto requestDto);
 
-    void deleteTask(@NonNull User user, @NonNull Long taskId);
+    @NonNull    
+    DeleteTaskResponseDto deleteTask(@NonNull User user, @NonNull Long taskId);
 
     @NonNull 
     TaskResponseDto changeStatus(@NonNull User user, @NonNull Long taskId,
