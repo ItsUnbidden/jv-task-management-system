@@ -493,3 +493,6 @@ Known problems:
  - **Logging out** of *Docker* might **not be possible** under certain conditions. One of those *conditions* is when the **access token** has been rendered *invalid*.
  - *Google Calendar* and *Dropbox* **Services** are implemented very **differently**, so there might be some **inconsistencies** between them. This is because they were written at *different times* and with different *amount* of **experience**. I consider *Google Calendar Service* to be superior and *Dropbox Service* might be **updgraded** to it's level later.
  - **Only about 40%** of the *application* is *covered* with **tests**. This is due to the fact, that a *significant amount* of app's **code** is related to **OAuth2**, **Google Calendar** and **Dropbox**. These services are **very hard** to **test**, since they require *connection* to some *external resource* and 'logging in' an *external account* (API Console). For now I **wasn't able** to find a way to **test** them, and so they *lower the overall coverage severely*.
+
+# License
+This project is licensed under the [MIT License](/LICENSE).
