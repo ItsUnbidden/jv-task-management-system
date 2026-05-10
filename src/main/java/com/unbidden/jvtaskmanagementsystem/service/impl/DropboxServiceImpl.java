@@ -566,12 +566,14 @@ public class DropboxServiceImpl implements DropboxService {
         forbidden.add('|');
         forbidden.add('*');
         forbidden.add(':');
+        final String extension = StringUtils.getFilenameExtension(filename);
 
         String noExt = StringUtils.stripFilenameExtension(filename);
         for (Character ch : forbidden) {
             noExt = noExt.replace(ch, '_');
         }        
-        return noExt + '.' + StringUtils.getFilenameExtension(filename);
+
+        return noExt + (extension != null ? '.' + extension : "");
     }
 
     private CreateFolderResult createFolder(DbxClientV2 dbxClient, User caller, String path,

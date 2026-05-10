@@ -107,6 +107,7 @@ public class ProjectServiceImpl implements ProjectService {
         if (dropboxResult.getStatus().equals(ThirdPartyOperationStatus.SUCCESS)) {
             project.setDropboxProjectFolderId(dropboxResult.getProjectFolderId());
             project.setDropboxProjectSharedFolderId(dropboxResult.getProjectSharedFolderId());
+            creatorRole.setDropboxConnected(true);
         }
         
         updateProjectStatusAccordingToDate(project);

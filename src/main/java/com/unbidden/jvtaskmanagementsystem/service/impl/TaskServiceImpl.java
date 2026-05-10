@@ -186,8 +186,7 @@ public class TaskServiceImpl implements TaskService {
     private void updateTaskStatusAccordingToDate(Task task, boolean doSave) {
         final TaskStatus initialStatus = task.getStatus();
 
-        if (task.getStatus().equals(TaskStatus.COMPLETED) 
-                || task.getStatus().equals(TaskStatus.OVERDUE)) {
+        if (task.getStatus().equals(TaskStatus.COMPLETED)) {
             return;
         }
 
