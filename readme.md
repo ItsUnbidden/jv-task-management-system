@@ -24,8 +24,8 @@
 - [Issue](#issue)
 
 # Introduction
-**The goal** of this project was to create a **java server** for an application that can be used by developers working together on **large projects** which require **complex administration**. Be aware that current state of the project **does not** include any UI and can only be properly used with additional tools like **[Postman](https://www.postman.com/)**. Here are some of the project's features:
- - Authentication using **JWT**
+**The goal** of this project was to create a **java server** for an application that can be used by developers working together on **large projects** which require **complex administration**. Currently, this backend is supposed to be paired with an **Angular frontend** which you can find [here](https://github.com/ItsUnbidden/angular-task-management-system). Here are some of the project's key features:
+ - Authentication using **JWT** and refresh token cookies
  - Application wide **role system**, allowing admins to manage the app
  - A system for browsing and managing projects with features such as:
     - **public** and **private** projects — public projects can be seen by logged in users
@@ -34,10 +34,12 @@
     - both tasks and projects have **date bounds** that infuence their status
     - many different **sorting methods** for tasks, projects, etc.
  - User management for admins
- - Projects can be connected to *Dropbox* in order to enable **file sharing** within project
+ - Projects can be connected to *Dropbox* in order to enable **file sharing** within a project
  - Projects can also be connected to *Google Calendar* in order to better **track progress** and get **notifications**
  - *Third party services* are connected with **OAuth2** protocol
- - *Swagger UI* for easier integration into other projects and trying out the server
+ - *Swagger UI* for easier integration into other projects and trying out the server **(currently not being updated due to its redundance because of the frontend)**
+
+**Since the backend is being actively revamped, this README is significantly outdated in some places. I will eventually update it, but be aware that some things are actually quite different from what is described here.**
 
 # Technologies
 The project is built using mainly **Spring Framework**. Here is a complete list of technologies employed:
@@ -58,20 +60,24 @@ The project is built using mainly **Spring Framework**. Here is a complete list 
  - Docker Testcontainers using MySQL
 
 # Usage
-Here is a **flowchart** of the *app's structure*:
-![](/images/Task_Management_System_structure.png)
+Here I will describe how the server **features** work *in detail*.
 
 ## Util Controllers
-These are the Utility Controllers — they are used for actions like authentication, OAuth2 Authorization, user profile management, etc. Utility controllers are not used for any main features like project management.
+These are the Utility Controllers — they are used for actions like authentication, OAuth2 authorization, user profile management, etc.
 
 ### Authentication Controller
 
-*This controller* is available for *everyone* — even for **non-authenticated** users. There is always a **default user** created during the initialization of the database. It will always have a special *OWNER* role and it's credentials can be configured.
-***Available endpoints:***
- - **POST:** `/login` — **accepts** *user credentials* (email or username, password) and **returns** a *JWT* for authentication.
- - **POST**: `/register` — **accepts** *user details* (like name) and credentials. **Returns** a *newly created user*.
+*Most endpoints* in this controller are available for *everyone* — even for **non-authenticated** users. There is always a **default user** created during the initialization of the database. They will always have a special *OWNER* role and their credentials can be configured. All of these endpoints start with `/auth`.
 
-All inputted data is **verified** during these requests, so emails must follow the email pattern, and passwords must match. If request is invalid, **response code 400** will be thrown.
+***Available endpoints:***
+ - **POST:** `/login` — **accepts** *user credentials* (email or username, password) and **sets** HTTP-only *JWT* and refresh token cookies for authentication.
+ - **POST:** `/register` — **accepts** *user details* and credentials. **Returns** a *newly created user*.
+ - **POST:** `/refresh` — **refreshes** the current *short-lived* token. It also rotates the *long-lived* token. Doesn't return a body, but sets the **cookies**.
+ - **DELETE:** `/logout` — **invalidates** the current *long-lived* token and **removes** all *authentication cookies*. This endpoint needs a valid *short-lived* token.
+ - **GET:** `/csrf` — **forces** the resolution of the *CSRF token*. If there's no *CSRF token*, the its cookie will be set.
+ - **GET:** `/csrf/refresh` — **refreshes** the *CSRF token*. Should be used after *login* and *logout*.
+
+All inputted data is **verified** during these requests, so emails must follow the email pattern, and passwords must match.
 
 Some examples:
 
@@ -79,9 +85,11 @@ Some examples:
 
 ![](/images/login.png)
 
-Response will look something like this: `{"token":"eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJvd25lckBib29rc3RvcmUuY29tIiwiaWF0IjoxNzA3MzI2ODg5LCJleHAiOjE3MDczMjg2ODl9.4_2yXaHkGMxtpi14Jzsvi9kET4Lis_OdxlAOnurys-ha6Bfn_t6vJnU1fD9DjCvmg1PGTq1a3_RiahhiHQ83PQ"}`
+Response will include the cookies for the short-lived and long-lived tokens. 
 
 *Registration request:*
+
+**Note: first and last names do not exist anymore. This image will be updated later.**
 
 ![](/images/registration_request.png)
 
@@ -89,7 +97,9 @@ Response will look something like this: `{"token":"eyJhbGciOiJIUzUxMiJ9.eyJzdWIi
 
 ![](/images/registration_response.png)
 
-For all endpoints in other controllers authentication is **required**. If **no token** is sent with the requests, **response code 401** will be thrown.
+For all endpoints in other controllers authentication is **required**. Also, a **CSRF token** is mandatory for all state-altering requests.
+
+If you're interested in how this authentication flow works in practice, you should check out the [frontend](/https://github.com/ItsUnbidden/angular-task-management-system).
 
 ### User Controller
 
@@ -153,12 +163,6 @@ Logout for *Dropbox* currently has a *problem* — it can lead to **deadlocking*
  - **DELETE:** `/google/logout` — **logs out** of *Google*. This means *all standard and refresh tokens* will be **revoked**.
 
 *Google's* logout is more **flexible** then *Dropbox's*: it will *always logout* no matter whether the token can be revoked. *Google's* refresh tokens are not permanent, so this behaviour is paramount.
-
-### Swagger UI
-
-Using `/swagger-ui/index.html` endpoint, you can try out the server using pretty **Swagger UI**:
-
-![](/images/swagger.png)
 
 ## Main Controllers
 These are the *Main Controllers* — they contain endpoints for interaction with app's* main entities* like **projects**, **tasks** or **messages**.
