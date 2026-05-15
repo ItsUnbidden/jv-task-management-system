@@ -1,5 +1,6 @@
 package com.unbidden.jvtaskmanagementsystem.repository;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -16,4 +17,6 @@ public interface RefreshJwtRepository extends JpaRepository<RefreshToken, Long>{
     void deleteAllByUserId(@NonNull Long userId);
 
     void deleteByToken(@NonNull String token);
+
+    int deleteByExpiryDateBefore(@NonNull LocalDateTime boundary);
 }

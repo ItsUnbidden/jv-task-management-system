@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -25,6 +26,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @Configuration
 @EnableWebSecurity
+@EnableScheduling
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
     private final CustomAccessDeniedHandler accessDeniedHandler;
@@ -36,7 +38,7 @@ public class SecurityConfig {
     private final CookieCsrfTokenRepository csrfTokenRepository;
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    protected SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
                 .cors(cors -> {})
                 .csrf(csrf -> csrf
@@ -51,6 +53,7 @@ public class SecurityConfig {
                         "/api/auth/register",
                         "/api/auth/refresh",
                         "/api/auth/csrf",
+                        "/api/auth/csrf/refresh",
                         "/api/oauth2/connect/code",
                         "/api/v3/api-docs/**",
                         "/api/swagger-ui/**",
@@ -68,7 +71,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
+    protected CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of("http://localhost:4200"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
