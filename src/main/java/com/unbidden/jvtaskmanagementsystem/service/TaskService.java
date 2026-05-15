@@ -7,7 +7,6 @@ import org.springframework.lang.NonNull;
 import com.unbidden.jvtaskmanagementsystem.dto.task.UpdateTaskRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.task.UpdateTaskStatusRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.task.specification.TaskFilterDto;
-import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.CreatedTaskFolderResult;
 import com.unbidden.jvtaskmanagementsystem.model.Task;
 import com.unbidden.jvtaskmanagementsystem.model.User;
 
@@ -34,7 +33,7 @@ public interface TaskService {
 
     @NonNull 
     Task createTaskInProject(@NonNull User user, @NonNull Long projectId,
-            @NonNull Task task, @NonNull CreatedTaskFolderResult dropboxResult);
+            @NonNull Task task);
 
     @NonNull         
     Task updateTask(@NonNull User user, @NonNull Long taskId,
@@ -49,4 +48,6 @@ public interface TaskService {
     @NonNull 
     Page<Task> getTasksByLabelId(@NonNull User user, @NonNull Long labelId,
             @NonNull Pageable pageable);
+
+    void setDropboxFolderId(@NonNull Long taskId, @NonNull String taskFolderId);
 }

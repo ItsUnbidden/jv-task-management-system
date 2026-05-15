@@ -69,9 +69,9 @@ public class CustomGlobalExceptionHandler extends ResponseEntityExceptionHandler
         return new ResponseEntity<>(body, HttpStatus.CONFLICT);
     }
 
-    @ExceptionHandler({IllegalOperationException.class})
+    @ExceptionHandler({IllegalOperationException.class, InconsistentDataException.class})
     protected ResponseEntity<Object> handleInvalidUserInput(
-            @NonNull IllegalOperationException ex
+            @NonNull UnexpectedException ex
     ) {
         final Map<String, Object> body = new HashMap<>();
 
