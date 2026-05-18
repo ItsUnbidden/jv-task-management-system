@@ -1,0 +1,54 @@
+databaseChangeLog:
+  - changeSet:
+      id: update-varchar-lengths
+      author: Unbidden
+      changes:
+        - modifyDataType:
+            tableName: projects
+            columnName: description
+            newDataType: VARCHAR(2000)
+
+        - modifyDataType:
+            tableName: tasks
+            columnName: description
+            newDataType: VARCHAR(2000)
+
+        - modifyDataType:
+            tableName: messages
+            columnName: text
+            newDataType: VARCHAR(2000)
+
+        - modifyDataType:
+            tableName: authorized_clients
+            columnName: refresh_token
+            newDataType: TEXT
+
+        - modifyDataType:
+            tableName: authorized_clients
+            columnName: external_account_id
+            newDataType: TEXT
+        
+        - modifyDataType:
+            tableName: project_calendars
+            columnName: calendar_id
+            newDataType: VARCHAR(1000)
+
+        - modifyDataType:
+            tableName: project_calendars
+            columnName: start_event_id
+            newDataType: VARCHAR(1000)
+
+        - modifyDataType:
+            tableName: project_calendars
+            columnName: end_event_id
+            newDataType: VARCHAR(1000)
+
+        - modifyDataType:
+            tableName: task_events
+            columnName: event_id
+            newDataType: VARCHAR(1000)
+
+        - modifyDataType:
+            tableName: attachments
+            columnName: dropbox_id
+            newDataType: VARCHAR(1000)

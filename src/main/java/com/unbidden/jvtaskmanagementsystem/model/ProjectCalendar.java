@@ -28,12 +28,13 @@ public class ProjectCalendar {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 1000)
     private String calendarId;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 1000)
     private String startEventId;
 
+    @Column(length = 1000)
     private String endEventId;
 
     @OneToOne
