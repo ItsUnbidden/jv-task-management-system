@@ -69,9 +69,9 @@ public class CustomGlobalExceptionHandler extends ResponseEntityExceptionHandler
         return new ResponseEntity<>(body, HttpStatus.CONFLICT);
     }
 
-    @ExceptionHandler({IllegalOperationException.class})
+    @ExceptionHandler({IllegalOperationException.class, InconsistentDataException.class})
     protected ResponseEntity<Object> handleInvalidUserInput(
-            @NonNull IllegalOperationException ex
+            @NonNull UnexpectedException ex
     ) {
         final Map<String, Object> body = new HashMap<>();
 
@@ -146,7 +146,7 @@ public class CustomGlobalExceptionHandler extends ResponseEntityExceptionHandler
         final Map<String, Object> body = new HashMap<>();
 
         body.put("timestamp", LocalDateTime.now());
-        body.put("type", ErrorType.GENERAL_AUTHENTICATION_FAILURE);
+        body.put("type", ErrorType.AUTH_GENERAL);
         body.put("message", ex.getMessage());
 
         return new ResponseEntity<>(body, HttpStatus.UNAUTHORIZED);

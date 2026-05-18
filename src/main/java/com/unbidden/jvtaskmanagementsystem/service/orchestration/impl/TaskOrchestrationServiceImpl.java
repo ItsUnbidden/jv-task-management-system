@@ -11,7 +11,6 @@ import com.unbidden.jvtaskmanagementsystem.dto.task.TaskResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.task.UpdateTaskRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.task.UpdateTaskStatusRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.task.specification.TaskFilterDto;
-import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.CreatedTaskFolderResult;
 import com.unbidden.jvtaskmanagementsystem.mapper.TaskMapper;
 import com.unbidden.jvtaskmanagementsystem.model.Label;
 import com.unbidden.jvtaskmanagementsystem.model.Project;
@@ -109,11 +108,10 @@ public class TaskOrchestrationServiceImpl implements TaskOrchestrationService {
                 : entityUtil.getUserById(requestDto.getAssigneeId()));
         task.setProject(project);
         if (requestDto.getLabelIds() != null) task.setLabels(labelRepository.findAllById(requestDto.getLabelIds()));
-        final CreatedTaskFolderResult dropboxResult = dropboxService.createTaskFolder(authorizedUser, task);
         calendarService.createEventForTask(authorizedUser, task);
 
         return taskMapper.toDto(taskService.createTaskInProject(
-                user, projectId, task, dropboxResult));
+                user, projectId, task));
     }
 
     @NonNull

@@ -1,19 +1,19 @@
 package com.unbidden.jvtaskmanagementsystem.exception;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.unbidden.jvtaskmanagementsystem.dto.ErrorResponse;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -30,16 +30,13 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
     @Override
     public void handle(HttpServletRequest request, HttpServletResponse response,
             AccessDeniedException accessDeniedException) throws IOException, ServletException {
-        Map<String, Object> body = new LinkedHashMap<>();
         LOGGER.error("Access denied handler was triggered.", accessDeniedException);
 
-        body.put("timestamp", LocalDateTime.now().toString());
-        body.put("errors", List.of(accessDeniedException.getMessage()));
-
         response.setStatus(HttpStatus.FORBIDDEN.value());
-        response.setContentType("application/json");
-        response.setCharacterEncoding("UTF-8");
-        response.getWriter().write(objectMapper.writeValueAsString(body));
-        response.getWriter().flush();
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+        objectMapper.writeValue(response.getWriter(), new ErrorResponse(LocalDateTime.now(),
+                ErrorType.AUTH_GENERAL,
+                accessDeniedException.getMessage()));
     }
 }

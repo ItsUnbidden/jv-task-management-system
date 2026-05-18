@@ -7,6 +7,6 @@ import lombok.Data;
 @Data
 public class CreateMessageRequestDto {
     @NotBlank
-    @Size(min = 1, max = 255)
+    @Size(max = 2000)
     private String text;
 }

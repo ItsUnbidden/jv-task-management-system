@@ -10,10 +10,11 @@ import lombok.Data;
 @Data
 public class UpdateLabelRequestDto {
     @NotBlank
-    @Size(min = 1, max = 25)
+    @Size(max = 25)
     private String name;
 
     @NotNull
+    @Size(max = 50)
     private String color;
 
     @NotNull

@@ -12,6 +12,7 @@ import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.CreatedTaskFol
 import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.DeleteResult;
 import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.DropboxOperationResult;
 import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.FileOperationResult;
+import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.FileUploadOperationResult;
 import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.ProjectConnectedToDropboxResult;
 import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.RemoveUserFromProjectFolderResult;
 import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.TransferOwnershipResult;
@@ -51,7 +52,7 @@ public interface DropboxService {
     AddUserToProjectFolderResult joinDropbox(@NonNull User user, @NonNull Project project);
 
     @NonNull
-    FileOperationResult uploadFileInTaskFolder(@NonNull User user, @NonNull Task task,
+    FileUploadOperationResult uploadFileInTaskFolder(@NonNull User user, @NonNull Task task,
             @NonNull MultipartFile file);
 
     @NonNull

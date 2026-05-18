@@ -16,10 +16,10 @@ import com.unbidden.jvtaskmanagementsystem.dto.projectrole.UpdateProjectRoleRequ
 import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.ThirdPartyOperationResult.ThirdPartyOperationStatus;
 import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.AddUserToProjectFolderResult;
 import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.CreatedProjectFolderResult;
-import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.CreatedTaskFolderResult;
 import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.ProjectConnectedToDropboxResult;
 import com.unbidden.jvtaskmanagementsystem.exception.EntityNotFoundException;
 import com.unbidden.jvtaskmanagementsystem.exception.ErrorType;
+import com.unbidden.jvtaskmanagementsystem.exception.InconsistentDataException;
 import com.unbidden.jvtaskmanagementsystem.model.Project;
 import com.unbidden.jvtaskmanagementsystem.model.Project.ProjectStatus;
 import com.unbidden.jvtaskmanagementsystem.model.ProjectRole;
@@ -124,15 +124,14 @@ public class ProjectServiceImpl implements ProjectService {
         project.setName(requestDto.getName());
         project.setDescription(requestDto.getDescription());
         if (requestDto.getStartDate() != null) {
-            if (requestDto.getStartDate().equals(LocalDate.now()) || requestDto.getStartDate().isAfter(LocalDate.now())) {
-                project.setStartDate(requestDto.getStartDate());
-            }
+            project.setStartDate(requestDto.getStartDate());
         }
         if (requestDto.getEndDate() != null) {
             if (requestDto.getEndDate().isAfter(project.getStartDate())) {
                 project.setEndDate(requestDto.getEndDate());
             } else {
-                throw new IllegalArgumentException("The end date cannot be before the start date.");
+                throw new InconsistentDataException("The end date cannot be before the start date.",
+                        ErrorType.PROJECT_INCONSISTENT_DATE);
             }
         } else {
             project.setEndDate(null);
@@ -225,12 +224,6 @@ public class ProjectServiceImpl implements ProjectService {
             project.setDropboxProjectFolderId(dropboxResult.getProjectFolderResult().getProjectFolderId());
             project.setDropboxProjectSharedFolderId(dropboxResult.getProjectFolderResult().getProjectSharedFolderId());
 
-            project.getTasks().forEach(t -> {
-                final CreatedTaskFolderResult result = dropboxResult.getTaskFolderResults().get(t.getId());
-                if (result != null && result.getStatus().equals(ThirdPartyOperationStatus.SUCCESS)) {
-                    t.setDropboxTaskFolderId(result.getTaskFolderId());
-                }
-            });
             project.getProjectRoles().forEach(pr -> {
                 final AddUserToProjectFolderResult result =
                         dropboxResult.getUserConnectionResults().get(pr.getUser().getId());

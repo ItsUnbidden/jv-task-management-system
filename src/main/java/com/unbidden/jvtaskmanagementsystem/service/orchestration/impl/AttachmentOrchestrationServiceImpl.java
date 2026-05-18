@@ -12,6 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.unbidden.jvtaskmanagementsystem.dto.attachment.AttachmentDto;
 import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.ThirdPartyOperationResult.ThirdPartyOperationStatus;
 import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.FileOperationResult;
+import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.FileUploadOperationResult;
 import com.unbidden.jvtaskmanagementsystem.exception.ErrorType;
 import com.unbidden.jvtaskmanagementsystem.exception.FileSizeLimitExceededException;
 import com.unbidden.jvtaskmanagementsystem.exception.UnexpectedException;
@@ -24,6 +25,7 @@ import com.unbidden.jvtaskmanagementsystem.model.User;
 import com.unbidden.jvtaskmanagementsystem.security.project.ProjectSecurity;
 import com.unbidden.jvtaskmanagementsystem.service.AttachmentService;
 import com.unbidden.jvtaskmanagementsystem.service.DropboxService;
+import com.unbidden.jvtaskmanagementsystem.service.TaskService;
 import com.unbidden.jvtaskmanagementsystem.service.orchestration.AttachmentOrchestrationService;
 import com.unbidden.jvtaskmanagementsystem.util.EntityUtil;
 import com.unbidden.jvtaskmanagementsystem.util.HttpClientUtil.HeaderNames;
@@ -42,6 +44,8 @@ public class AttachmentOrchestrationServiceImpl implements AttachmentOrchestrati
     private final AttachmentMapper attachmentMapper;
 
     private final DropboxService dropboxService;
+
+    private final TaskService taskService;
 
     private final EntityUtil entityUtil;
 
@@ -70,6 +74,7 @@ public class AttachmentOrchestrationServiceImpl implements AttachmentOrchestrati
         try {
             final FileOperationResult dropboxResult = dropboxService.downloadFile(
                 authorizedUser, attachment.getDropboxId(), response.getOutputStream());
+
         } catch (IOException e) {
             throw new UnexpectedException("Exception occured during an "
                     + "attempt to get output stream.", ErrorType.INTERNAL);
@@ -100,11 +105,14 @@ public class AttachmentOrchestrationServiceImpl implements AttachmentOrchestrati
                     ErrorType.ATTACHMENT_FILE_TOO_LARGE);
         }
 
-        final FileOperationResult dropboxResult = dropboxService.uploadFileInTaskFolder(
+        final FileUploadOperationResult dropboxResult = dropboxService.uploadFileInTaskFolder(
                 authorizedUser, task, file);
         if (!dropboxResult.getStatus().equals(ThirdPartyOperationStatus.SUCCESS)) {
             throw new FileUploadFailedException("Filed to upload the file.",
                     ErrorType.ATTACHMENT_UPLOAD_FAILURE, dropboxResult);
+        }
+        if (dropboxResult.getNewFolderResult() != null) {
+            taskService.setDropboxFolderId(taskId, dropboxResult.getNewFolderResult().getTaskFolderId());
         }
         attachment.setDropboxId(dropboxResult.getMeta().getId());
         attachment.setUploadDate(LocalDateTime.now());

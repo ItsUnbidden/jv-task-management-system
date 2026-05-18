@@ -24,7 +24,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 
 @Component
-public class JwtUtil {
+public class AuthUtil {
     private static final int REFRESH_TOKEN_BYTE_SIZE = 32;
 
     private final SecretKey secret;
@@ -41,7 +41,7 @@ public class JwtUtil {
     @Value("${jwt.expiration}")
     private Long expiration;
 
-    public JwtUtil(@Value("${jwt.secret}") String secretString) {
+    public AuthUtil(@Value("${jwt.secret}") String secretString) {
         secret = Keys.hmacShaKeyFor(secretString.getBytes(StandardCharsets.UTF_8));
     }
 

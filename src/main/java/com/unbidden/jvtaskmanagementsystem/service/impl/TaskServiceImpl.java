@@ -14,8 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.unbidden.jvtaskmanagementsystem.dto.task.UpdateTaskRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.task.UpdateTaskStatusRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.task.specification.TaskFilterDto;
-import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.ThirdPartyOperationResult.ThirdPartyOperationStatus;
-import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.CreatedTaskFolderResult;
+import com.unbidden.jvtaskmanagementsystem.exception.ErrorType;
+import com.unbidden.jvtaskmanagementsystem.exception.InconsistentDataException;
 import com.unbidden.jvtaskmanagementsystem.model.Label;
 import com.unbidden.jvtaskmanagementsystem.model.Project;
 import com.unbidden.jvtaskmanagementsystem.model.Task;
@@ -50,7 +50,7 @@ public class TaskServiceImpl implements TaskService {
         Page<Task> tasks = taskRepository.findByAssigneeIdAndSearchByTaskName(user.getId(), name, pageable);
 
         tasks.forEach(t -> {
-            updateTaskStatusAccordingToDate(t, true);
+            updateTaskStatusAccordingToDate(t);
             t.setLabels(labelRepository.findByTaskId(t.getId(), Pageable.unpaged()).getContent()); // TODO: N + 1. Consider removing the labels field from the task entity entirely, since it's not really used that much.
         });
         return tasks;
@@ -63,7 +63,7 @@ public class TaskServiceImpl implements TaskService {
             @NonNull Pageable pageable) {
         Page<Task> tasks = taskRepository.findByProjectId(projectId, pageable);
 
-        tasks.forEach(t -> updateTaskStatusAccordingToDate(t, true));
+        tasks.forEach(t -> updateTaskStatusAccordingToDate(t));
         return tasks;
     }
 
@@ -75,7 +75,7 @@ public class TaskServiceImpl implements TaskService {
         Page<Task> tasks = taskRepository
                 .findByAssigneeIdAndByProjectId(userId, projectId, pageable);
         
-        tasks.forEach(t -> updateTaskStatusAccordingToDate(t, true));
+        tasks.forEach(t -> updateTaskStatusAccordingToDate(t));
         return tasks;
     }
 
@@ -85,7 +85,7 @@ public class TaskServiceImpl implements TaskService {
     public Task getTaskById(@NonNull User user, @NonNull Long taskId) {
         Task task = entityUtil.getTaskById(taskId);
 
-        updateTaskStatusAccordingToDate(task, true);
+        updateTaskStatusAccordingToDate(task);
         return task;
     }
 
@@ -96,7 +96,7 @@ public class TaskServiceImpl implements TaskService {
             @NonNull Pageable pageable) {
         Page<Task> tasks = taskRepository.findByLabelId(labelId, pageable);
 
-        tasks.forEach(t -> updateTaskStatusAccordingToDate(t, true));
+        tasks.forEach(t -> updateTaskStatusAccordingToDate(t));
         return tasks;
     }
 
@@ -115,7 +115,7 @@ public class TaskServiceImpl implements TaskService {
                 .and(TaskSpecifications.isBeforeDueDate(filterDto.getDueDateTo()))
                 .and(TaskSpecifications.hasAnyLabels(filterDto.getLabelIds()));        
         final Page<Task> tasks = taskRepository.findAll(specification, pageable);
-        tasks.forEach(t -> updateTaskStatusAccordingToDate(t, true));
+        tasks.forEach(t -> updateTaskStatusAccordingToDate(t));
         return tasks;
     }
 
@@ -123,18 +123,15 @@ public class TaskServiceImpl implements TaskService {
     @Override
     @Transactional
     public Task createTaskInProject(@NonNull User user, @NonNull Long projectId,
-            @NonNull Task task, @NonNull CreatedTaskFolderResult dropboxResult) {
+            @NonNull Task task) {
         final Project project = entityUtil.getProjectById(projectId);
 
         project.getTasks().add(task);
         task.setProject(project);
         task.setStatus(TaskStatus.NOT_STARTED);
         task.setAmountOfMessages(0);
-        if (dropboxResult.getStatus().equals(ThirdPartyOperationStatus.SUCCESS)) {
-            task.setDropboxTaskFolderId(dropboxResult.getTaskFolderId());
-        }
         checkDateIsLegit(task);
-        updateTaskStatusAccordingToDate(task, false);
+        updateTaskStatusAccordingToDate(task);
         projectRepository.save(project);
         return taskRepository.save(task);
     }
@@ -155,8 +152,8 @@ public class TaskServiceImpl implements TaskService {
         if (requestDto.getNewAssigneeId() != null) taskFromDb.setAssignee(entityUtil.getUserById(requestDto.getNewAssigneeId()));
         if (requestDto.getLabelIds() != null) taskFromDb.setLabels(labelRepository.findAllById(requestDto.getLabelIds()));
         
-        updateTaskStatusAccordingToDate(taskFromDb, false);
-        return taskRepository.save(taskFromDb);
+        updateTaskStatusAccordingToDate(taskFromDb);
+        return taskFromDb;
     }
 
     @Override
@@ -178,14 +175,21 @@ public class TaskServiceImpl implements TaskService {
         }
 
         task.setStatus(requestDto.getNewStatus());
-        updateTaskStatusAccordingToDate(task, false);
+        updateTaskStatusAccordingToDate(task);
 
-        return taskRepository.save(task);
+        return task;
     }
 
-    private void updateTaskStatusAccordingToDate(Task task, boolean doSave) {
-        final TaskStatus initialStatus = task.getStatus();
+    @Override
+    @Transactional
+    public void setDropboxFolderId(@NonNull Long taskId, @NonNull String taskFolderId) {
+        final Task task = entityUtil.getTaskById(taskId);
 
+        task.setDropboxTaskFolderId(taskFolderId);
+        updateTaskStatusAccordingToDate(task);
+    }
+
+    private void updateTaskStatusAccordingToDate(Task task) {
         if (task.getStatus().equals(TaskStatus.COMPLETED)) {
             return;
         }
@@ -194,14 +198,10 @@ public class TaskServiceImpl implements TaskService {
                 && task.getDueDate().isBefore(LocalDate.now())) {
             task.setStatus(TaskStatus.OVERDUE);
         }
-        if (task.getDueDate() != null
-                && task.getDueDate().isAfter(LocalDate.now())
-                && !task.getStatus().equals(TaskStatus.NOT_STARTED)) {
+        if ((task.getDueDate() != null && task.getDueDate().isAfter(LocalDate.now())
+                && !task.getStatus().equals(TaskStatus.NOT_STARTED)
+                || (task.getDueDate() == null && task.getStatus().equals(TaskStatus.OVERDUE)))) {
             task.setStatus(TaskStatus.IN_PROGRESS);
-        }
-
-        if (doSave && !initialStatus.equals(task.getStatus())) {
-            taskRepository.save(task); 
         }
     }
 
@@ -209,21 +209,22 @@ public class TaskServiceImpl implements TaskService {
         if (task.getDueDate() != null) {
             if (task.getProject().getEndDate() == null) {
                 if (!task.getDueDate().isAfter(task.getProject().getStartDate())) {
-                    throw new IllegalArgumentException("Task's due date is specified as "
+                    throw new InconsistentDataException("Task's due date is specified as "
                             + task.getDueDate() + " in project where start date is currently "
                             + task.getProject().getStartDate()
-                            + ". Task's due date must be after project's start date.");
+                            + ". Task's due date must be after project's start date.",
+                            ErrorType.TASK_DATE_BEFORE_PROJECT_START);
                 }
             } else {
                 if (!(task.getDueDate().isAfter(task.getProject().getStartDate())
                         && (task.getDueDate().isBefore(task.getProject().getEndDate())
                         || task.getDueDate().isEqual(task.getProject().getEndDate())))) {
-                    throw new IllegalArgumentException("Task's due date is specified as "
+                    throw new InconsistentDataException("Task's due date is specified as "
                             + task.getDueDate() + " in project where start and end dates "
                             + "currently are " + task.getProject().getStartDate() + " and "
                             + task.getProject().getEndDate() + " respectively. Task's due date "
                             + "must belong to the interval between project's "
-                            + "start and end dates.");
+                            + "start and end dates.", ErrorType.TASK_DATE_WRONG_INTERVAL);
                 }
             }
         }

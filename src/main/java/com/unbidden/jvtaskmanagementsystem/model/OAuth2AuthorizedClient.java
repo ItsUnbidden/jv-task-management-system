@@ -27,7 +27,7 @@ public class OAuth2AuthorizedClient {
     @Column(nullable = false)
     private String clientRegistrationName;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String token;
     
     @Column(nullable = false)
@@ -36,7 +36,9 @@ public class OAuth2AuthorizedClient {
     @Column(nullable = false)
     private Integer expiresIn;
     
+    @Column(columnDefinition = "TEXT")
     private String refreshToken;
 
+    @Column(columnDefinition = "TEXT")
     private String externalAccountId;
 }

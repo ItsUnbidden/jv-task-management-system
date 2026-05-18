@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.unbidden.jvtaskmanagementsystem.dto.auth.LoginRequestDto;
-import com.unbidden.jvtaskmanagementsystem.dto.auth.LoginResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.auth.RegistrationRequest;
 import com.unbidden.jvtaskmanagementsystem.dto.user.UserResponseDto;
 import com.unbidden.jvtaskmanagementsystem.security.AuthenticationService;
@@ -66,25 +65,6 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    @Operation(
-            summary = "Login",
-            responses = {
-                @ApiResponse(
-                    content = @Content(
-                        mediaType = "application/json",
-                        schema = @Schema(implementation = LoginResponseDto.class)),
-                    responseCode = "200",
-                    description = "Token"),
-                @ApiResponse(
-                    content = @Content(schema = @Schema(hidden = true)),
-                    responseCode = "400",
-                    description = "Invalid input"),
-                @ApiResponse(
-                    content = @Content(schema = @Schema(hidden = true)),
-                    responseCode = "401",
-                    description = "Unauthorized")
-            }
-    )
     public void login(
             @NonNull HttpServletResponse response,
             @Parameter(

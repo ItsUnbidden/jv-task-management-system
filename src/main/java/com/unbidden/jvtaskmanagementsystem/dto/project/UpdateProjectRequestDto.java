@@ -15,6 +15,7 @@ public class UpdateProjectRequestDto {
     @Size(min = 3, max = 50)
     private String name;
 
+    @Size(max = 2000)
     private String description;
 
     @NotNull

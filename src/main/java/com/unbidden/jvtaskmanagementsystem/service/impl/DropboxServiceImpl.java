@@ -53,7 +53,7 @@ import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.CreatedTaskFol
 import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.DeleteResult;
 import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.DropboxOperationResult;
 import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.FileOperationResult;
-import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.FileOperationResult.FileOperationErrorTag;
+import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.FileUploadOperationResult;
 import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.ProjectConnectedToDropboxResult;
 import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.RemoveUserFromProjectFolderResult;
 import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.TransferOwnershipResult;
@@ -274,12 +274,10 @@ public class DropboxServiceImpl implements DropboxService {
 
             final CreatedProjectFolderResult projectFolderResult =
                     createSharedProjectFolder0(dbxClient, user, project);
-            final Map<Long, CreatedTaskFolderResult> taskFolderResults = new HashMap<>();
 
             // Only set for convenience in this service. Will not be persisted later.
             project.setDropboxProjectFolderId(projectFolderResult.getProjectFolderId());
             project.setDropboxProjectSharedFolderId(projectFolderResult.getProjectSharedFolderId());
-            project.getTasks().forEach(t -> taskFolderResults.put(t.getId(), createTaskFolder0(dbxClient, user, t)));
             final Map<Long, AddUserToProjectFolderResult> userConnectionResults = addUsersToDropboxFolder0(dbxClient, user, project,
                     project.getProjectRoles().stream()
                     .filter(pr -> !pr.getRoleType().equals(ProjectRoleType.CREATOR))
@@ -288,7 +286,7 @@ public class DropboxServiceImpl implements DropboxService {
             userConnectionResults.put(user.getId(), new AddUserToProjectFolderResult(
                     ThirdPartyOperationStatus.SUCCESS, user.getId()));
             return new ProjectConnectedToDropboxResult(ThirdPartyOperationStatus.SUCCESS,
-                    projectFolderResult, taskFolderResults, userConnectionResults);
+                    projectFolderResult, userConnectionResults);
         } catch (OAuth2AuthorizedClientLoadingException e) {
             return new ProjectConnectedToDropboxResult(ThirdPartyOperationStatus.SKIPPED);
         }
@@ -317,35 +315,32 @@ public class DropboxServiceImpl implements DropboxService {
 
     @NonNull
     @Override
-    public FileOperationResult uploadFileInTaskFolder(@NonNull User user, @NonNull Task task,
+    public FileUploadOperationResult uploadFileInTaskFolder(@NonNull User user, @NonNull Task task,
             MultipartFile file) {
-        if (task.getDropboxTaskFolderId() == null) {
-            return new FileOperationResult(ThirdPartyOperationStatus.FAILED,
-                    FileOperationErrorTag.NO_TASK_FOLDER_ID, 
-                    "Cannot upload the file because the task does not have a folder on Dropbox.");
-        }
         if (task.getProject().isDropboxConnected()) {
             try {
                 final DbxClientV2 dbxClient = getDbxClient(user);
+                final CreatedTaskFolderResult folderResult = task.getDropboxTaskFolderId() == null
+                        ? createTaskFolder0(dbxClient, user, task) : null;
 
-                final Metadata taskFolderMeta = getMetadata(dbxClient, user, task.getDropboxTaskFolderId());
-                final FileMetadata fileMetadata = uploadFile(dbxClient, user, taskFolderMeta, file);
-                return new FileOperationResult(ThirdPartyOperationStatus.SUCCESS, fileMetadata);
+                final FileMetadata fileMetadata = uploadFile(dbxClient, user,
+                        task.getDropboxTaskFolderId() != null
+                        ? task.getDropboxTaskFolderId() 
+                        : folderResult.getTaskFolderId(), file);
+                return new FileUploadOperationResult(ThirdPartyOperationStatus.SUCCESS, fileMetadata, folderResult);
             } catch (UploadErrorException e) {
-                return new FileOperationResult(ThirdPartyOperationStatus.FAILED); //TODO: parse tags
-            } catch (GetMetadataErrorException e) {
-                return new FileOperationResult(ThirdPartyOperationStatus.FAILED); //TODO: parse tags
+                return new FileUploadOperationResult(ThirdPartyOperationStatus.FAILED); //TODO: parse tags
             } catch (IOException e) {
-                return new FileOperationResult(ThirdPartyOperationStatus.FAILED,
+                return new FileUploadOperationResult(ThirdPartyOperationStatus.FAILED,
                         FileOperationResult.FileOperationErrorTag.IOEXCEPTION,
                     "An IO issue has prevented the file from being uploaded.");
             } catch (OAuth2AuthorizedClientLoadingException e) {
-                return new FileOperationResult(ThirdPartyOperationStatus.SKIPPED);
+                return new FileUploadOperationResult(ThirdPartyOperationStatus.SKIPPED);
             } catch (ThirdPartyExpectedException e) {
-                return handleThirdPartyException(e, FileOperationResult::new);
+                return handleThirdPartyException(e, FileUploadOperationResult::new);
             }
         }
-        return new FileOperationResult(ThirdPartyOperationStatus.NOT_APPLICABLE);
+        return new FileUploadOperationResult(ThirdPartyOperationStatus.NOT_APPLICABLE);
     }
 
     @NonNull
@@ -764,7 +759,7 @@ public class DropboxServiceImpl implements DropboxService {
     }
 
     private FileMetadata uploadFile(DbxClientV2 dbxClient, User caller,
-            Metadata taskFolderMeta, MultipartFile file)
+            String taskFolderId, MultipartFile file)
             throws ThirdPartyInconsistentTokenException,
                    ThirdPartyUnknownException,
                    ThirdPartyRetryTooLongException,
@@ -774,7 +769,7 @@ public class DropboxServiceImpl implements DropboxService {
         int attemptCounter = 0;
         while (true) {
             try {
-                return dbxClient.files().uploadBuilder(taskFolderMeta.getPathLower()
+                return dbxClient.files().uploadBuilder(taskFolderId
                         + "/" + removeDangerousChars(file.getOriginalFilename()))
                         .withAutorename(true)
                         .uploadAndFinish(file.getInputStream());

@@ -11,7 +11,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import com.unbidden.jvtaskmanagementsystem.util.JwtUtil;
+import com.unbidden.jvtaskmanagementsystem.util.AuthUtil;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -22,7 +22,7 @@ import lombok.RequiredArgsConstructor;
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
-    private final JwtUtil jwtUtil;
+    private final AuthUtil authUtil;
 
     private final UserDetailsService userDetailsService;
 
@@ -31,10 +31,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull HttpServletRequest request,
             @NonNull HttpServletResponse response, 
             @NonNull FilterChain filterChain) throws ServletException, IOException {
-        final String token = jwtUtil.getAccessTokenFromCookie(request).orElse(null);
+        final String token = authUtil.getAccessTokenFromCookie(request).orElse(null);
 
-        if (token != null && jwtUtil.isValidToken(token)) {
-            final String username = jwtUtil.getUsername(token);
+        if (token != null && authUtil.isValidToken(token)) {
+            final String username = authUtil.getUsername(token);
             final UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
             Authentication authentication = new UsernamePasswordAuthenticationToken(

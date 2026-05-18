@@ -3,7 +3,6 @@ package com.unbidden.jvtaskmanagementsystem.controller;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.Date;
 import java.util.Optional;
 import java.util.Set;
 
@@ -31,8 +30,6 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.unbidden.jvtaskmanagementsystem.dto.auth.LoginRequestDto;
-import com.unbidden.jvtaskmanagementsystem.dto.auth.LoginResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.auth.RegistrationRequest;
 import com.unbidden.jvtaskmanagementsystem.dto.user.UserResponseDto;
 import com.unbidden.jvtaskmanagementsystem.model.Role.RoleType;
@@ -40,10 +37,6 @@ import com.unbidden.jvtaskmanagementsystem.model.User;
 import com.unbidden.jvtaskmanagementsystem.repository.RoleRepository;
 import com.unbidden.jvtaskmanagementsystem.repository.UserRepository;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jws;
-import io.jsonwebtoken.JwtException;
-import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
@@ -115,34 +108,6 @@ public class AuthControllerTest {
         Assertions.assertEquals(request.getEmail(), request.getEmail());
         Assertions.assertEquals(request.getPassword(), request.getPassword());
         Assertions.assertEquals(request.getUsername(), request.getUsername());
-    }
-
-    @Test
-    void login_ValidRequest_Token() throws Exception {
-        LoginRequestDto requestDto = new LoginRequestDto();
-        requestDto.setUsername("testUser");
-        requestDto.setPassword("password123");
-
-        MvcResult result = mockMvc.perform(post("/auth/login")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestDto)))
-                .andExpect(status().isOk())
-                .andReturn();
-
-        LoginResponseDto actual = objectMapper.readValue(
-                result.getResponse().getContentAsString(), LoginResponseDto.class);
-
-        Assertions.assertNotNull(actual);
-
-        try {
-            Jws<Claims> claimsJws = Jwts.parser()
-                    .verifyWith(secret)
-                    .build()
-                    .parseSignedClaims(actual.token());
-            Assertions.assertTrue(claimsJws.getPayload().getExpiration().after(new Date()));
-        } catch (JwtException | IllegalArgumentException e) {
-            Assertions.assertTrue(false);
-        }
     }
 
     @AfterAll

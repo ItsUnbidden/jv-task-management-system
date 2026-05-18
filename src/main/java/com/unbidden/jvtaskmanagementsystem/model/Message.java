@@ -31,7 +31,7 @@ public abstract class Message {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 2000)
     private String text;
 
     @Column(nullable = false)
