@@ -19,9 +19,11 @@ import com.unbidden.jvtaskmanagementsystem.dto.project.ProjectWithDropboxResultR
 import com.unbidden.jvtaskmanagementsystem.dto.user.DeleteUserResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.user.UserResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.user.UserUpdateDetailsRequestDto;
+import com.unbidden.jvtaskmanagementsystem.exception.EntityNotFoundException;
 import com.unbidden.jvtaskmanagementsystem.exception.ErrorType;
 import com.unbidden.jvtaskmanagementsystem.exception.StateCollisionException;
 import com.unbidden.jvtaskmanagementsystem.mapper.UserMapper;
+import com.unbidden.jvtaskmanagementsystem.model.OAuth2AuthorizedClient;
 import com.unbidden.jvtaskmanagementsystem.model.Project;
 import com.unbidden.jvtaskmanagementsystem.model.ProjectRole;
 import com.unbidden.jvtaskmanagementsystem.model.ProjectRole.ProjectRoleType;
@@ -31,8 +33,10 @@ import com.unbidden.jvtaskmanagementsystem.model.User;
 import com.unbidden.jvtaskmanagementsystem.repository.ProjectRoleRepository;
 import com.unbidden.jvtaskmanagementsystem.repository.RoleRepository;
 import com.unbidden.jvtaskmanagementsystem.repository.UserRepository;
+import com.unbidden.jvtaskmanagementsystem.repository.oauth2.ClientRegistrationRepository;
 import com.unbidden.jvtaskmanagementsystem.security.AuthenticationService;
 import com.unbidden.jvtaskmanagementsystem.service.UserService;
+import com.unbidden.jvtaskmanagementsystem.service.oauth2.OAuth2Service;
 import com.unbidden.jvtaskmanagementsystem.service.orchestration.ProjectOrchestrationService;
 import com.unbidden.jvtaskmanagementsystem.util.EntityUtil;
 
@@ -47,11 +51,15 @@ public class UserServiceImpl implements UserService {
 
     private final ProjectOrchestrationService projectService;
 
+    private final OAuth2Service oauthService;
+
     private final UserRepository userRepository;
 
     private final RoleRepository roleRepository;
 
     private final ProjectRoleRepository projectRoleRepository;
+
+    private final ClientRegistrationRepository clientRegistrationRepository;
     
     private final UserMapper userMapper;
 
@@ -165,7 +173,24 @@ public class UserServiceImpl implements UserService {
                 }
             }
             final DeleteUserResponseDto responseDto = new DeleteUserResponseDto(deletedProjects, quittedProjects);
-                     
+                 
+            try {
+                final OAuth2AuthorizedClient dropboxAuthClient = oauthService
+                        .getAuthorizedClientForUser(user, clientRegistrationRepository
+                        .findByClientName("dropbox").get());
+
+                oauthService.deleteAuthorizedClient(dropboxAuthClient.getId());
+            } catch (EntityNotFoundException e) {
+            }
+            try {
+                final OAuth2AuthorizedClient googleAuthClient = oauthService
+                        .getAuthorizedClientForUser(user, clientRegistrationRepository
+                        .findByClientName("google").get());
+    
+                oauthService.deleteAuthorizedClient(googleAuthClient.getId());
+            } catch (EntityNotFoundException e) {
+            }
+            
             authenticationService.logout(request, response);
             userRepository.deleteById(user.getId());
             return responseDto;
