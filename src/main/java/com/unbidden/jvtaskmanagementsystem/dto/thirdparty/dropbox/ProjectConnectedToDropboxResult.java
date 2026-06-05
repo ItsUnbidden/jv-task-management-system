@@ -15,21 +15,17 @@ public class ProjectConnectedToDropboxResult extends DropboxOperationResult {
 
     private final Map<Long, AddUserToProjectFolderResult> userConnectionResults;
 
-    private final ProjectConnectedToDropboxErrorTag tag;
-
     public ProjectConnectedToDropboxResult(@NonNull ThirdPartyOperationStatus status,
-            @Nullable ProjectConnectedToDropboxErrorTag tag, @Nullable String errorMessage) {
-        super(status, errorMessage);
-        this.projectFolderResult = null;
+            CreatedProjectFolderResult projectFolderResult) {
+        super(status, projectFolderResult.getTag(), projectFolderResult.getErrorMessage());
+        this.projectFolderResult = projectFolderResult;
         this.userConnectionResults = null;
-        this.tag = tag;
     }
 
     public ProjectConnectedToDropboxResult(@NonNull ThirdPartyOperationStatus status) {
         super(status);
         this.projectFolderResult = null;
         this.userConnectionResults = null;
-        this.tag = null;
     }
 
     public ProjectConnectedToDropboxResult(@NonNull ThirdPartyOperationStatus status,
@@ -38,10 +34,5 @@ public class ProjectConnectedToDropboxResult extends DropboxOperationResult {
         super(status);
         this.projectFolderResult = projectFolderResult;
         this.userConnectionResults = userConnectionResults;
-        this.tag = null;
-    }
-
-    public static enum ProjectConnectedToDropboxErrorTag {
-        UNKNOWN
     }
 }

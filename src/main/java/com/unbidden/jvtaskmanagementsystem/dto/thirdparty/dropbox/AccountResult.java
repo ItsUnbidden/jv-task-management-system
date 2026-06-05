@@ -13,12 +13,12 @@ public class AccountResult extends DropboxOperationResult {
     private final FullAccount account;
 
     public AccountResult(@NonNull ThirdPartyOperationStatus status) {
-        super(status, null);
+        super(status);
         this.account = null;
     }
 
-    public AccountResult(@NonNull ThirdPartyOperationStatus status, String errorMessage) {
-        super(status, errorMessage);
+    public AccountResult(@NonNull ThirdPartyOperationStatus status, DropboxErrorTag tag, String errorMessage) {
+        super(status, tag, errorMessage);
         this.account = null;
     }
 

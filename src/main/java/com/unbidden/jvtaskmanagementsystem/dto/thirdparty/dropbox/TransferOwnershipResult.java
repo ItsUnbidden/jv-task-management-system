@@ -9,20 +9,12 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class TransferOwnershipResult extends DropboxOperationResult {
-    private final TransferOwnershipErrorTag tag;
-
     public TransferOwnershipResult(@NonNull ThirdPartyOperationStatus status,
-            @Nullable TransferOwnershipErrorTag tag, @Nullable String errorMessage) {
-        super(status, errorMessage);
-        this.tag = tag;
+            @Nullable DropboxErrorTag tag, @Nullable String errorMessage) {
+        super(status, tag, errorMessage);
     }
 
     public TransferOwnershipResult(@NonNull ThirdPartyOperationStatus status) {
         super(status);
-        this.tag = null;
-    }
-
-    public static enum TransferOwnershipErrorTag {
-        UNKNOWN
     }
 }

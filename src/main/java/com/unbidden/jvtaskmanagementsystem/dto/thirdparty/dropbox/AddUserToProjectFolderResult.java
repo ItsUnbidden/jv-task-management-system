@@ -11,12 +11,9 @@ import lombok.EqualsAndHashCode;
 public class AddUserToProjectFolderResult extends DropboxOperationResult {
     private final Long userId;
 
-    private final AddUserToProjectFolderErrorTag tag;
-
     public AddUserToProjectFolderResult(@NonNull ThirdPartyOperationStatus status,
-            @Nullable AddUserToProjectFolderErrorTag tag, @Nullable String errorMessage) {
-        super(status, errorMessage);
-        this.tag = tag;
+            @Nullable DropboxErrorTag tag, @Nullable String errorMessage) {
+        super(status, tag, errorMessage);
         this.userId = null;
     }
 
@@ -24,16 +21,10 @@ public class AddUserToProjectFolderResult extends DropboxOperationResult {
             @Nullable Long userId) {
         super(status);
         this.userId = userId;
-        this.tag = null;
     }
 
     public AddUserToProjectFolderResult(@NonNull ThirdPartyOperationStatus status) {
         super(status);
         this.userId = null;
-        this.tag = null;
-    }
-
-    public static enum AddUserToProjectFolderErrorTag {
-        UNKNOWN
     }
 }

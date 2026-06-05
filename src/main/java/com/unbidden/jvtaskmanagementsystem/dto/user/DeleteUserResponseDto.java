@@ -5,7 +5,7 @@ import java.util.List;
 import org.springframework.lang.NonNull;
 
 import com.unbidden.jvtaskmanagementsystem.dto.project.DeleteProjectResponseDto;
-import com.unbidden.jvtaskmanagementsystem.dto.project.RemoveUserFromProjectResponseDto;
+import com.unbidden.jvtaskmanagementsystem.dto.project.ProjectWithDropboxResultResponseDto;
 
 import lombok.Data;
 
@@ -15,5 +15,5 @@ public class DeleteUserResponseDto {
     private List<DeleteProjectResponseDto> deletedProjects;
 
     @NonNull
-    private List<RemoveUserFromProjectResponseDto> quittedProjects;
+    private List<ProjectWithDropboxResultResponseDto> quittedProjects;
 }

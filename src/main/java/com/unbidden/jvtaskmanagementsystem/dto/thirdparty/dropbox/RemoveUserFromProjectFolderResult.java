@@ -9,20 +9,12 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class RemoveUserFromProjectFolderResult extends DropboxOperationResult {
-    private final RemoveUserFromProjectFolderErrorTag tag;
-
     public RemoveUserFromProjectFolderResult(@NonNull ThirdPartyOperationStatus status,
-            @Nullable RemoveUserFromProjectFolderErrorTag tag, @Nullable String errorMessage) {
-        super(status, errorMessage);
-        this.tag = tag;
+            @Nullable DropboxErrorTag tag, @Nullable String errorMessage) {
+        super(status, tag, errorMessage);
     }
 
     public RemoveUserFromProjectFolderResult(@NonNull ThirdPartyOperationStatus status) {
         super(status);
-        this.tag = null;
-    }
-
-    public static enum RemoveUserFromProjectFolderErrorTag {
-        UNKNOWN
     }
 }

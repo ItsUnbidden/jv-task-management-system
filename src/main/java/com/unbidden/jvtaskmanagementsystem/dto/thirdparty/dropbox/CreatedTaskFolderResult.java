@@ -11,29 +11,20 @@ import lombok.EqualsAndHashCode;
 public class CreatedTaskFolderResult extends DropboxOperationResult {
     private final String taskFolderId;
 
-    private final CreateTaskFolderErrorTag tag;
-
     public CreatedTaskFolderResult(@NonNull ThirdPartyOperationStatus status,
-            @Nullable CreateTaskFolderErrorTag tag, @Nullable String errorMessage) {
-        super(status, errorMessage);
-        this.tag = tag;
+            @Nullable DropboxErrorTag tag, @Nullable String errorMessage) {
+        super(status, tag, errorMessage);
         this.taskFolderId = null;
     }
 
     public CreatedTaskFolderResult(@NonNull ThirdPartyOperationStatus status) {
         super(status);
         this.taskFolderId = null;
-        this.tag = null;
     }
 
     public CreatedTaskFolderResult(@NonNull ThirdPartyOperationStatus status,
             @Nullable String taskFolderId) {
         super(status);
         this.taskFolderId = taskFolderId;
-        this.tag = null;
-    }
-
-    public static enum CreateTaskFolderErrorTag {
-        UNKNOWN
     }
 }

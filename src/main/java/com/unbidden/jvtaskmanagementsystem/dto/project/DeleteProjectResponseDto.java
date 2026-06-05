@@ -1,19 +1,17 @@
 package com.unbidden.jvtaskmanagementsystem.dto.project;
 
-import org.springframework.lang.NonNull;
-
-import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.ThirdPartyOperationResult;
+import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.DropboxOperationResult;
 
 import lombok.Data;
 
 @Data
 public class DeleteProjectResponseDto {
-    @NonNull
-    private String projectName;
-    
-    @NonNull
-    private ThirdPartyOperationResult dropboxFolderDeleted;
+    private final Long projectId;
 
-    @NonNull
-    private ThirdPartyOperationResult calendarDeleted;
+    private final DropboxOperationResult dropboxResult;
+
+    public DeleteProjectResponseDto(Long projectId, DropboxOperationResult dropboxResult) {
+        this.projectId = projectId;
+        this.dropboxResult = dropboxResult;
+    }
 }

@@ -180,10 +180,17 @@ public class EntityUtil {
     public User getProjectOwner(@NonNull Project project) {
         ProjectRole ownerProjectRole = project.getProjectRoles()
                 .stream()
-                .filter(pr -> pr.getRoleType().equals(ProjectRoleType.CREATOR))
+                .filter(pr -> pr.getRoleType() == ProjectRoleType.CREATOR)
                 .toList()
                 .get(0);
         return ownerProjectRole.getUser();
+    }
+
+    public boolean isProjectOwner(@NonNull Long userId, @NonNull Long projectId) {
+        final Optional<ProjectRole> roleOpt = projectRoleRepository.findByProjectIdWithUserId(
+                projectId, userId);
+
+        return roleOpt.isPresent() && roleOpt.get().getRoleType() == ProjectRoleType.CREATOR;
     }
 
     private Message unproxyMessage(Message message) {
