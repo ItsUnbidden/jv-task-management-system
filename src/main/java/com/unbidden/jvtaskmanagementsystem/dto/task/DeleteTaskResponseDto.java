@@ -3,6 +3,7 @@ package com.unbidden.jvtaskmanagementsystem.dto.task;
 import org.springframework.lang.NonNull;
 
 import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.ThirdPartyOperationResult;
+import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.DeleteResult;
 
 import lombok.Data;
 
@@ -12,7 +13,7 @@ public class DeleteTaskResponseDto {
     private String taskName;
 
     @NonNull
-    private ThirdPartyOperationResult dropboxFolderDeleted;
+    private DeleteResult dropboxFolderDeleted;
 
     @NonNull
     private ThirdPartyOperationResult calendarFolderDeleted;

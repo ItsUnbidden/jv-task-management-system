@@ -13,7 +13,7 @@ public class FileUploadOperationResult extends FileOperationResult {
     private final CreatedTaskFolderResult newFolderResult;
 
     public FileUploadOperationResult(@NonNull ThirdPartyOperationStatus status,
-            FileOperationErrorTag tag, String errorMessage) {
+            DropboxErrorTag tag, String errorMessage) {
         super(status, tag, errorMessage);
         this.newFolderResult = null;
     }
@@ -26,6 +26,12 @@ public class FileUploadOperationResult extends FileOperationResult {
     public FileUploadOperationResult(@NonNull ThirdPartyOperationStatus status, FileMetadata meta,
             CreatedTaskFolderResult newFolderResult) {
         super(status, meta);
+        this.newFolderResult = newFolderResult; 
+    }
+
+    public FileUploadOperationResult(@NonNull ThirdPartyOperationStatus status,
+            CreatedTaskFolderResult newFolderResult) {
+        super(status, newFolderResult.getTag(), newFolderResult.getErrorMessage());
         this.newFolderResult = newFolderResult; 
     }
 }

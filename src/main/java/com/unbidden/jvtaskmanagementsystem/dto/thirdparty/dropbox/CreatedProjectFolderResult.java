@@ -13,12 +13,9 @@ public class CreatedProjectFolderResult extends DropboxOperationResult {
 
     private final String projectSharedFolderId;
 
-    private final CreateProjectFolderErrorTag tag;
-
     public CreatedProjectFolderResult(@NonNull ThirdPartyOperationStatus status,
-            @Nullable CreateProjectFolderErrorTag tag, @Nullable String errorMessage) {
-        super(status, errorMessage);
-        this.tag = tag;
+            @Nullable DropboxErrorTag tag, @Nullable String errorMessage) {
+        super(status, tag, errorMessage);
         this.projectFolderId = null;
         this.projectSharedFolderId = null;
     }
@@ -27,7 +24,6 @@ public class CreatedProjectFolderResult extends DropboxOperationResult {
         super(status);
         this.projectFolderId = null;
         this.projectSharedFolderId = null;
-        this.tag = null;
     }
 
     public CreatedProjectFolderResult(@NonNull ThirdPartyOperationStatus status,
@@ -36,10 +32,5 @@ public class CreatedProjectFolderResult extends DropboxOperationResult {
         super(status);
         this.projectFolderId = projectFolderId;
         this.projectSharedFolderId = projectSharedFolderId;
-        this.tag = null;
-    }
-
-    public static enum CreateProjectFolderErrorTag {
-        UNKNOWN
     }
 }

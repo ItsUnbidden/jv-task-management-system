@@ -16,6 +16,7 @@ import com.unbidden.jvtaskmanagementsystem.dto.projectrole.UpdateProjectRoleRequ
 import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.ThirdPartyOperationResult.ThirdPartyOperationStatus;
 import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.AddUserToProjectFolderResult;
 import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.CreatedProjectFolderResult;
+import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.DropboxOperationResult.DropboxErrorTag;
 import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.ProjectConnectedToDropboxResult;
 import com.unbidden.jvtaskmanagementsystem.exception.EntityNotFoundException;
 import com.unbidden.jvtaskmanagementsystem.exception.ErrorType;
@@ -150,7 +151,8 @@ public class ProjectServiceImpl implements ProjectService {
     @NonNull
     @Override
     @Transactional
-    public Project addUserToProject(@NonNull Long projectId, @NonNull String username) {
+    public Project addUserToProject(@NonNull Long projectId, @NonNull String username,
+            @NonNull AddUserToProjectFolderResult dropboxResult) {
         final Project project = entityUtil.getProjectById(projectId);
         final User newProjectMember = userRepository.findByUsername(username)
                 .orElseThrow(() -> new EntityNotFoundException("User with username "
@@ -161,6 +163,11 @@ public class ProjectServiceImpl implements ProjectService {
         projectRole.setRoleType(ProjectRoleType.CONTRIBUTOR);
         projectRole.setUser(newProjectMember);
         project.getProjectRoles().add(projectRole);
+        if (dropboxResult.getStatus().equals(ThirdPartyOperationStatus.SUCCESS)
+                || (dropboxResult.getStatus().equals(ThirdPartyOperationStatus.PARTIAL_SUCCESS)
+                && dropboxResult.getTag().equals(DropboxErrorTag.MEMBERSHIP_MOUNT_ALREADY_MOUNTED))) {
+            projectRole.setDropboxConnected(true);
+        }
         updateProjectStatusAccordingToDate(project);
         return project;
     }
@@ -169,6 +176,15 @@ public class ProjectServiceImpl implements ProjectService {
     @Transactional
     public Project removeUserFromProject(@NonNull Long projectId, @NonNull Long userId) {
         return removeUserFromProject0(projectId, userId);
+    }
+
+    @Override
+    @Transactional
+    public Project joinProject(@NonNull User user, @NonNull Long projectId) {
+        final ProjectRole projectRole = entityUtil.getProjectRoleByProjectIdAndUserId(projectId, user.getId());
+
+        projectRole.setDropboxConnected(true);
+        return entityUtil.getProjectById(projectId);
     }
 
     @Override
@@ -243,6 +259,9 @@ public class ProjectServiceImpl implements ProjectService {
 
         project.setDropboxProjectFolderId(null);
         project.setDropboxProjectSharedFolderId(null);
+
+        project.getProjectRoles().forEach(pr -> pr.setDropboxConnected(false));
+        project.getTasks().forEach(t -> t.setDropboxTaskFolderId(null));
 
         return project;
     }

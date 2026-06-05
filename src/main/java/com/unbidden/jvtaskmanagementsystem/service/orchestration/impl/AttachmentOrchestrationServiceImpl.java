@@ -3,6 +3,8 @@ package com.unbidden.jvtaskmanagementsystem.service.orchestration.impl;
 import java.io.IOException;
 import java.time.LocalDateTime;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.lang.NonNull;
@@ -11,12 +13,16 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.unbidden.jvtaskmanagementsystem.dto.attachment.AttachmentDto;
 import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.ThirdPartyOperationResult.ThirdPartyOperationStatus;
+import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.DeleteResult;
+import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.DropboxOperationResult.DropboxErrorTag;
 import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.FileOperationResult;
 import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.FileUploadOperationResult;
 import com.unbidden.jvtaskmanagementsystem.exception.ErrorType;
 import com.unbidden.jvtaskmanagementsystem.exception.FileSizeLimitExceededException;
 import com.unbidden.jvtaskmanagementsystem.exception.UnexpectedException;
-import com.unbidden.jvtaskmanagementsystem.exception.thirdparty.dropbox.FileUploadFailedException;
+import com.unbidden.jvtaskmanagementsystem.exception.thirdparty.dropbox.FileDeleteException;
+import com.unbidden.jvtaskmanagementsystem.exception.thirdparty.dropbox.FileDownloadException;
+import com.unbidden.jvtaskmanagementsystem.exception.thirdparty.dropbox.FileUploadException;
 import com.unbidden.jvtaskmanagementsystem.mapper.AttachmentMapper;
 import com.unbidden.jvtaskmanagementsystem.model.Attachment;
 import com.unbidden.jvtaskmanagementsystem.model.ProjectRole.ProjectRoleType;
@@ -27,6 +33,7 @@ import com.unbidden.jvtaskmanagementsystem.service.AttachmentService;
 import com.unbidden.jvtaskmanagementsystem.service.DropboxService;
 import com.unbidden.jvtaskmanagementsystem.service.TaskService;
 import com.unbidden.jvtaskmanagementsystem.service.orchestration.AttachmentOrchestrationService;
+import com.unbidden.jvtaskmanagementsystem.service.orchestration.ProjectOrchestrationService;
 import com.unbidden.jvtaskmanagementsystem.util.EntityUtil;
 import com.unbidden.jvtaskmanagementsystem.util.HttpClientUtil.HeaderNames;
 import com.unbidden.jvtaskmanagementsystem.util.HttpClientUtil.HeaderValues;
@@ -37,6 +44,8 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class AttachmentOrchestrationServiceImpl implements AttachmentOrchestrationService {
+    private static final Logger LOGGER = LogManager.getFormatterLogger(AttachmentOrchestrationServiceImpl.class);
+
     private static final long MAXIMUM_FILE_SIZE = 157_286_400L; 
     
     private final AttachmentService attachmentService;
@@ -46,6 +55,8 @@ public class AttachmentOrchestrationServiceImpl implements AttachmentOrchestrati
     private final DropboxService dropboxService;
 
     private final TaskService taskService;
+
+    private final ProjectOrchestrationService projectService;
 
     private final EntityUtil entityUtil;
 
@@ -58,8 +69,6 @@ public class AttachmentOrchestrationServiceImpl implements AttachmentOrchestrati
                 .map(attachmentMapper::toDto);
     }
 
-    // TODO: need to finish this by dealing with the Dropbox result
-    @NonNull
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, entityIdClass = Attachment.class)
     public void download(@NonNull User user, @NonNull HttpServletResponse response,
@@ -68,28 +77,37 @@ public class AttachmentOrchestrationServiceImpl implements AttachmentOrchestrati
         final User authorizedUser = (entityUtil.isManager(user)
                 ? entityUtil.getProjectOwner(attachment.getTask().getProject()) : user);
 
-        response.setContentType(HeaderValues.OCTET_STREAM);
-        response.setHeader(HeaderNames.CONTENT_DISPOSITION, "attachment; filename="
-                + attachment.getFilename());
         try {
             final FileOperationResult dropboxResult = dropboxService.downloadFile(
-                authorizedUser, attachment.getDropboxId(), response.getOutputStream());
+                    authorizedUser, attachment.getDropboxId(), response.getOutputStream());
 
+            if (dropboxResult.getStatus() != ThirdPartyOperationStatus.SUCCESS) {
+                if (dropboxResult.getTag() == DropboxErrorTag.PATH_LOOKUP_NOT_FOUND
+                        || dropboxResult.getTag() == DropboxErrorTag.PATH_LOOKUP_NOT_FILE) {
+                    LOGGER.info("Failed to find the file in attachment " + attachmentId + " in Dropbox. The attachment will be deleted.");
+                    attachmentService.delete(attachmentId);        
+                }
+                throw new FileDownloadException("A Dropbox-related issue has occured while "
+                        + "attempting to download the file.",
+                        ErrorType.ATTACHMENT_DOWNLOAD_FAILURE, dropboxResult);
+            }
         } catch (IOException e) {
             throw new UnexpectedException("Exception occured during an "
                     + "attempt to get output stream.", ErrorType.INTERNAL);
         }
+        response.setContentType(HeaderValues.OCTET_STREAM);
+        response.setHeader(HeaderNames.CONTENT_DISPOSITION, "attachment; filename="
+                + attachment.getFilename());
     }
 
-    // TODO: need to finish this by dealing with the Dropbox result
     @NonNull
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, entityIdClass = Task.class)
     public AttachmentDto upload(@NonNull User user, @NonNull Long taskId,
             @NonNull MultipartFile file) {
         final Task task = entityUtil.getTaskById(taskId);
-        final User authorizedUser = (entityUtil.isManager(user)
-                ? entityUtil.getProjectOwner(task.getProject()) : user);
+        final User authorizedUser = entityUtil.isManager(user)
+                ? entityUtil.getProjectOwner(task.getProject()) : user;
 
         final Attachment attachment = new Attachment();
         attachment.setTask(task);
@@ -107,8 +125,21 @@ public class AttachmentOrchestrationServiceImpl implements AttachmentOrchestrati
 
         final FileUploadOperationResult dropboxResult = dropboxService.uploadFileInTaskFolder(
                 authorizedUser, task, file);
-        if (!dropboxResult.getStatus().equals(ThirdPartyOperationStatus.SUCCESS)) {
-            throw new FileUploadFailedException("Filed to upload the file.",
+        if (dropboxResult.getStatus() != ThirdPartyOperationStatus.SUCCESS) {
+            if (dropboxResult.getTag() == DropboxErrorTag.PATH_LOOKUP_NOT_FOUND
+                    || dropboxResult.getTag() == DropboxErrorTag.PATH_LOOKUP_NOT_FOLDER) {
+                if (entityUtil.isProjectOwner(user.getId(), task.getProject().getId())) {
+                    LOGGER.info("Failed to find the project folder for task " + taskId
+                            + ". The folder might not exist, so the project will be disconnected from Dropbox.");
+                    projectService.disconnectDropbox(user, task.getProject().getId());
+                    throw new FileUploadException("Filed to upload the file. The project folder might "
+                            + "not exist anymore, so the project was disconnected from Dropbox.",
+                            ErrorType.ATTACHMENT_UPLOAD_FAILURE, dropboxResult);
+                }
+                throw new FileUploadException("Filed to upload the file. The project folder might "
+                        + "not be mounted.", ErrorType.ATTACHMENT_UPLOAD_FAILURE, dropboxResult);
+            }
+            throw new FileUploadException("Filed to upload the file.",
                     ErrorType.ATTACHMENT_UPLOAD_FAILURE, dropboxResult);
         }
         if (dropboxResult.getNewFolderResult() != null) {
@@ -119,16 +150,21 @@ public class AttachmentOrchestrationServiceImpl implements AttachmentOrchestrati
         return attachmentMapper.toDto(attachmentService.upload(attachment));
     }
 
-    // TODO: need to finish this by dealing with the Dropbox result
     @Override
+    @NonNull
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, entityIdClass = Attachment.class)
-    public void delete(@NonNull User user, @NonNull Long attachmentId) {
+    public DeleteResult delete(@NonNull User user, @NonNull Long attachmentId) {
         final Attachment attachment = entityUtil.getAttachmentById(attachmentId);
         final User authorizedUser = (entityUtil.isManager(user)
                 ? entityUtil.getProjectOwner(attachment.getTask().getProject()) : user);
 
         attachmentService.delete(attachmentId);
-        dropboxService.deleteFile(authorizedUser, attachment.getDropboxId());
+        final DeleteResult dropboxResult = dropboxService.deleteFile(authorizedUser, attachment.getDropboxId());
+        if (!dropboxResult.getStatus().equals(ThirdPartyOperationStatus.SUCCESS)) {
+            throw new FileDeleteException("A Dropbox-related issue has occured while attempting "
+                    + "to delete the file.", ErrorType.ATTACHMENT_FILE_DELETE_FAILURE,
+                    dropboxResult);
+        }
+        return dropboxResult;
     }
-
 }

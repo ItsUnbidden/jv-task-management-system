@@ -6,13 +6,18 @@ import org.mapstruct.Mapping;
 import com.unbidden.jvtaskmanagementsystem.config.MapperConfig;
 import com.unbidden.jvtaskmanagementsystem.dto.project.CreateProjectRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.project.ProjectResponseDto;
+import com.unbidden.jvtaskmanagementsystem.dto.project.ProjectWithDropboxResultResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.projectrole.ProjectRoleDto;
+import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.DropboxOperationResult;
 import com.unbidden.jvtaskmanagementsystem.model.Project;
 import com.unbidden.jvtaskmanagementsystem.model.ProjectRole;
 
 @Mapper(config = MapperConfig.class)
 public interface ProjectMapper {
     ProjectResponseDto toProjectDto(Project project);
+
+    @Mapping(target = "status", source = "project.status")
+    ProjectWithDropboxResultResponseDto toProjectDtoWithDropboxResult(Project project, DropboxOperationResult dropboxResult);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "status", ignore = true)

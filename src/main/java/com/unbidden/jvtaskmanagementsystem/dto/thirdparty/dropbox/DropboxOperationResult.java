@@ -1,7 +1,6 @@
 package com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox;
 
 import org.springframework.lang.NonNull;
-import org.springframework.lang.Nullable;
 
 import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.ThirdPartyOperationResult;
 
@@ -11,15 +10,108 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class DropboxOperationResult extends ThirdPartyOperationResult {
-    private final String errorMessage;
+    private String errorMessage;
+
+    private DropboxErrorTag tag;
     
-    public DropboxOperationResult(@NonNull ThirdPartyOperationStatus status, @Nullable String errorMessage) {
+    public DropboxOperationResult(@NonNull ThirdPartyOperationStatus status, DropboxErrorTag tag, String errorMessage) {
         super(status);
         this.errorMessage = errorMessage;
+        this.tag = tag;
     }
 
     public DropboxOperationResult(@NonNull ThirdPartyOperationStatus status) {
         super(status);
         this.errorMessage = null;
+        this.tag = null;
+    }
+
+    public enum DropboxErrorTag {
+        // Files
+        FILES_TOO_MANY_WRITE_OPERATIONS,
+        FILES_TOO_MANY_FILES,
+        FILES_IOEXCEPTION,
+        FILES_UPLOAD_PROPERTIES,
+        FILES_UPLOAD_PAYLOAD_TOO_LARGE,
+        FILES_UPLOAD_CONTENT_HASH_MISMATCH,
+        FILES_DOWNLOAD_UNSUPPORTED,
+
+        // Lookup
+        PATH_LOOKUP_MALFORMED_PATH,
+        PATH_LOOKUP_NOT_FOUND,
+        PATH_LOOKUP_NOT_FILE,
+        PATH_LOOKUP_NOT_FOLDER,
+        PATH_LOOKUP_RESTRICTED_CONTENT,
+        PATH_LOOKUP_UNSUPPORTED_CONTENT_TYPE,
+        PATH_LOOKUP_LOCKED,
+
+        // Write
+        PATH_WRITE_CONFLICT,
+        PATH_WRITE_MALFORMED_PATH,
+        PATH_WRITE_NO_PERMISSION,
+        PATH_WRITE_NOT_ENOUGH_SPACE,
+        PATH_WRITE_DISALLOWED_NAME,
+        PATH_WRITE_TEAM_FOLDER,
+        PATH_WRITE_SUPPRESSED,
+        PATH_WRITE_TOO_MANY_OPERATIONS,
+
+        // Shared folder access
+        SHARED_FOLDER_ACCESS_INVALID_ID,
+        SHARED_FOLDER_ACCESS_NOT_A_MEMBER,
+        SHARED_FOLDER_ACCESS_INVALID_MEMBER,
+        SHARED_FOLDER_ACCESS_UNMOUNTED,
+
+        // Shared folder member
+        SHARED_FOLDER_MEMBER_INVALID_DROPBOX_ID,
+        SHARED_FOLDER_MEMBER_NOT_A_MEMBER,
+        SHARED_FOLDER_MEMBER_NO_EXPLICIT_ACCESS,
+
+        // Membership
+        // Remove user
+        MEMBERSHIP_REMOVE_FOLDER_OWNER,
+        MEMBERSHIP_REMOVE_MOUNTED,
+        MEMBERSHIP_REMOVE_GROUP_ACCESS,
+        MEMBERSHIP_REMOVE_NO_PREMISSION,
+        MEMBERSHIP_REMOVE_NO_EXPLICIT_ACCESS,
+        MEMBERSHIP_REMOVE_TEAM_FOLDER,
+        MEMBERSHIP_REMOVE_TOO_MANY_FILES,
+        // Transfer ownership
+        MEMBERSHIP_TRANSFER_INVALID_DROPBOX_ID,
+        MEMBERSHIP_TRANSFER_NEW_OWNER_NOT_A_MEMBER,
+        MEMBERSHIP_TRANSFER_NEW_OWNER_UNMOUNTED,
+        MEMBERSHIP_TRANSFER_NEW_OWNER_EMAIL_UNVERIFIED,
+        MEMBERSHIP_TRANSFER_TEAM_FOLDER,
+        MEMBERSHIP_TRANSFER_NO_PERMISSION,
+        // Add folder member
+        MEMBERSHIP_ADD_EMAIL_UNVERIFIED,
+        MEMBERSHIP_ADD_BANNED_MEMBER,
+        MEMBERSHIP_ADD_BAD_MEMBER,
+        MEMBERSHIP_ADD_CANT_SHARE_OUTSIDE_TEAM,
+        MEMBERSHIP_ADD_TOO_MANY_MEMBERS,
+        MEMBERSHIP_ADD_TOO_MANY_PENDING_INVITES,
+        MEMBERSHIP_ADD_RATE_LIMIT,
+        MEMBERSHIP_ADD_TOO_MANY_INVITEES,
+        MEMBERSHIP_ADD_INSUFFICIENT_PLAN,
+        MEMBERSHIP_ADD_TEAM_FOLDER,
+        MEMBERSHIP_ADD_NO_PERMISSION,
+        // Mount folder
+        MEMBERSHIP_MOUNT_INSIDE_SHARED_FOLDER,
+        MEMBERSHIP_MOUNT_INSUFFICIENT_QUOTA,
+        MEMBERSHIP_MOUNT_ALREADY_MOUNTED,
+        MEMBERSHIP_MOUNT_NO_PERMISSION,
+        MEMBERSHIP_MOUNT_NOT_MOUNTABLE,
+
+        // Share folder
+        SHARE_FOLDER_EMIAL_UNVERIFIED,
+        SHARE_FOLDER_BAD_PATH,
+        SHARE_FOLDER_TEAM_POLICY,
+        SHARE_FOLDER_DISALLOWED_SHARED_LINK_POLICY,
+        SHARE_FOLDER_NO_PERMISSION,
+
+        // General
+        GENERAL_TEST,
+        GENERAL_LOGOUT,
+        GENERAL_ACCOUNT,
+        GENERAL_UNKNOWN
     }
 }

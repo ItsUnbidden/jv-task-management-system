@@ -15,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.unbidden.jvtaskmanagementsystem.dto.auth.LoginRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.auth.RegistrationRequest;
 import com.unbidden.jvtaskmanagementsystem.dto.project.DeleteProjectResponseDto;
-import com.unbidden.jvtaskmanagementsystem.dto.project.RemoveUserFromProjectResponseDto;
+import com.unbidden.jvtaskmanagementsystem.dto.project.ProjectWithDropboxResultResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.user.DeleteUserResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.user.UserResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.user.UserUpdateDetailsRequestDto;
@@ -147,7 +147,7 @@ public class UserServiceImpl implements UserService {
                 && passwordEncoder.matches(requestDto.getPassword(), user.getPassword())) {
             final List<ProjectRole> projectRoles = projectRoleRepository.findByUserId(user.getId());
             final List<DeleteProjectResponseDto> deletedProjects = new ArrayList<>();
-            final List<RemoveUserFromProjectResponseDto> quittedProjects = new ArrayList<>();
+            final List<ProjectWithDropboxResultResponseDto> quittedProjects = new ArrayList<>();
 
             for (var role : projectRoles) {
                 final Project project = role.getProject();
@@ -158,7 +158,7 @@ public class UserServiceImpl implements UserService {
                     
                     deletedProjects.add(projectResponseDto);
                 } else {
-                    final RemoveUserFromProjectResponseDto projectResponseDto =
+                    final ProjectWithDropboxResultResponseDto projectResponseDto =
                             projectService.quitProject(user, project.getId());
 
                     quittedProjects.add(projectResponseDto);

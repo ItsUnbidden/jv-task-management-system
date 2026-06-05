@@ -7,6 +7,7 @@ import org.springframework.lang.NonNull;
 import com.unbidden.jvtaskmanagementsystem.dto.project.UpdateProjectRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.project.UpdateProjectStatusRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.projectrole.UpdateProjectRoleRequestDto;
+import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.AddUserToProjectFolderResult;
 import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.CreatedProjectFolderResult;
 import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.ProjectConnectedToDropboxResult;
 import com.unbidden.jvtaskmanagementsystem.model.Project;
@@ -36,7 +37,7 @@ public interface ProjectService {
 
     @NonNull
     public Project addUserToProject(@NonNull Long projectId,
-            @NonNull String username);
+            @NonNull String username, @NonNull AddUserToProjectFolderResult dropboxResult);
 
     @NonNull
     public Project changeProjectMemberRole(@NonNull Long projectId, @NonNull Long userId,
@@ -45,6 +46,10 @@ public interface ProjectService {
     @NonNull
     public Project removeUserFromProject(@NonNull Long projectId, @NonNull Long userId);
 
+    @NonNull
+    public Project joinProject(@NonNull User user, @NonNull Long projectId);
+
+    @NonNull
     public Project quitProject(@NonNull User user, @NonNull Long projectId);
 
     @NonNull
