@@ -16,5 +16,5 @@ public class DeleteTaskResponseDto {
     private DeleteResult dropboxFolderDeleted;
 
     @NonNull
-    private ThirdPartyOperationResult calendarFolderDeleted;
+    private ThirdPartyOperationResult calendarDeleted;
 }
