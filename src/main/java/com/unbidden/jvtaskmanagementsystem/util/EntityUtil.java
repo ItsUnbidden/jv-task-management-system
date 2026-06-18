@@ -20,6 +20,7 @@ import com.unbidden.jvtaskmanagementsystem.model.ProjectRole;
 import com.unbidden.jvtaskmanagementsystem.model.ProjectRole.ProjectRoleType;
 import com.unbidden.jvtaskmanagementsystem.model.Reply;
 import com.unbidden.jvtaskmanagementsystem.model.Role.RoleType;
+import com.unbidden.jvtaskmanagementsystem.model.Subtask;
 import com.unbidden.jvtaskmanagementsystem.model.Task;
 import com.unbidden.jvtaskmanagementsystem.model.User;
 import com.unbidden.jvtaskmanagementsystem.repository.AttachmentRepository;
@@ -28,6 +29,7 @@ import com.unbidden.jvtaskmanagementsystem.repository.LabelRepository;
 import com.unbidden.jvtaskmanagementsystem.repository.ProjectRepository;
 import com.unbidden.jvtaskmanagementsystem.repository.ProjectRoleRepository;
 import com.unbidden.jvtaskmanagementsystem.repository.ReplyRepository;
+import com.unbidden.jvtaskmanagementsystem.repository.SubtaskRepository;
 import com.unbidden.jvtaskmanagementsystem.repository.TaskRepository;
 import com.unbidden.jvtaskmanagementsystem.repository.UserRepository;
 import com.unbidden.jvtaskmanagementsystem.repository.oauth2.ClientRegistrationRepository;
@@ -44,6 +46,8 @@ public class EntityUtil {
     private final UserRepository userRepository;
 
     private final TaskRepository taskRepository;
+
+    private final SubtaskRepository subtaskRepository;
 
     private final LabelRepository labelRepository;
 
@@ -74,6 +78,13 @@ public class EntityUtil {
         return taskRepository.findById(taskId).orElseThrow(() ->
                 new EntityNotFoundException("Was not able to find a task with id " 
                 + taskId, ErrorType.TASK_NOT_FOUND));
+    }
+
+    @NonNull 
+    public Subtask getSubtaskById(@NonNull Long subtaskId) {
+        return subtaskRepository.findById(subtaskId).orElseThrow(() ->
+                new EntityNotFoundException("Was not able to find a subtask with id " 
+                + subtaskId, ErrorType.SUBTASK_NOT_FOUND));
     }
 
     @NonNull
