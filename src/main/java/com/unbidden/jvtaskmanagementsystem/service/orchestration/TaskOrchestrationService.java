@@ -50,4 +50,6 @@ public interface TaskOrchestrationService {
     @NonNull 
     Page<TaskResponseDto> getTasksByLabelId(@NonNull User user, @NonNull Long labelId,
             @NonNull Pageable pageable);
+
+    int getTaskProgress(@NonNull User user, @NonNull Long taskId);
 }

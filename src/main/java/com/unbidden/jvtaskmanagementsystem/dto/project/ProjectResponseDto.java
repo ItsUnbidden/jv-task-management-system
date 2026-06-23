@@ -25,6 +25,8 @@ public class ProjectResponseDto {
     
     private Set<ProjectRoleDto> projectRoles;
 
+    private Integer progress;
+
     @JsonProperty("isPrivate")
     private boolean isPrivate;
 

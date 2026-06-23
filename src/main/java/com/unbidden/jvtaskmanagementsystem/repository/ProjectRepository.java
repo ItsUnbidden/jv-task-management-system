@@ -31,4 +31,8 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
             + "where (p.isPrivate = false or u.id = ?1) and p.name like %?2%")
     Page<Project> findPublicByNameContainsAllIgnoreCase(Long userId,
             String name, Pageable pageable);
+
+    @NonNull
+    @Query("select p.progress from Project p where p.id = :id")
+    Optional<Integer> findProgressById(@NonNull Long id);
 }

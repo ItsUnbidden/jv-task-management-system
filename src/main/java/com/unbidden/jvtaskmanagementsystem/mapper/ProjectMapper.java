@@ -26,6 +26,7 @@ public interface ProjectMapper {
     @Mapping(target = "dropboxProjectFolderId", ignore = true)
     @Mapping(target = "dropboxProjectSharedFolderId", ignore = true)
     @Mapping(target = "projectCalendar", ignore = true)
+    @Mapping(target = "progress", ignore = true)
     @Mapping(target = "deleted", ignore = true)
     Project toProject(CreateProjectRequestDto requestDto);
 

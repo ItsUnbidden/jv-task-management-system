@@ -18,4 +18,8 @@ public interface SubtaskRepository extends JpaRepository<Subtask, Long> {
 
     @NonNull
     Page<Subtask> findByTaskId(@NonNull Long taskId, @NonNull Pageable pageable);
+
+    int countByTaskId(@NonNull Long taskId);
+
+    int countByTaskIdAndIsCompletedTrue(@NonNull Long taskId);
 }

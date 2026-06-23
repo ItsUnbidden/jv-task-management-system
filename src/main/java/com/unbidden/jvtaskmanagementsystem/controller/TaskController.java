@@ -357,4 +357,9 @@ public class TaskController {
             @NonNull @Valid @RequestBody UpdateTaskStatusRequestDto requestDto) {
         return taskService.changeStatus((User)authentication.getPrincipal(), taskId, requestDto);
     }
+
+    @GetMapping("/{taskId}/progress")
+    public int getTaskProgress(Authentication authentication, @NonNull @PathVariable Long taskId) {
+        return taskService.getTaskProgress((User)authentication.getPrincipal(), taskId);
+    }
 }

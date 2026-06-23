@@ -3,17 +3,24 @@ package com.unbidden.jvtaskmanagementsystem.service.impl;
 import java.time.LocalDate;
 import java.util.List;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.lang.NonNull;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
+import com.unbidden.jvtaskmanagementsystem.dto.internal.SubtasksChanged;
+import com.unbidden.jvtaskmanagementsystem.dto.internal.TaskProgressUpdated;
 import com.unbidden.jvtaskmanagementsystem.dto.task.UpdateTaskRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.task.UpdateTaskStatusRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.task.specification.TaskFilterDto;
+import com.unbidden.jvtaskmanagementsystem.exception.EntityNotFoundException;
 import com.unbidden.jvtaskmanagementsystem.exception.ErrorType;
 import com.unbidden.jvtaskmanagementsystem.exception.InconsistentDataException;
 import com.unbidden.jvtaskmanagementsystem.model.Label;
@@ -24,6 +31,7 @@ import com.unbidden.jvtaskmanagementsystem.model.Task.TaskStatus;
 import com.unbidden.jvtaskmanagementsystem.model.User;
 import com.unbidden.jvtaskmanagementsystem.repository.LabelRepository;
 import com.unbidden.jvtaskmanagementsystem.repository.ProjectRepository;
+import com.unbidden.jvtaskmanagementsystem.repository.SubtaskRepository;
 import com.unbidden.jvtaskmanagementsystem.repository.TaskRepository;
 import com.unbidden.jvtaskmanagementsystem.service.TaskService;
 import com.unbidden.jvtaskmanagementsystem.util.EntityUtil;
@@ -34,9 +42,13 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class TaskServiceImpl implements TaskService {
+    private final ApplicationEventPublisher eventPublisher;
+
     private final ProjectRepository projectRepository;
 
     private final TaskRepository taskRepository;
+
+    private final SubtaskRepository subtaskRepository;
 
     private final LabelRepository labelRepository;
 
@@ -130,8 +142,12 @@ public class TaskServiceImpl implements TaskService {
         task.setProject(project);
         task.setStatus(TaskStatus.NOT_STARTED);
         task.setAmountOfMessages(0);
+        task.setProgress(0);
         checkDateIsLegit(task);
         updateTaskStatusAccordingToDate(task);
+            
+        eventPublisher.publishEvent(new TaskProgressUpdated(project.getId()));
+
         projectRepository.save(project);
         return taskRepository.save(task);
     }
@@ -159,7 +175,11 @@ public class TaskServiceImpl implements TaskService {
     @Override
     @Transactional
     public void deleteTask(@NonNull User user, @NonNull Long taskId) {
-        taskRepository.deleteById(taskId);
+        final Task task = entityUtil.getTaskById(taskId);
+
+        eventPublisher.publishEvent(new TaskProgressUpdated(task.getProject().getId()));
+        
+        taskRepository.delete(task);
     }
 
     @NonNull
@@ -173,8 +193,11 @@ public class TaskServiceImpl implements TaskService {
             throw new AccessDeniedException("Only user that is assigned to task " + taskId 
                     + " can change its status.");
         }
-
+        
         task.setStatus(requestDto.getNewStatus());
+        
+        updateTaskProgress(task);
+        
         updateTaskStatusAccordingToDate(task);
 
         return task;
@@ -187,6 +210,40 @@ public class TaskServiceImpl implements TaskService {
 
         task.setDropboxTaskFolderId(taskFolderId);
         updateTaskStatusAccordingToDate(task);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int getTaskProgress(@NonNull Long taskId) {
+        return taskRepository.findProgressById(taskId).orElseThrow(() ->
+                new EntityNotFoundException("Task " + taskId + " was not found.", ErrorType.TASK_NOT_FOUND));
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void subtaskUpdateListener(SubtasksChanged event) {
+        final Task task = entityUtil.getTaskById(event.taskId());
+
+        updateTaskProgress(task);
+    }
+
+    private void updateTaskProgress(Task task) {
+        if (task.getStatus() == TaskStatus.COMPLETED) {
+            task.setProgress(100);
+            eventPublisher.publishEvent(new TaskProgressUpdated(task.getProject().getId()));
+            return;
+        }
+        final int numberOfSubtasks = subtaskRepository.countByTaskId(task.getId());
+        final int numberOfCompletedSubtasks = subtaskRepository.countByTaskIdAndIsCompletedTrue(task.getId());
+
+        if (numberOfSubtasks == 0) {
+            task.setProgress(0);
+        } else {
+            task.setProgress(numberOfCompletedSubtasks * 100 / numberOfSubtasks);
+        }
+
+        eventPublisher.publishEvent(new TaskProgressUpdated(task.getProject().getId()));
     }
 
     private void updateTaskStatusAccordingToDate(Task task) {

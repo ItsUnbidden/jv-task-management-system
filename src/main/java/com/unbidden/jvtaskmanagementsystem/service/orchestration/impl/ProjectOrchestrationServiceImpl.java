@@ -201,6 +201,7 @@ public class ProjectOrchestrationServiceImpl implements ProjectOrchestrationServ
                 dropboxResult);
     }
 
+    @NonNull
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR)
     public ProjectWithDropboxResultResponseDto quitProject(@NonNull User user, @NonNull Long projectId) {
@@ -265,6 +266,7 @@ public class ProjectOrchestrationServiceImpl implements ProjectOrchestrationServ
         return projectMapper.toProjectDto(project);
     }
 
+    @NonNull
     @Override
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR)
     public ProjectWithDropboxResultResponseDto joinDropbox(@NonNull User user, @NonNull Long projectId) {
@@ -325,6 +327,12 @@ public class ProjectOrchestrationServiceImpl implements ProjectOrchestrationServ
         
         return new ProjectCalendarDisconnectionResponseDto(projectMapper.toProjectDto(
                 projectService.disconnectCalendar(project.getId())), calendarResult);
+    }
+
+    @Override
+    @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true)
+    public int getProjectProgress(@NonNull User user, @NonNull Long projectId) {
+        return projectService.getProjectProgress(projectId);
     }
 
     private void checkAndDisconnectDropboxIfNeeded(User user, Project project, DropboxOperationResult dropboxResult) {

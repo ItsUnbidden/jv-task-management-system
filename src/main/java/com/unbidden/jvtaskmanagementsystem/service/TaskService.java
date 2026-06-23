@@ -4,6 +4,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.lang.NonNull;
 
+import com.unbidden.jvtaskmanagementsystem.dto.internal.SubtasksChanged;
 import com.unbidden.jvtaskmanagementsystem.dto.task.UpdateTaskRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.task.UpdateTaskStatusRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.task.specification.TaskFilterDto;
@@ -50,4 +51,8 @@ public interface TaskService {
             @NonNull Pageable pageable);
 
     void setDropboxFolderId(@NonNull Long taskId, @NonNull String taskFolderId);
+
+    int getTaskProgress(@NonNull Long taskId);
+
+    void subtaskUpdateListener(SubtasksChanged event);
 }

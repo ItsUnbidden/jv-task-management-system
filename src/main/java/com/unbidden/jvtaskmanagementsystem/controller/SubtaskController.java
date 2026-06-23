@@ -21,6 +21,7 @@ import com.unbidden.jvtaskmanagementsystem.dto.task.UpdateSubtaskRequestDto;
 import com.unbidden.jvtaskmanagementsystem.model.User;
 import com.unbidden.jvtaskmanagementsystem.service.SubtaskService;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 
@@ -38,13 +39,13 @@ public class SubtaskController {
 
     @PostMapping
     public SubtaskResponseDto createSubtask(Authentication authentication,
-            @NonNull @RequestBody CreateSubtaskRequestDto requestDto) {
+            @NonNull @Valid @RequestBody CreateSubtaskRequestDto requestDto) {
         return subtaskService.createSubtask((User)authentication.getPrincipal(), requestDto.taskId(), requestDto);
     }
 
     @PutMapping("/{id}")
     public SubtaskResponseDto updateSubtask(Authentication authentication, @NonNull @PathVariable Long id,
-            @NonNull @RequestBody UpdateSubtaskRequestDto requestDto) {
+            @NonNull @Valid @RequestBody UpdateSubtaskRequestDto requestDto) {
         return subtaskService.updateSubtask((User)authentication.getPrincipal(), id, requestDto);
     }
 

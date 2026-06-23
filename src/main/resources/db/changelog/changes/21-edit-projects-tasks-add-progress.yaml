@@ -1,0 +1,27 @@
+databaseChangeLog:
+  - changeSet:
+      id: edit-projects-tasks-add-progress
+      author: Unbidden
+      changes:
+        - addColumn:
+            tableName: projects
+            columns:
+              - column:
+                  name: progress
+                  type: int
+                  defaultValue: 0
+        - addColumn:
+            tableName: tasks
+            columns:
+              - column:
+                  name: progress
+                  type: int
+                  defaultValue: 0
+        - addNotNullConstraint:
+            tableName: projects
+            columnName: progress
+            columnDataType: int
+        - addNotNullConstraint:
+            tableName: tasks
+            columnName: progress
+            columnDataType: int

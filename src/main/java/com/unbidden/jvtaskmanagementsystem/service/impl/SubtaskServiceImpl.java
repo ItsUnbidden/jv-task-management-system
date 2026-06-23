@@ -1,11 +1,13 @@
 package com.unbidden.jvtaskmanagementsystem.service.impl;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.unbidden.jvtaskmanagementsystem.dto.internal.SubtasksChanged;
 import com.unbidden.jvtaskmanagementsystem.dto.task.CreateSubtaskRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.task.SubtaskResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.task.UpdateSubtaskRequestDto;
@@ -24,6 +26,8 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class SubtaskServiceImpl implements SubtaskService {
+    private final ApplicationEventPublisher eventPublisher;
+
     private final SubtaskRepository subtaskRepository;
 
     private final TaskMapper taskMapper;
@@ -45,6 +49,8 @@ public class SubtaskServiceImpl implements SubtaskService {
     public SubtaskResponseDto createSubtask(@NonNull User user, @NonNull Long taskId, @NonNull CreateSubtaskRequestDto requestDto) {
         final Task task = entityUtil.getTaskById(taskId);
         final Subtask subtask = new Subtask();
+        
+        eventPublisher.publishEvent(new SubtasksChanged(task.getId()));
 
         subtask.setName(requestDto.name());
         subtask.setTask(task);
@@ -58,6 +64,10 @@ public class SubtaskServiceImpl implements SubtaskService {
     public SubtaskResponseDto updateSubtask(@NonNull User user, @NonNull Long subtaskId, @NonNull UpdateSubtaskRequestDto requestDto) {
         final Subtask subtask = entityUtil.getSubtaskById(subtaskId);
 
+        if (subtask.isCompleted() != requestDto.isCompleted()) {
+            eventPublisher.publishEvent(new SubtasksChanged(subtask.getTask().getId()));
+        }
+
         subtask.setName(requestDto.name());
         subtask.setCompleted(requestDto.isCompleted());
         return taskMapper.toSubtaskDto(subtask);
@@ -67,6 +77,10 @@ public class SubtaskServiceImpl implements SubtaskService {
     @Transactional
     @ProjectSecurity(securityLevel = ProjectRoleType.ADMIN, entityIdClass = Subtask.class)
     public void deleteSubtask(@NonNull User user, @NonNull Long subtaskId) {
-        subtaskRepository.deleteById(subtaskId);
+        final Subtask subtask = entityUtil.getSubtaskById(subtaskId);
+        
+        eventPublisher.publishEvent(new SubtasksChanged(subtask.getTask().getId()));
+
+        subtaskRepository.delete(subtask);
     }
 }
