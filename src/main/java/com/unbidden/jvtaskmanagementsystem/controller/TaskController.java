@@ -221,7 +221,6 @@ public class TaskController {
         return taskService.getTasksInProjectBySpecification((User)authentication.getPrincipal(), projectId, filterDto, pageable);
     }
     
-    
     @PostMapping()
     @Operation(
             summary = "Create new task in project",

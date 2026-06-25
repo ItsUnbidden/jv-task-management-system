@@ -31,10 +31,10 @@ import lombok.RequiredArgsConstructor;
 public class SubtaskController {
     private final SubtaskService subtaskService;
 
-    @GetMapping("/task/{id}")
+    @GetMapping("/task/{taskId}")
     public Page<SubtaskResponseDto> getSubtasksByTaskId(Authentication authentication,
-            @NonNull @PathVariable Long id, @NonNull Pageable pageable) {
-        return subtaskService.getSubtasksByTaskId((User)authentication.getPrincipal(), id, pageable);
+            @NonNull @PathVariable Long taskId, @NonNull Pageable pageable) {
+        return subtaskService.getSubtasksByTaskId((User)authentication.getPrincipal(), taskId, pageable);
     }
 
     @PostMapping
@@ -43,15 +43,15 @@ public class SubtaskController {
         return subtaskService.createSubtask((User)authentication.getPrincipal(), requestDto.taskId(), requestDto);
     }
 
-    @PutMapping("/{id}")
-    public SubtaskResponseDto updateSubtask(Authentication authentication, @NonNull @PathVariable Long id,
+    @PutMapping("/{subtaskId}")
+    public SubtaskResponseDto updateSubtask(Authentication authentication, @NonNull @PathVariable Long subtaskId,
             @NonNull @Valid @RequestBody UpdateSubtaskRequestDto requestDto) {
-        return subtaskService.updateSubtask((User)authentication.getPrincipal(), id, requestDto);
+        return subtaskService.updateSubtask((User)authentication.getPrincipal(), subtaskId, requestDto);
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{subtaskId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void updateSubtask(Authentication authentication, @NonNull @PathVariable Long id) {
-        subtaskService.deleteSubtask((User)authentication.getPrincipal(), id);
+    public void updateSubtask(Authentication authentication, @NonNull @PathVariable Long subtaskId) {
+        subtaskService.deleteSubtask((User)authentication.getPrincipal(), subtaskId);
     }
 }
