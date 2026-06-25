@@ -5,8 +5,10 @@ import org.mapstruct.Mapping;
 
 import com.unbidden.jvtaskmanagementsystem.config.MapperConfig;
 import com.unbidden.jvtaskmanagementsystem.dto.task.CreateTaskRequestDto;
+import com.unbidden.jvtaskmanagementsystem.dto.task.SubtaskResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.task.TaskResponseDto;
 import com.unbidden.jvtaskmanagementsystem.model.Label;
+import com.unbidden.jvtaskmanagementsystem.model.Subtask;
 import com.unbidden.jvtaskmanagementsystem.model.Task;
 
 @Mapper(config = MapperConfig.class)
@@ -18,6 +20,8 @@ public interface TaskMapper {
     @Mapping(target = "labelIds", source = "labels")
     TaskResponseDto toDto(Task task);
 
+    SubtaskResponseDto toSubtaskDto(Subtask subtask);
+
     @Mapping(target = "status", ignore = true)
     @Mapping(target = "dropboxTaskFolderId", ignore = true)
     @Mapping(target = "amountOfMessages", ignore = true)
@@ -25,6 +29,7 @@ public interface TaskMapper {
     @Mapping(target = "project", ignore = true)
     @Mapping(target = "labels", ignore = true)
     @Mapping(target = "assignee", ignore = true)
+    @Mapping(target = "progress", ignore = true)
     @Mapping(target = "deleted", ignore = true)
     Task toModel(CreateTaskRequestDto requestDto);
 

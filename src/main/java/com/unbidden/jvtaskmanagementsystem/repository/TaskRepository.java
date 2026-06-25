@@ -1,5 +1,6 @@
 package com.unbidden.jvtaskmanagementsystem.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -36,4 +37,12 @@ public interface TaskRepository extends JpaRepository<Task, Long>, JpaSpecificat
             + "left join fetch t.labels l where a.id = :assigneeId and p.id = :projectId")
     Page<Task> findByAssigneeIdAndByProjectId(@NonNull Long assigneeId, 
             @NonNull Long projectId, Pageable pageable);
+
+    @NonNull
+    @Query("select t.progress from Task t where t.id = :id")
+    Optional<Integer> findProgressById(@NonNull Long id);
+
+    @NonNull
+    @Query("select t.progress from Task t left join t.project p where p.id = :projectId")
+    List<Integer> findProgressValuesByProjectId(@NonNull Long projectId);
 }

@@ -47,6 +47,9 @@ public class Task {
 
     private Integer amountOfMessages;
 
+    @Column(nullable = false)
+    private Integer progress;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id", nullable = false)
     private Project project;

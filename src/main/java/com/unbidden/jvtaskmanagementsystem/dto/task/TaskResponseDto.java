@@ -30,5 +30,7 @@ public class TaskResponseDto {
 
     private Integer amountOfMessages;
 
+    private Integer progress;
+
     private Set<Long> labelIds;
 }

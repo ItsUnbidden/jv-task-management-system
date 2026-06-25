@@ -37,3 +37,7 @@ databaseChangeLog:
       file: /db/changelog/changes/18-edit-users-drop-name-columns.yaml
   - include:
       file: /db/changelog/changes/19-update-varchar-lengths.yaml
+  - include:
+      file: /db/changelog/changes/20-create-subtasks-table.yaml
+  - include:
+      file: /db/changelog/changes/21-edit-projects-tasks-add-progress.yaml

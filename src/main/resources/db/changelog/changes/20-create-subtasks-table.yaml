@@ -1,0 +1,33 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-subtasks-table
+      author: Unbidden
+      changes:
+        - createTable:
+            tableName: subtasks
+            columns: 
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    nullable: false
+                    primaryKey: true
+              - column:
+                  name: task_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_task_id_subtasks
+                    references: tasks(id)
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: is_completed
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false

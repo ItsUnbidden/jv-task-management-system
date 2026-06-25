@@ -16,60 +16,64 @@ import com.unbidden.jvtaskmanagementsystem.model.User;
 
 public interface ProjectOrchestrationService {
     @NonNull
-    public ProjectResponseDto findProjectById(@NonNull User user, @NonNull Long projectId);
+    ProjectResponseDto findProjectById(@NonNull User user, @NonNull Long projectId);
     
     @NonNull
-    public Page<ProjectResponseDto> findAllProjectsForUserAndSearchByName(@NonNull User user,
+    Page<ProjectResponseDto> findAllProjectsForUserAndSearchByName(@NonNull User user,
             @NonNull String name, @NonNull Pageable pageable);
 
     @NonNull
-    public Page<ProjectResponseDto> searchProjectsByName(@NonNull User user, 
+    Page<ProjectResponseDto> searchProjectsByName(@NonNull User user, 
             @NonNull String name, @NonNull Pageable pageable);
     
     @NonNull
-    public ProjectWithDropboxResultResponseDto createProject(@NonNull User user,
+    ProjectWithDropboxResultResponseDto createProject(@NonNull User user,
             @NonNull CreateProjectRequestDto requestDto);
     
     @NonNull
-    public ProjectResponseDto updateProject(@NonNull User user, @NonNull Long projectId,
+    ProjectResponseDto updateProject(@NonNull User user, @NonNull Long projectId,
             @NonNull UpdateProjectRequestDto requestDto);
 
     @NonNull
-    public DeleteProjectResponseDto deleteProject(@NonNull User user, @NonNull Long projectId);
+    DeleteProjectResponseDto deleteProject(@NonNull User user, @NonNull Long projectId);
 
     @NonNull
-    public ProjectWithDropboxResultResponseDto addUserToProject(@NonNull User user, @NonNull Long projectId,
+    ProjectWithDropboxResultResponseDto addUserToProject(@NonNull User user, @NonNull Long projectId,
             @NonNull String username);
 
     @NonNull
-    public ProjectWithDropboxResultResponseDto changeProjectMemberRole(@NonNull User user, @NonNull Long projectId,
+    ProjectWithDropboxResultResponseDto changeProjectMemberRole(@NonNull User user, @NonNull Long projectId,
             @NonNull Long userId, @NonNull UpdateProjectRoleRequestDto requestDto);
 
     @NonNull
-    public ProjectWithDropboxResultResponseDto removeUserFromProject(@NonNull User user,
+    ProjectWithDropboxResultResponseDto removeUserFromProject(@NonNull User user,
             @NonNull Long projectId, @NonNull Long userId);
 
-    public ProjectWithDropboxResultResponseDto quitProject(@NonNull User user, @NonNull Long projectId);
+    @NonNull
+    ProjectWithDropboxResultResponseDto quitProject(@NonNull User user, @NonNull Long projectId);
 
     @NonNull
-    public ProjectResponseDto changeStatus(@NonNull User user, @NonNull Long projectId,
+    ProjectResponseDto changeStatus(@NonNull User user, @NonNull Long projectId,
             @NonNull UpdateProjectStatusRequestDto requestDto);
 
     @NonNull
-    public ProjectWithDropboxResultResponseDto connectProjectToDropbox(@NonNull User user,
+    ProjectWithDropboxResultResponseDto connectProjectToDropbox(@NonNull User user,
             @NonNull Long projectId);
 
     @NonNull
-    public ProjectResponseDto connectProjectToCalendar(@NonNull User user,
+    ProjectResponseDto connectProjectToCalendar(@NonNull User user,
             @NonNull Long projectId);
 
-    public ProjectWithDropboxResultResponseDto joinDropbox(@NonNull User user, @NonNull Long projectId);
+    @NonNull
+    ProjectWithDropboxResultResponseDto joinDropbox(@NonNull User user, @NonNull Long projectId);
 
-    public void joinCalendar(@NonNull User user, @NonNull Long projectId);
+    void joinCalendar(@NonNull User user, @NonNull Long projectId);
 
     @NonNull
-    public ProjectWithDropboxResultResponseDto disconnectDropbox(@NonNull User user, @NonNull Long projectId);
+    ProjectWithDropboxResultResponseDto disconnectDropbox(@NonNull User user, @NonNull Long projectId);
 
     @NonNull
-    public ProjectCalendarDisconnectionResponseDto disconnectCalendar(@NonNull User user, @NonNull Long projectId);
+    ProjectCalendarDisconnectionResponseDto disconnectCalendar(@NonNull User user, @NonNull Long projectId);
+
+    int getProjectProgress(@NonNull User user, @NonNull Long projectId);
 }

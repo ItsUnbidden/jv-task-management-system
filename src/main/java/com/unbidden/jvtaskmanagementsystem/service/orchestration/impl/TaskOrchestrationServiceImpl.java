@@ -153,4 +153,11 @@ public class TaskOrchestrationServiceImpl implements TaskOrchestrationService {
             @NonNull UpdateTaskStatusRequestDto requestDto) {
         return taskMapper.toDto(taskService.changeStatus(user, taskId, requestDto));
     }
+
+    @Override
+    @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, entityIdClass = Task.class,
+            bypassIfPublic = true)
+    public int getTaskProgress(@NonNull User user, @NonNull Long taskId) {
+        return taskService.getTaskProgress(taskId);
+    }
 }

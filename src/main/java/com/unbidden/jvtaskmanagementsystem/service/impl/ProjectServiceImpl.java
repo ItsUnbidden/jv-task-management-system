@@ -2,14 +2,19 @@ package com.unbidden.jvtaskmanagementsystem.service.impl;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
+import com.unbidden.jvtaskmanagementsystem.dto.internal.TaskProgressUpdated;
 import com.unbidden.jvtaskmanagementsystem.dto.project.UpdateProjectRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.project.UpdateProjectStatusRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.projectrole.UpdateProjectRoleRequestDto;
@@ -102,6 +107,7 @@ public class ProjectServiceImpl implements ProjectService {
         project.setProjectRoles(Set.of(creatorRole));
         project.setStatus(ProjectStatus.INITIATED);
         project.setTasks(new ArrayList<>());
+        project.setProgress(0);
         if (project.getStartDate() == null) {
             project.setStartDate(LocalDate.now());
         }
@@ -201,6 +207,9 @@ public class ProjectServiceImpl implements ProjectService {
         final Project project = entityUtil.getProjectById(projectId);
 
         project.setStatus(requestDto.getNewStatus());
+
+        updateProjectProgress(project);
+
         updateProjectStatusAccordingToDate(project);
         return project;
     }
@@ -275,6 +284,44 @@ public class ProjectServiceImpl implements ProjectService {
         project.setProjectCalendar(null);
 
         return project;
+    }
+
+    @Override
+    @Transactional
+    public int getProjectProgress(@NonNull Long projectId) {
+        return projectRepository.findProgressById(projectId).orElseThrow(() ->
+                new EntityNotFoundException("Project " + projectId + " does not exist.",
+                ErrorType.PROJECT_NOT_FOUND));
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void taskProgressUpdateListener(TaskProgressUpdated event) {
+        final Project project = entityUtil.getProjectById(event.projectId());
+
+        updateProjectProgress(project);
+    }
+
+    private void updateProjectProgress(Project project) {
+        if (project.getStatus() == ProjectStatus.COMPLETED) {
+            project.setProgress(100);
+            return;
+        }
+        final List<Integer> taskProgressValues = taskRepository.findProgressValuesByProjectId(project.getId());
+
+        if (taskProgressValues.isEmpty()) {
+            project.setProgress(0);
+            return;
+        }
+        
+        int value = 0;
+        for (Integer progress : taskProgressValues) {
+            value += progress;
+        }
+        value /= taskProgressValues.size();
+
+        project.setProgress(Math.clamp(value, 0, 100));
     }
 
     private void updateProjectStatusAccordingToDate(Project project) {

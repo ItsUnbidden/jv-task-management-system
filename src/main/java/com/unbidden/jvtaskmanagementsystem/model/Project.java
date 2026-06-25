@@ -56,6 +56,9 @@ public class Project {
     @ToString.Exclude
     private List<Task> tasks;
 
+    @Column(nullable = false)
+    private Integer progress;
+
     private String dropboxProjectFolderId;
 
     private String dropboxProjectSharedFolderId;

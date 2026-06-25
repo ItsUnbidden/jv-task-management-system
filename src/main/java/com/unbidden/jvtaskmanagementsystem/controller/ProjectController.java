@@ -544,4 +544,9 @@ public class ProjectController {
             @NonNull @PathVariable Long projectId) {
         return projectService.disconnectCalendar((User)authentication.getPrincipal(), projectId);
     }
+
+    @GetMapping("/{projectId}/progress")
+    public int getTaskProgress(Authentication authentication, @NonNull @PathVariable Long projectId) {
+        return projectService.getProjectProgress((User)authentication.getPrincipal(), projectId);
+    }
 }
