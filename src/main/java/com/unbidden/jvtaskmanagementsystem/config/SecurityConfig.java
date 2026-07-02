@@ -2,6 +2,7 @@ package com.unbidden.jvtaskmanagementsystem.config;
 
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -38,6 +39,9 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     private final CookieCsrfTokenRepository csrfTokenRepository;
+
+    @Value("${cors.allowed-origin-patterns}")
+    private String allowedOriginPatterns;
 
     @Bean
     @Order(1)
@@ -77,6 +81,7 @@ public class SecurityConfig {
 
     @Bean
     @Order(2)
+    @SuppressWarnings("null")
     protected SecurityFilterChain frontendFilterChain(HttpSecurity http) throws Exception {
         return http
                 .cors(AbstractHttpConfigurer::disable)
@@ -91,12 +96,13 @@ public class SecurityConfig {
 
     @Bean
     protected CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:4200"));
+        final CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOriginPatterns(List.of(allowedOriginPatterns.split(" ")));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+
+        final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;
     }
