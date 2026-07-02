@@ -1,0 +1,124 @@
+{
+    "properties": [
+        {
+            "name": "oauth2.providers",
+            "type": "java.lang.String",
+            "description": "A comma-separated list of providers. Currently supported providers: dropbox, google"
+        },
+        {
+            "name": "oauth2.dropbox.client-id",
+            "type": "java.lang.String",
+            "description": "The client ID for Dropbox integration. Provided by Dropbox."
+        },
+        {
+            "name": "oauth2.dropbox.client-secret",
+            "type": "java.lang.String",
+            "description": "The secret key for Dropbox integration. Provided by Dropbox."
+        },
+        {
+            "name": "oauth2.dropbox.redirect-uri",
+            "type": "java.net.URI",
+            "description": "The redirect URI that Dropbox will use in order to complete the OAuth2 flow. Must match the one specified in the Dropbox Dev Console."
+        },
+        {
+            "name": "oauth2.dropbox.authorization-uri",
+            "type": "java.net.URI",
+            "description": "The URI that will be used to start the OAuth2 flow for Dropbox. Provided by Dropbox."
+        },
+        {
+            "name": "oauth2.dropbox.token-uri",
+            "type": "java.net.URI",
+            "description": "The URI that will be used to exchange the OAuth2 token. Provided by Dropbox."
+        },
+        {
+            "name": "oauth2.dropbox.scope",
+            "type": "java.lang.String",
+            "description": "A whitespace-separated list of Dropbox scopes. These must match the ones specified in the Dropbox Dev Console."
+        },
+        {
+            "name": "oauth2.dropbox.use-refresh-tokens",
+            "type": "java.lang.Boolean",
+            "description": "A boolean value that indicates whether refresh tokens will be used to refresh Dropbox OAuth2 access tokens."
+        },
+        {
+            "name": "oauth2.google.client-id",
+            "type": "java.lang.String",
+            "description": "The client ID for Google Calendar integration. Provided by Google."
+        },
+        {
+            "name": "oauth2.google.client-secret",
+            "type": "java.lang.String",
+            "description": "The secret key for Google Calendar integration. Provided by Google."
+        },
+        {
+            "name": "oauth2.google.redirect-uri",
+            "type": "java.net.URI",
+            "description": "The redirect URI that Google Calendar will use in order to complete the OAuth2 flow. Must match the one specified in the Google Dev Console."
+        },
+        {
+            "name": "oauth2.google.authorization-uri",
+            "type": "java.net.URI",
+            "description": "The URI that will be used to start the OAuth2 flow for Google Calendar. Provided by Google."
+        },
+        {
+            "name": "oauth2.google.token-uri",
+            "type": "java.net.URI",
+            "description": "The URI that will be used to exchange the OAuth2 token. Provided by Google."
+        },
+        {
+            "name": "oauth2.google.scope",
+            "type": "java.lang.String",
+            "description": "A whitespace-separated list of Google Calendar scopes. These must match the ones specified in the Google Dev Console."
+        },
+        {
+            "name": "oauth2.google.use-refresh-tokens",
+            "type": "java.lang.Boolean",
+            "description": "A boolean value that indicates whether refresh tokens will be used to refresh Google Calendar OAuth2 access tokens."
+        },
+        {
+            "name": "jwt.expiration",
+            "type": "java.lang.Long",
+            "description": "A 64-bit integer that indicates how many milliseconds it will take for a JWT access token to expire."
+        },
+        {
+            "name": "jwt.refresh-expiration-hours",
+            "type": "java.lang.Long",
+            "description": "A 64-bit integer that indicates how many hours it will take for a refresh token to expire."
+        },
+        {
+            "name": "jwt.secret",
+            "type": "java.lang.String",
+            "description": "A string that is used to encode JWT tokens. Should be a relatively long series of quasi-random characters."
+        },
+        {
+            "name": "refresh-token.cleanup.interval",
+            "type": "java.lang.Integer",
+            "description": "A 32-bit integer that indicates the interval of time in hours between refresh token cleanup cycles."
+        },
+        {
+            "name": "refresh-token.cleanup.initial-delay",
+            "type": "java.lang.Integer",
+            "description": "A 32-bit integer that indicates the delay before the initial cleanup. Can be 0."
+        },
+        {
+            "name": "refresh-token.cleanup.max-age-days",
+            "type": "java.lang.Integer",
+            "description": "A 32-bit integer that indicates the maximum age in days of a refresh token. Tokens that are older than this will be cleaned up."
+        },
+        {
+            "name": "frontend.base-url",
+            "type": "java.net.URI",
+            "description": "The base URL of the frontend. If the frontend is served by this Spring server, then this value should be set to the domain this server is running on. For example: https://taskmanagementsystem.com"
+        },
+        {
+            "name": "cors.allowed-origin-patterns",
+            "type": "java.net.String",
+            "description": "A whitespace-separated list of URLs that will call this backend's endpoints. Wildcards are supported, for example: \"https://*.ngrok-free.app\" in case you're running ngrok. Depending on the situation, you might be required to specify the frontend's domain here (in case you're getting 403 \"Invalid CORS request\" errors)."
+        },
+        { 
+            "name": "dropbox.root.path",
+            "type": "java.net.String",
+            "description": "The path to the root Dropbox folder that will be created in users' Dropbox accounts. Must start with \"/\". I do not recommend nesting folders here."
+        }
+    ]
+}

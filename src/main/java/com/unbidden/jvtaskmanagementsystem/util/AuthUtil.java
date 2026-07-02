@@ -10,7 +10,6 @@ import java.util.function.Function;
 
 import javax.crypto.SecretKey;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
@@ -29,20 +28,22 @@ public class AuthUtil {
 
     private final SecretKey secret;
 
-    @Autowired
-    private SecureRandom secureRandom;
+    private final SecureRandom secureRandom;
 
-    @Autowired
-    private MessageDigest messageDigest;
+    private final MessageDigest messageDigest;
 
-    @Autowired
-    private Base64.Encoder base64UrlEncoder;
+    private final Base64.Encoder base64UrlEncoder;
 
     @Value("${jwt.expiration}")
     private Long expiration;
 
-    public AuthUtil(@Value("${jwt.secret}") String secretString) {
+    public AuthUtil(@Value("${jwt.secret}") String secretString,
+            SecureRandom secureRandom, MessageDigest messageDigest,
+            Base64.Encoder base64UrlEncoder) {
         secret = Keys.hmacShaKeyFor(secretString.getBytes(StandardCharsets.UTF_8));
+        this.secureRandom = secureRandom;
+        this.messageDigest = messageDigest;
+        this.base64UrlEncoder = base64UrlEncoder;
     }
 
     @NonNull
@@ -69,6 +70,7 @@ public class AuthUtil {
     }
 
     @NonNull 
+    @SuppressWarnings("null")
     public String getUsername(@NonNull String token) {
         return getClaimFromToken(token, Claims::getSubject);
     }
@@ -91,7 +93,7 @@ public class AuthUtil {
         final Cookie cookie = new Cookie("refresh_token", refreshToken);
 
         cookie.setHttpOnly(true);
-        // cookie.setSecure(true);
+        cookie.setSecure(true);
         cookie.setPath("/api/auth");
         cookie.setAttribute("SameSite", "Lax");
         return cookie;
@@ -102,7 +104,7 @@ public class AuthUtil {
         final Cookie cookie = new Cookie("access_token", accessToken);
 
         cookie.setHttpOnly(true);
-        // cookie.setSecure(true);
+        cookie.setSecure(true);
         cookie.setPath("/api");
         cookie.setAttribute("SameSite", "Lax");
         return cookie;
@@ -113,7 +115,7 @@ public class AuthUtil {
         final Cookie cookie = new Cookie("refresh_token", "");
 
         cookie.setHttpOnly(true);
-        // cookie.setSecure(true);
+        cookie.setSecure(true);
         cookie.setPath("/api/auth");
         cookie.setAttribute("SameSite", "Lax");
         cookie.setMaxAge(0);
@@ -125,7 +127,7 @@ public class AuthUtil {
         final Cookie cookie = new Cookie("access_token", "");
 
         cookie.setHttpOnly(true);
-        // cookie.setSecure(true);
+        cookie.setSecure(true);
         cookie.setPath("/api");
         cookie.setAttribute("SameSite", "Lax");
         cookie.setMaxAge(0);
