@@ -8,19 +8,20 @@
     - [OAuth2 Controller](#oauth2-controller)
     - [Dropbox Controller](#dropbox-controller)
     - [Google Controller](#google-controller)
-    - [Swagger UI](#swagger-ui)
   - [Main Controllers](#main-controllers)
     - [Project Controller](#project-controller)
     - [Task Controller](#task-controller)
+    - [Subtask Controller](#subtask-controller)
     - [Label Controller](#label-controller)
     - [Message Controller](#message-controller)
     - [Attachment Controller](#attachment-controller)
 - [Configuration](#configuration)
-  - [application.properties](#applicationproperties)
-  - [liquibase.properties](#liquibaseproperties)
+  - [application-prod.properties](#application-prodproperties)
   - [.env](#env)
+  - [Environmental variables](#environmental-variables)
 - [Installation](#installation)
 - [Issue](#issue)
+- [License](#license)
 
 # Introduction
 **The goal** of this project was to create a **Java server** for an application that can be used by developers working together on **large projects** which require **complex administration**. Currently, this backend is supposed to be paired with an **Angular frontend** which you can find [here](https://github.com/ItsUnbidden/angular-task-management-system). Here are some of the project's key features:
@@ -385,121 +386,83 @@ Some examples:
 ![](/images/file_upload_response.png)
 
 # Configuration
-*To configure* the **server** you might need to **change** a *few files*, such as:
-1. `application.properties` — sets several **crucial variables** for *Spring Framework* to use. Also provides settings for **JWT** and **OAuth2**. If *Docker* is used, application settings should be set in the **.env** file **instead**.
-2. `liquibase.propeties` — **required** to change only when *Docker* is **not used**. Sets database connection properties.
-3. `.env` — if you are using *Docker*, you should set **application variables** in **here** *instead* of *application.properties*.
+*To configure* the **server** you will have to **change** these files:
+1. `application-prod.properties` — contains **settings** for some of the app's features. This file is **not used** *by default*.
+2. `.env` — defines **environmental variables** for *Docker Compose*.
 
-## application.properties
+If you do not use *Docker Compose*, you will have to also set **environmental variables**. How you do that depends on what your setup is.
 
-*Path to the file:*
+## [`application-prod.properties`](/src/main/resources/application-prod.properties)
 
-![](/images/application.properties_path.png)
+This file contains some useful app settings:
 
-*These values* should be set only in the case where *Docker* is **not used**. If you are using *Docker*, these parameters should be set in the `.env` file. This likely will be *fixed later*, so that only the `.env` file will be required to be configured.
+- `logging.level.com.unbidden.jvtaskmanagementsystem` — *app-specific* logging level. For **production**, `INFO` or `WARN` is recommended.
+- `oauth2.dropbox.use-refresh-tokens` — whether **Dropbox** should use *refresh tokens*. `True` is recommended.
+- `oauth2.google.use-refresh-tokens` — whether **Google Calendar** should use *refresh tokens*. `True` is recommended.
+- `jwt.expiration` — defines how long **access tokens** will be considered *valid*. Must be specified in **milliseconds**.
+- `jwt.refresh-expiration-hours` — defines how long **refresh tokens** will be considered *valid*. Must be specified in **hours**.
+- `refresh-token.cleanup.interval` — defines the time interval between **refresh token** *cleanup cycles*. Must be specified in **hours**.
+- `refresh-token.cleanup.initial-delay` — defines the initial **delay** before the first **refresh token** *cleanup cycle* after startup. Can be 0. Must be specified in **hours**.
+- `refresh-token.cleanup.max-age-days` — defines for how long a **refresh token** is *stored*. After this time passes, the token will be **eligible for cleanup**. Must be specified in **days**.
+- `frontend.base-url` — the *base URL* of the **frontend**. For example: `https://taskmanagementsystem.com`.
+- `cors.allowed-origin-patterns` — A *whitespace-separated* list of allowed **request origins**. You might be required to specify the *frontend's base URL* here if you're getting **403 "Invalid CORS Request"** errors.
+- `dropbox.root.path` — the path to the *folder* in the **users' Dropbox accounts** where shared *project folders* will be created. **Nesting folders is not recommended**. Example: `/TMS`.
 
- - `spring.datasource.url` — sets **database URL** to connect to.
- - `spring.datasource.username` — sets **username** for *database* user.
- - `spring.datasource.password` — sets **password** for *database*.
- - `spring.datasource.driver-class-name` — sets **driver** for your *database*. In case of **MySQL**: `com.mysql.cj.jdbc.Driver`
- - `jwt.expiration` — determines *how long* one **token** will be **active** for in *milliseconds*.
- - `jwt.secret` — sets the **secret key** used in forming **tokens**. The key is supposed to be *quite long*.
- - `dropbox.root.path` — sets a **default path** to *Dropbox shared folder*.
- - `oauth2.providers` — sets **OAuth2 Providers**. Their *names* need to be *separated* by `,`. In the current app version, there are only **two**: `dropbox` and `google`.
- - `oauth2.<provider>.client-id` — sets **client id** for *provider*.
- - `oauth2.<provider>.client-secret` — sets **client secret** for *provider*.
- - `oauth2.<provider>.redirect-uri` — sets **redirect uri**. In the current app version, this parameter **must be set** to `<host>/oauth2/connect/code`, where `<host>` is the **current server address**.
- - `oauth2.<provider>.authorization-uri` — sets provider's **OAuth2 Authorization endpoint** address.
- - `oauth2.<provider>.token-uri` — sets provider's **authorization code exchange endpoint** address.
- - `oauth2.<provider>.scope` — sets **OAuth2 scopes**. Default values are *already* set.
- - `oauth2.<provider>.use-refresh-tokens` — whether the *OAuth2 Service* should use **refresh tokens** for this provider. `true` value is *recommended*.
+This file **won't load** automatically by itself, because, by default, `application-dev.properties` is used, which is **not present** in the repository. You either have to add it or set a special *environmental variable*. The **instructions** on how to do that are in the section **below**.
 
-*Example:*
+## `.env`
 
-![](/images/application.properties_example.png)
+This file sets **environmental variables** for *Docker Compose*. You do not need to change this file unless you're running the app using *Docker Compose*. The file is **not present** in the repository by default, so you will have to **create** it. You can use [`.env.sample`](/.env.sample) as a *template*.
 
-## liquibase.properties
+## Environmental variables
 
-*Path to the file:*
+If you do not use `Docker Compose`, you will have to set the **environmental variables** for sensitive parameters. How you do it depends on your system and case. For instance, you can configure the environment for **VS Code** launch configurations in `launch.json`:
 
-![](/images/liquibase.properties_path.png)
+```json
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "JvTaskManagementSystemApplication",
+            "request": "launch",
+            "mainClass": "com.unbidden.jvtaskmanagementsystem.JvTaskManagementSystemApplication",
+            "projectName": "jv-task-management-system",
+            "env": {
+                "DB_BASE_URL": "localhost:3306",
+                "DB_NAME": "task_management",
+                "DB_USERNAME": "root",
+                "DB_PASSWORD": "...",
+                "DROPBOX_CLIENT_ID": "...",
+                "DROPBOX_SECRET": "...",
+                "GOOGLE_CLIENT_ID": "...",
+                "GOOGLE_SECRET": "...",
+                "JWT_SECRET": "..."
+            }
+        }
+    ]
+}
+```
 
-Change only if *Docker* is **not used**, otherwise nothing will happen:
+The list of the **variables** that have to be set can be found in [`.env.sample`](.env.sample).
 
- - `url` — sets **database URL** to connect to.
- - `username` — sets **username** for *database* user.
- - `password` — sets **password** for *database* user.
-
-*Example:*
-
-![](/images/liquibase.properties_example.png)
-
-## .env
-
-*Path to the file:*
-
-![](/images/.env_path.png)
-
-This file sets **variables** for *Docker* **virtual environment**. Some of these are *not necessary* to alter, even if you are using *Docker*.
-
-These can be left as they are:
- - `MYSQL_PASSWORD` — **password** for *MySQL* database.
- - `MYSQL_DATABASE` — **name** for the *database*.
- - `MYSQL_LOCAL_PORT` — **port**, on which the *database* will be available for **access**.
- - `MYSQL_DOCKER_PORT` — **port**, on which the *database* is running **inside** *Docker*.
- - `SPRING_LOCAL_PORT` — **port**, on which the *server* will be available for **access**.
- - `SPRING_DOCKER_PORT` — **port**, on which the *server* is running **inside** *Docker*.
- - `DEBUG_PORT` — **port**, on which remote **debug function** is available.
-
-*Everything* concerning **OAuth2** and **JWT** authentication is *mandatory*:
-
- - `OAUTH2_PROVIDERS` — **the same as** `oauth2.providers` in `application.properties`.
-
-*Dropbox:*
-
- - `DROPBOX_CLIENT_ID` — **the same as** `oauth2.dropbox.client-id` in `application.properties`.
- - `DROPBOX_CLIENT_SECRET` — **the same as** `oauth2.dropbox.client-secret` in `application.properties`.
- - `DROPBOX_REDIRECT_URI` — **the same as** `oauth2.dropbox.redirect-uri` in `application.properties`.
- - `DROPBOX_AUTH_URI` — **the same as** `oauth2.dropbox.authorization-uri` in `application.properties`.
- - `DROPBOX_TOKEN_URI` — **the same as** `oauth2.dropbox.token-uri` in `application.properties`.
- - `DROPBOX_SCOPE` — **the same as** `oauth2.dropbox.scope` in `application.properties`.
- - `DROPBOX_REFRESH_TOKENS` — **the same as** `oauth2.dropbox.use-refresh-tokens` in `application.properties`.
- - `DROPBOX_SHARED_FOLDER_ROOT_PATH` — **the same as** `dropbox.root.path` in `application.properties`.
-
-*Google:*
-
- - `GOOGLE_CLIENT_ID` — **the same as** `oauth2.google.client-id` in `application.properties`.
- - `GOOGLE_CLIENT_SECRET` — **the same as** `oauth2.google.client-secret` in `application.properties`.
- - `GOOGLE_REDIRECT_URI` — **the same as** `oauth2.google.redirect-uri` in `application.properties`.
- - `GOOGLE_AUTH_URI` — **the same as** `oauth2.google.authorization-uri` in `application.properties`.
- - `GOOGLE_TOKEN_URI` — **the same as** `oauth2.google.token-uri` in `application.properties`.
- - `GOOGLE_SCOPE` — **the same as** `oauth2.google.scope` in `application.properties`.
- - `GOOGLE_REFRESH_TOKENS` — **the same as** `oauth2.google.use-refresh-tokens` in `application.properties`.
-
-*Example:*
-
-![](/images/.env_example.png)
+Also, if you want to use the **production profile** of `application.properties`, you need to set an *additional variable*: `SPRING_PROFILES_ACTIVE=prod`. The repository does not contain `application-dev.properties` by default, so unless you **created one**, you would have to set this flag to **run the app**.
 
 # Installation
-First, you need to compile the project. You must have **JDK 21** and **Maven** installed on your device for this to work.
+First, you need to compile the project. You must have **JDK 25** and **Maven** installed on your device for this to work.
 1. Download the repository and unzip it into a directory.
-2. Configure **all files** as it was shown in the previous section.
-3. If you want to launch the server using **Docker**, then you can **skip** this step. Otherwise, you need to **remove Docker dependency** so that the application starts without it.
+2. Configure **all files** as shown in the previous section.
+3. In case you want the frontend to be served from the Spring backend (which is how it's supposed to work), you will also need to build it and copy all of the compiled files into the [static resource folder](/src/main/resources/static/). For more information, check out the [frontend repository](https://github.com/ItsUnbidden/angular-task-management-system).
+4. Open a terminal in the project's directory.
+5. Use `mvn clean package -DskipTests` to build the project. This will not run the test cases because they are currently broken. When the project is compiled, you can **launch** the server.
 
-*pom.xml is in the root directory:*
+### If you are *using* Docker:
 
-![](/images/remove_docker_dependancy.png)
+Use `docker-compose build` to create the required images. After that is done, you can use `docker-compose up` or the **Docker app** to launch it. The app will be accessible at the `8081` port.
 
-1. Open a terminal in the project's directory.
-2. Use `mvn clean package -DskipTests` to build the project. This will not run the test cases, because they are currently broken.
-When the project is compiled, you can **launch** the server.
+### If you are launching without Docker:
 
-If you are using **Docker**:
-Use `docker-compose build` to create a container. After that is done, you can use `docker-compose up` or **Docker app** to launch it.
-The server will be accessible at the port specified in the `.env` file.
-
-If you are launching **without Docker**:
-**Ensure that all files are configured properly and the database is running**. After that, use `java -jar <name>.jar` (replace <name> with the actual name of the file that got generated) in a terminal opened at `<project_folder>/target` directory. Server will be available for access at the default `8080` port.
+**Ensure that all files are configured properly and the database is running**. After that, use `java -jar <name>.jar` (replace <name> with the actual name of the file that got generated) in a terminal opened at the `<project_folder>/target` directory. The server will be available for access at the default `8080` port. *A disclaimer*: this will **not work** unless you have all of the **environmental variables** set up correctly on your machine. If you don't want to set them, I'd recommend using *Docker Compose*.
 
 # Issue
 Although most of the features are implemented, the project is still in **development**. If you found a bug or problem, please [raise an issue](https://github.com/ItsUnbidden/jv-task-management-system/issues).
