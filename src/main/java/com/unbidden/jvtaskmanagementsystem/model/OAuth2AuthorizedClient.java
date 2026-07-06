@@ -39,6 +39,6 @@ public class OAuth2AuthorizedClient {
     @Column(columnDefinition = "TEXT")
     private String refreshToken;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String externalAccountId;
 }

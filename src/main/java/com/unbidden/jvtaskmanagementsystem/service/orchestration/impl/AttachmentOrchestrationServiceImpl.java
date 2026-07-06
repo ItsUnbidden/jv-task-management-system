@@ -82,8 +82,10 @@ public class AttachmentOrchestrationServiceImpl implements AttachmentOrchestrati
                     authorizedUser, attachment.getDropboxId(), response.getOutputStream());
 
             if (dropboxResult.getStatus() != ThirdPartyOperationStatus.SUCCESS) {
-                if (dropboxResult.getTag() == DropboxErrorTag.PATH_LOOKUP_NOT_FOUND
-                        || dropboxResult.getTag() == DropboxErrorTag.PATH_LOOKUP_NOT_FILE) {
+                if ((dropboxResult.getTag() == DropboxErrorTag.PATH_LOOKUP_NOT_FOUND
+                        || dropboxResult.getTag() == DropboxErrorTag.PATH_LOOKUP_NOT_FILE)
+                        && entityUtil.isProjectOwner(user.getId(),
+                        attachment.getTask().getProject().getId())) {
                     LOGGER.info("Failed to find the file in attachment " + attachmentId + " in Dropbox. The attachment will be deleted.");
                     attachmentService.delete(attachmentId);        
                 }

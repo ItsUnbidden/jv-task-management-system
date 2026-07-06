@@ -9,6 +9,6 @@ import org.springframework.lang.NonNull;
 import com.unbidden.jvtaskmanagementsystem.model.Attachment;
 
 public interface AttachmentRepository extends JpaRepository<Attachment, Long> {
-    @EntityGraph(attributePaths = "task")
+    @EntityGraph(attributePaths = { "task", "task.project" })
     Page<Attachment> findByTaskId(@NonNull Long taskId, Pageable pageable);
 }

@@ -1,16 +1,18 @@
 package com.unbidden.jvtaskmanagementsystem.repository.oauth2;
 
-import com.unbidden.jvtaskmanagementsystem.model.AuthorizationMeta;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Repository;
+
+import com.unbidden.jvtaskmanagementsystem.model.AuthorizationMeta;
 
 @Repository
 public class InMemoryAuthorizationMetaRepository implements AuthorizationMetaRepository {
@@ -19,13 +21,13 @@ public class InMemoryAuthorizationMetaRepository implements AuthorizationMetaRep
 
     private static final int EXPIRATION_SECONDS = 300;
 
-    private Map<String, AuthorizationMeta> metas = new HashMap<>();
+    private final ConcurrentMap<String, AuthorizationMeta> metas = new ConcurrentHashMap<>();
 
     @Override
     public AuthorizationMeta save(AuthorizationMeta meta) {
         removeOverdue();
         metas.put(meta.getId().toString(), meta);
-        LOGGER.info("Meta " + meta.getId() + " persisted.");
+        LOGGER.debug("Meta " + meta.getId() + " persisted.");
         return meta;
     }
 
@@ -36,7 +38,7 @@ public class InMemoryAuthorizationMetaRepository implements AuthorizationMetaRep
     }
 
     private void removeOverdue() {
-        LOGGER.info("Checking for outdated metas...");
+        LOGGER.debug("Checking for outdated metas...");
         List<String> keysForRemoval = new ArrayList<>();
 
         for (Entry<String, AuthorizationMeta> entry : metas.entrySet()) {
@@ -47,14 +49,15 @@ public class InMemoryAuthorizationMetaRepository implements AuthorizationMetaRep
         }
         
         if (keysForRemoval.isEmpty()) {
-            LOGGER.info("No metas to remove.");
+            LOGGER.debug("No metas to remove.");
+            return;
         } else {
-            LOGGER.info("Some metas are overdue.");
+            LOGGER.debug("Some metas are overdue.");
         }
 
         for (String key : keysForRemoval) {
             metas.remove(key);
-            LOGGER.info("Removed meta " + key);
+            LOGGER.debug("Removed meta " + key);
         }
     }
 }

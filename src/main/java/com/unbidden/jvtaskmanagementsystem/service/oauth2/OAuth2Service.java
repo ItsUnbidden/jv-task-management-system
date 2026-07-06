@@ -3,7 +3,6 @@ package com.unbidden.jvtaskmanagementsystem.service.oauth2;
 import org.springframework.lang.NonNull;
 
 import com.unbidden.jvtaskmanagementsystem.dto.oauth2.OAuth2StatusResponseDto;
-import com.unbidden.jvtaskmanagementsystem.dto.oauth2.OAuth2SuccessResponse;
 import com.unbidden.jvtaskmanagementsystem.exception.EntityNotFoundException;
 import com.unbidden.jvtaskmanagementsystem.exception.oauth2.OAuth2AuthorizedClientLoadingException;
 import com.unbidden.jvtaskmanagementsystem.model.ClientRegistration;
@@ -36,7 +35,7 @@ public interface OAuth2Service {
      * @param error if any
      * @param errorDescription if any
      */
-    OAuth2SuccessResponse callback(@NonNull HttpServletResponse response, @NonNull String code,
+    void callback(@NonNull HttpServletResponse response, String code,
             @NonNull String state, String error, String errorDescription);
 
     /**
