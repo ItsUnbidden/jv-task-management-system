@@ -19,6 +19,7 @@ import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.TransferOwners
 import com.unbidden.jvtaskmanagementsystem.model.Project;
 import com.unbidden.jvtaskmanagementsystem.model.Task;
 import com.unbidden.jvtaskmanagementsystem.model.User;
+import com.unbidden.jvtaskmanagementsystem.util.DisableLogging;
 
 public interface DropboxService {
     @NonNull
@@ -69,5 +70,8 @@ public interface DropboxService {
     DropboxOperationResult logout(@NonNull User user);
 
     @NonNull
-    AccountResult getUserAccount(@NonNull User user);
+    DropboxOperationResult logout(@NonNull User user, @DisableLogging @NonNull String token);
+
+    @NonNull
+    AccountResult getUserAccount(@NonNull User user, @DisableLogging @NonNull String token);
 }

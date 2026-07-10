@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - changeSet:
+      id: edit-authorized-clients-add-external-id-nonnull-constraint
+      author: Unbidden
+      changes:
+        - modifyDataType:
+            tableName: authorized_clients
+            columnName: external_account_id
+            newDataType: VARCHAR(1000)
+        - addNotNullConstraint:
+            tableName: authorized_clients
+            columnName: external_account_id
+            columnDataType: VARCHAR(1000)

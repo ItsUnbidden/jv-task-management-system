@@ -1,5 +1,7 @@
 package com.unbidden.jvtaskmanagementsystem.util;
 
+import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -30,17 +32,26 @@ public class LoggingAspect {
     public void beforeServiceMethodAdvice(JoinPoint joinPoint) {
         StringBuilder builder = new StringBuilder();
         MethodSignature signature = (MethodSignature)joinPoint.getSignature();
+        Method method = signature.getMethod();
+        Parameter[] params = method.getParameters();
+        Object[] args = joinPoint.getArgs();
         Logger logger = getLogger(signature.getDeclaringType());
-        
-        for (int i = 0; i < joinPoint.getArgs().length; i++) {
-            if (joinPoint.getArgs()[i] != null) {
-                builder.append(signature.getParameterNames()[i]).append(" - ")
-                        .append(joinPoint.getArgs()[i].toString()).append("; ");
+
+        for (int i = 0; i < args.length; i++) {
+            builder.append(params[i].getName()).append(" - ");
+            
+            if (params[i].isAnnotationPresent(DisableLogging.class)) {
+                builder.append("SECRET");
+            } else if (args[i] == null) {
+                builder.append("NULL");
+            } else {
+                builder.append(args[i].toString());
             }
+            builder.append("; ");
         }
         builder.delete(builder.length() - 2, builder.length());
 
-        logger.info("Service method \"" + signature.getName() + "\" was triggered. Args: "
+        logger.debug("Service method \"" + method.getName() + "\" was triggered. Args: "
                 + builder.toString());
     }
 
@@ -49,7 +60,7 @@ public class LoggingAspect {
         MethodSignature signature = (MethodSignature)joinPoint.getSignature();
         Logger logger = getLogger(signature.getDeclaringType());
         
-        logger.info("Service method \"" + signature.getName() + "\" has finished execution.");
+        logger.debug("Service method \"" + signature.getName() + "\" has finished execution.");
     }
 
     @Before("execution(public * com.unbidden.jvtaskmanagementsystem.security.project."
@@ -58,7 +69,7 @@ public class LoggingAspect {
         MethodSignature signature = (MethodSignature)joinPoint.getSignature();
         Logger logger = getLogger(signature.getDeclaringType());
 
-        logger.info("Project provider " + signature.getDeclaringType().getSimpleName()
+        logger.debug("Project provider " + signature.getDeclaringType().getSimpleName()
                 + " is trying to load project using provider's entity id " + joinPoint.getArgs()[0]);
     }
 

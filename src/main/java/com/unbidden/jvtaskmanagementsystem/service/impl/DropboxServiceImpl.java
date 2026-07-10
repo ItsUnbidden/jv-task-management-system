@@ -90,6 +90,7 @@ import com.unbidden.jvtaskmanagementsystem.model.Task;
 import com.unbidden.jvtaskmanagementsystem.model.User;
 import com.unbidden.jvtaskmanagementsystem.service.DropboxService;
 import com.unbidden.jvtaskmanagementsystem.service.oauth2.OAuth2Service;
+import com.unbidden.jvtaskmanagementsystem.util.DisableLogging;
 import com.unbidden.jvtaskmanagementsystem.util.EntityUtil;
 
 import jakarta.annotation.PostConstruct;
@@ -634,17 +635,34 @@ public class DropboxServiceImpl implements DropboxService {
         try {
             final OAuth2AuthorizedClient authorizedClient =
                     oauthService.loadAuthorizedClient(user, clientRegistration);
-            final DbxClientV2 dbxClient = new DbxClientV2(dbxRequestConfig,
-                    authorizedClient.getToken());
+            final DropboxOperationResult result = logout(user, authorizedClient.getToken());
+
+            oauthService.deleteAuthorizedClient(authorizedClient.getId());
+            return result;
+        } catch (OAuth2AuthorizedClientLoadingException e) {
+            return new DropboxOperationResult(ThirdPartyOperationStatus.NOT_APPLICABLE);
+        }
+    }
+    
+    /**
+     * Logs the user out of Dropbox directly using their token.
+     * Possible error tags:
+     * <ls>
+     *  <li>{@code GENERAL_LOGOUT}</li>
+     * </ls>
+     * All tags are available here: {@link DropboxErrorTag}.
+     */
+    @NonNull
+    @Override
+    public DropboxOperationResult logout(@NonNull User user, @DisableLogging @NonNull String token) {
+        try {
+            final DbxClientV2 dbxClient = new DbxClientV2(dbxRequestConfig, token);
 
             logout(dbxClient, user);
-            oauthService.deleteAuthorizedClient(authorizedClient.getId());
             return new DropboxOperationResult(ThirdPartyOperationStatus.SUCCESS);
         } catch (DbxApiException e) {
             return new DropboxOperationResult(ThirdPartyOperationStatus.FAILED,
                     DropboxErrorTag.GENERAL_LOGOUT, "An unknown error has occured during logout.");
-        } catch (OAuth2AuthorizedClientLoadingException e) {
-            return new DropboxOperationResult(ThirdPartyOperationStatus.NOT_APPLICABLE);
         } catch (ThirdPartyExpectedException e) {
             return handleThirdPartyException(e, DropboxOperationResult::new);
         }
@@ -660,9 +678,9 @@ public class DropboxServiceImpl implements DropboxService {
      */
     @NonNull
     @Override
-    public AccountResult getUserAccount(@NonNull User user) {
+    public AccountResult getUserAccount(@NonNull User user, @DisableLogging @NonNull String token) {
         try {
-            final DbxClientV2 dbxClient = getDbxClient(user);
+            final DbxClientV2 dbxClient = new DbxClientV2(dbxRequestConfig, token);
 
             return new AccountResult(ThirdPartyOperationStatus.SUCCESS, getAccount(dbxClient, user));
         } catch (DbxApiException e) {
@@ -670,8 +688,6 @@ public class DropboxServiceImpl implements DropboxService {
                     DropboxErrorTag.GENERAL_ACCOUNT, "An unknown error has occured while "
                     + "attempting to fetch Dropbox account for user "
                     + user.getUsername());
-        } catch (OAuth2AuthorizedClientLoadingException e) {
-            return new AccountResult(ThirdPartyOperationStatus.SKIPPED);
         } catch (ThirdPartyExpectedException e) {
             return handleThirdPartyException(e, AccountResult::new);
         }

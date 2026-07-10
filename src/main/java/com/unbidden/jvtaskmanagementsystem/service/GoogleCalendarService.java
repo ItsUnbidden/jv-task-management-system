@@ -5,9 +5,11 @@ import java.time.LocalDate;
 import org.springframework.lang.NonNull;
 
 import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.calendar.CalendarOperationResult;
+import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.calendar.EmailResult;
 import com.unbidden.jvtaskmanagementsystem.model.Project;
 import com.unbidden.jvtaskmanagementsystem.model.Task;
 import com.unbidden.jvtaskmanagementsystem.model.User;
+import com.unbidden.jvtaskmanagementsystem.util.DisableLogging;
 
 public interface GoogleCalendarService {
     @NonNull
@@ -50,4 +52,10 @@ public interface GoogleCalendarService {
 
     @NonNull
     CalendarOperationResult logout(@NonNull User user);
+
+    @NonNull
+    CalendarOperationResult logout(@NonNull User user, @DisableLogging @NonNull String token);
+
+    @NonNull
+    EmailResult getEmail(@NonNull User user, @DisableLogging @NonNull String token);
 }

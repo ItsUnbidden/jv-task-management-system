@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
@@ -32,8 +33,10 @@ import com.google.api.services.calendar.model.CalendarListEntry;
 import com.google.api.services.calendar.model.Event;
 import com.google.api.services.calendar.model.EventDateTime;
 import com.google.api.services.calendar.model.EventReminder;
+import com.unbidden.jvtaskmanagementsystem.dto.oauth2.GoogleUserInfoResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.ThirdPartyOperationResult.ThirdPartyOperationStatus;
 import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.calendar.CalendarOperationResult;
+import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.calendar.EmailResult;
 import com.unbidden.jvtaskmanagementsystem.exception.oauth2.OAuth2AuthorizedClientLoadingException;
 import com.unbidden.jvtaskmanagementsystem.model.ClientRegistration;
 import com.unbidden.jvtaskmanagementsystem.model.OAuth2AuthorizedClient;
@@ -51,7 +54,9 @@ import com.unbidden.jvtaskmanagementsystem.repository.oauth2.ClientRegistrationR
 import com.unbidden.jvtaskmanagementsystem.service.GoogleCalendarService;
 import com.unbidden.jvtaskmanagementsystem.service.oauth2.OAuth2Service;
 import com.unbidden.jvtaskmanagementsystem.util.BearerAuthentication;
+import com.unbidden.jvtaskmanagementsystem.util.DisableLogging;
 import com.unbidden.jvtaskmanagementsystem.util.EntityUtil;
+import com.unbidden.jvtaskmanagementsystem.util.HttpClientUtil;
 import com.unbidden.jvtaskmanagementsystem.util.HttpClientUtil.HeaderNames;
 import com.unbidden.jvtaskmanagementsystem.util.HttpClientUtil.HeaderValues;
 
@@ -66,6 +71,9 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
     private static final String GOOGLE_TOKEN_REVOKE_URL =
             "https://oauth2.googleapis.com/revoke?token=%s";
 
+    private static final String GOOGLE_USER_INFO_URL =
+            "https://www.googleapis.com/oauth2/v1/userinfo";
+
     private final ClientRegistration clientRegistration;
 
     private final OAuth2Service oauthService;
@@ -78,6 +86,8 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
 
     private final EntityUtil entityUtil;
 
+    private final ObjectMapper objectMapper;
+
     private final HttpClient http;
 
     public GoogleCalendarServiceImpl(
@@ -87,6 +97,7 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
             @Autowired ProjectRoleRepository projectRoleRepository,
             @Autowired TaskEventRepository taskEventRepository,
             @Autowired EntityUtil entityUtil,
+            @Autowired ObjectMapper objectMapper,
             @Autowired HttpClient http) {
         this.clientRegistration = clientRegistrationRepository.findByClientName("google").get();
         this.oauthService = oauthService;
@@ -94,6 +105,7 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
         this.projectRoleRepository = projectRoleRepository;
         this.taskEventRepository = taskEventRepository;
         this.entityUtil = entityUtil;
+        this.objectMapper = objectMapper;
         this.http = http;
     }
     
@@ -506,57 +518,62 @@ public class GoogleCalendarServiceImpl implements GoogleCalendarService {
         return new CalendarOperationResult(ThirdPartyOperationStatus.SUCCESS);
     }
 
-    // TODO: This is a complete piece of hot garbage. Calendars should not be deleted on logout.
     @NonNull
     @Override
     public CalendarOperationResult logout(@NonNull User user) {
-        final List<ProjectCalendar> projectCalendars =
-                projectCalendarRepository.findByCreatorId(user.getId());
-        OAuth2AuthorizedClient authorizedClient;
         try {
-            authorizedClient = oauthService.loadAuthorizedClient(user, clientRegistration);
+            final OAuth2AuthorizedClient authorizedClient = oauthService
+                    .loadAuthorizedClient(user, clientRegistration);
+
+            return logout(user, authorizedClient.getToken());
         } catch (OAuth2AuthorizedClientLoadingException e) {
-            LOGGER.warn("Unable to load authorized client for user " + user.getId()
-                    + ". This might be due to the fact that google refresh "
-                    + "tokens have a limited lifespan. To avoid hard-locking of google services, "
-                    + "user's authorized client will be deleted localy, but the actual token "
-                    + "will not be properly revoked.");
-            authorizedClient = oauthService.getAuthorizedClientForUser(user, clientRegistration);
-            oauthService.deleteAuthorizedClient(authorizedClient.getId());
-            LOGGER.info("Authorized client for user " + user.getId() + " and service "
-                    + clientRegistration.getClientName() + " has been successfully deleted.");
-            projectCalendarRepository.deleteAll(projectCalendars);
-            LOGGER.info("Project calendars for user " + user.getId()
-                    + " have been successfully deleted localy.");
-            return new CalendarOperationResult(ThirdPartyOperationStatus.PARTIAL_SUCCESS);
+            return new CalendarOperationResult(ThirdPartyOperationStatus.SKIPPED);
         }
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(GOOGLE_TOKEN_REVOKE_URL.formatted(authorizedClient.getToken())))
+    }
+
+    @NonNull
+    @Override
+    public CalendarOperationResult logout(@NonNull User user, @DisableLogging @NonNull String token) {
+        final HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(GOOGLE_TOKEN_REVOKE_URL.formatted(token)))
                 .POST(BodyPublishers.noBody())
                 .setHeader(HeaderNames.CONTENT_TYPE, HeaderValues.APPLICATION_FORM_URLENCODED)
                 .build();
 
         try {
-            for (ProjectCalendar projectCalendar : projectCalendars) {
-                deleteProjectCalendar(user, projectCalendar.getProject());
-                LOGGER.info("Project calendar " + projectCalendar.getId()
-                        + " has been successfully deleted remotely.");
-                projectCalendarRepository.delete(projectCalendar);
-                LOGGER.info("Project calendar " + projectCalendar.getId()
-                        + " has been successfully deleted localy.");
-            }
-            LOGGER.info("Sending request to revoke user " + user.getId() + "'s token for service "
-                    + clientRegistration.getClientName());
-            HttpResponse<String> response = http.send(request, BodyHandlers.ofString());
-            LOGGER.info("Response recieved.");
+            LOGGER.debug("Sending request to revoke user " + user.getId() + "'s token.");
+            final HttpResponse<String> response = http.send(request, BodyHandlers.ofString());
+            LOGGER.debug("Response recieved.");
 
             if (response.statusCode() != 200) {
                 return new CalendarOperationResult(ThirdPartyOperationStatus.FAILED);
             }
-            oauthService.deleteAuthorizedClient(authorizedClient.getId());
             return new CalendarOperationResult(ThirdPartyOperationStatus.SUCCESS);
         } catch (IOException | InterruptedException e) {
             return new CalendarOperationResult(ThirdPartyOperationStatus.FAILED);
+        }
+    }
+
+    @NonNull
+    @Override
+    public EmailResult getEmail(@NonNull User user, @DisableLogging @NonNull String token) {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(GOOGLE_USER_INFO_URL))
+                .GET()
+                .setHeader(HeaderNames.AUTHORIZATION,
+                    HttpClientUtil.getBearerAuthorizationHeader(token))
+                .build();
+        LOGGER.debug("Sending request for user " + user.getId() + "'s profile info...");
+        try {
+            HttpResponse<String> response = http.send(request, BodyHandlers.ofString());
+            LOGGER.debug("Response received.");
+
+            GoogleUserInfoResponseDto result =
+                    objectMapper.readValue(response.body(), GoogleUserInfoResponseDto.class);
+            LOGGER.debug("Response parsed.");
+            return new EmailResult(ThirdPartyOperationStatus.SUCCESS, result.getEmail());
+        } catch (IOException | InterruptedException e) {
+            return new EmailResult(ThirdPartyOperationStatus.FAILED);
         }
     }
 
