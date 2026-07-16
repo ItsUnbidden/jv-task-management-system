@@ -1,7 +1,9 @@
 package com.unbidden.jvtaskmanagementsystem.service.impl;
 
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
@@ -38,6 +40,8 @@ import com.unbidden.jvtaskmanagementsystem.service.TaskService;
 import com.unbidden.jvtaskmanagementsystem.util.EntityUtil;
 
 import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -126,7 +130,9 @@ public class TaskServiceImpl implements TaskService {
                 .and(TaskSpecifications.hasPriority(filterDto.getPriority()))
                 .and(TaskSpecifications.isAfterDueDate(filterDto.getDueDateFrom()))
                 .and(TaskSpecifications.isBeforeDueDate(filterDto.getDueDateTo()))
-                .and(TaskSpecifications.hasAnyLabels(filterDto.getLabelIds()));        
+                .and(filterDto.isAnyLabels()
+                        ? TaskSpecifications.hasAnyLabels(filterDto.getLabelIds())
+                        : TaskSpecifications.hasAllLabels(filterDto.getLabelIds()));        
         final Page<Task> tasks = taskRepository.findAll(specification, pageable);
         tasks.forEach(t -> updateTaskStatusAccordingToDate(t));
         return tasks;
@@ -320,11 +326,31 @@ public class TaskServiceImpl implements TaskService {
 
         public static Specification<Task> hasAnyLabels(List<Long> labelIds) {
             return (root, query, cb) -> {
-                if (labelIds == null) return null;
+                if (labelIds == null || labelIds.isEmpty()) return null;
 
                 query.distinct(true);
                 final Join<Task, Label> labelsJoin = root.join("labels");
                 return labelsJoin.get("id").in(labelIds);
+            };
+        }
+
+        public static Specification<Task> hasAllLabels(List<Long> labelIds) {
+            return (root, query, cb) -> {
+                if (labelIds == null || labelIds.isEmpty()) return null;
+
+                final Set<Long> distinctIds = new HashSet<>(labelIds);
+
+                final Subquery<Long> subquery = query.subquery(Long.class);
+                final Root<Task> subTaskRoot = subquery.from(Task.class);
+                final Join<Task, Label> subLabelsJoin = subTaskRoot.join("labels");
+
+                subquery.select(subTaskRoot.get("id"));
+                subquery.where(cb.and(cb.equal(root.get("id"), subTaskRoot.get("id")),
+                        subLabelsJoin.get("id").in(distinctIds)));
+                subquery.groupBy(subTaskRoot.get("id"));
+                subquery.having(cb.equal(cb.countDistinct(subLabelsJoin.get("id")), distinctIds.size()));
+
+                return cb.exists(subquery);
             };
         }
     }
