@@ -9,4 +9,6 @@ public class SubtaskResponseDto {
     private String name;
 
     private boolean isCompleted;
+
+    private Long version;
 }

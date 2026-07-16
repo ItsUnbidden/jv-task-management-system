@@ -19,4 +19,7 @@ public class UpdateLabelRequestDto {
 
     @NotNull
     private Set<Long> taskIds;
+    
+    @NotNull
+    private Long version;
 }

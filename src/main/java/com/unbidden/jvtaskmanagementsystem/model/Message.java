@@ -15,6 +15,7 @@ import jakarta.persistence.InheritanceType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.Data;
 
 @Entity
@@ -41,4 +42,8 @@ public abstract class Message {
 
     @Column(nullable = false, columnDefinition = "TINYINT(1)")
     private boolean isDeleted;
+
+    @Version
+    @Column(nullable = false)
+    private Long version;
 }

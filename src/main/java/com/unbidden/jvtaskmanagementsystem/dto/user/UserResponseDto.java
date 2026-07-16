@@ -19,4 +19,6 @@ public class UserResponseDto {
     private boolean isLocked;
 
     private Set<RoleType> roles;
+
+    private Long version;
 }

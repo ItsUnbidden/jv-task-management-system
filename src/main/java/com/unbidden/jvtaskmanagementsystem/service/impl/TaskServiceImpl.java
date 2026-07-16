@@ -23,6 +23,7 @@ import com.unbidden.jvtaskmanagementsystem.dto.task.specification.TaskFilterDto;
 import com.unbidden.jvtaskmanagementsystem.exception.EntityNotFoundException;
 import com.unbidden.jvtaskmanagementsystem.exception.ErrorType;
 import com.unbidden.jvtaskmanagementsystem.exception.InconsistentDataException;
+import com.unbidden.jvtaskmanagementsystem.exception.StateCollisionException;
 import com.unbidden.jvtaskmanagementsystem.model.Label;
 import com.unbidden.jvtaskmanagementsystem.model.Project;
 import com.unbidden.jvtaskmanagementsystem.model.Task;
@@ -158,6 +159,11 @@ public class TaskServiceImpl implements TaskService {
     public Task updateTask(@NonNull User user, @NonNull Long taskId,
             @NonNull UpdateTaskRequestDto requestDto) {
         final Task taskFromDb = entityUtil.getTaskById(taskId);
+
+        if (!requestDto.getVersion().equals(taskFromDb.getVersion())) {
+            throw new StateCollisionException("Can't update task " + taskFromDb.getName()
+                    + ", because the version does not match.", ErrorType.TASK_OPTIMISTIC_LOCK);
+        }
         
         taskFromDb.setName(requestDto.getName());
         taskFromDb.setDescription(requestDto.getDescription());

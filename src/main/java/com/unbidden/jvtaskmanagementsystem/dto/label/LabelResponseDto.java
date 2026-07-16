@@ -1,6 +1,7 @@
 package com.unbidden.jvtaskmanagementsystem.dto.label;
 
 import java.util.Set;
+
 import lombok.Data;
 
 @Data
@@ -14,4 +15,6 @@ public class LabelResponseDto {
     private Long projectId;
 
     private Set<Long> taskIds;
+
+    private Long version;
 }

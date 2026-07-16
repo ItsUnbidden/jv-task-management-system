@@ -16,6 +16,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -73,6 +74,10 @@ public class Project {
 
     @Column(nullable = false, columnDefinition = "TINYINT(1)")
     private boolean isDeleted;
+
+    @Version
+    @Column(nullable = false)
+    private Long version;
 
     public boolean isDropboxConnected() {
         return dropboxProjectFolderId != null;

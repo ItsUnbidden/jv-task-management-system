@@ -1,9 +1,11 @@
 package com.unbidden.jvtaskmanagementsystem.dto.task;
 
-import com.unbidden.jvtaskmanagementsystem.model.Task.TaskPriority;
-import com.unbidden.jvtaskmanagementsystem.model.Task.TaskStatus;
 import java.time.LocalDate;
 import java.util.Set;
+
+import com.unbidden.jvtaskmanagementsystem.model.Task.TaskPriority;
+import com.unbidden.jvtaskmanagementsystem.model.Task.TaskStatus;
+
 import lombok.Data;
 
 @Data
@@ -33,4 +35,6 @@ public class TaskResponseDto {
     private Integer progress;
 
     private Set<Long> labelIds;
+
+    private Long version;
 }

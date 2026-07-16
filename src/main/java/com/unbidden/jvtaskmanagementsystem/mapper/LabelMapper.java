@@ -19,6 +19,7 @@ public interface LabelMapper {
     @Mapping(target = "project", ignore = true)
     @Mapping(target = "tasks", ignore = true)
     @Mapping(target = "deleted", ignore = true)
+    @Mapping(target = "version", ignore = true)
     Label toModel(CreateLabelRequestDto requestDto);
 
     default Long mapTaskId(Task task) {

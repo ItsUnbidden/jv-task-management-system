@@ -11,6 +11,8 @@ import com.unbidden.jvtaskmanagementsystem.dto.internal.SubtasksChanged;
 import com.unbidden.jvtaskmanagementsystem.dto.task.CreateSubtaskRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.task.SubtaskResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.task.UpdateSubtaskRequestDto;
+import com.unbidden.jvtaskmanagementsystem.exception.ErrorType;
+import com.unbidden.jvtaskmanagementsystem.exception.StateCollisionException;
 import com.unbidden.jvtaskmanagementsystem.mapper.TaskMapper;
 import com.unbidden.jvtaskmanagementsystem.model.ProjectRole.ProjectRoleType;
 import com.unbidden.jvtaskmanagementsystem.model.Subtask;
@@ -64,12 +66,19 @@ public class SubtaskServiceImpl implements SubtaskService {
     public SubtaskResponseDto updateSubtask(@NonNull User user, @NonNull Long subtaskId, @NonNull UpdateSubtaskRequestDto requestDto) {
         final Subtask subtask = entityUtil.getSubtaskById(subtaskId);
 
+        if (!requestDto.version().equals(subtask.getVersion())) {
+            throw new StateCollisionException("Can't update subtask " + subtask.getId()
+                    + ", because the version does not match.", ErrorType.SUBTASK_OPTIMISTIC_LOCK);
+        }
+
         if (subtask.isCompleted() != requestDto.isCompleted()) {
             eventPublisher.publishEvent(new SubtasksChanged(subtask.getTask().getId()));
         }
 
         subtask.setName(requestDto.name());
         subtask.setCompleted(requestDto.isCompleted());
+        subtaskRepository.flush();
+
         return taskMapper.toSubtaskDto(subtask);
     }
 

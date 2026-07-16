@@ -1,0 +1,82 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-optimistic-locking
+      author: Unbidden
+      changes:
+        - addColumn:
+            tableName: projects
+            columns:
+              - column:
+                  name: version
+                  type: BIGINT
+                  defaultValue: 0
+        - addColumn:
+            tableName: tasks
+            columns:
+              - column:
+                  name: version
+                  type: BIGINT
+                  defaultValue: 0
+        - addColumn:
+            tableName: messages
+            columns:
+              - column:
+                  name: version
+                  type: BIGINT
+                  defaultValue: 0
+        - addColumn:
+            tableName: project_roles
+            columns:
+              - column:
+                  name: version
+                  type: BIGINT
+                  defaultValue: 0
+        - addColumn:
+            tableName: subtasks
+            columns:
+              - column:
+                  name: version
+                  type: BIGINT
+                  defaultValue: 0
+        - addColumn:
+            tableName: users
+            columns:
+              - column:
+                  name: version
+                  type: BIGINT
+                  defaultValue: 0
+        - addColumn:
+            tableName: labels
+            columns:
+              - column:
+                  name: version
+                  type: BIGINT
+                  defaultValue: 0
+        - addNotNullConstraint:
+            tableName: projects
+            columnName: version
+            columnDataType: BIGINT
+        - addNotNullConstraint:
+            tableName: tasks
+            columnName: version
+            columnDataType: BIGINT
+        - addNotNullConstraint:
+            tableName: messages
+            columnName: version
+            columnDataType: BIGINT
+        - addNotNullConstraint:
+            tableName: project_roles
+            columnName: version
+            columnDataType: BIGINT
+        - addNotNullConstraint:
+            tableName: subtasks
+            columnName: version
+            columnDataType: BIGINT
+        - addNotNullConstraint:
+            tableName: users
+            columnName: version
+            columnDataType: BIGINT
+        - addNotNullConstraint:
+            tableName: labels
+            columnName: version
+            columnDataType: BIGINT
