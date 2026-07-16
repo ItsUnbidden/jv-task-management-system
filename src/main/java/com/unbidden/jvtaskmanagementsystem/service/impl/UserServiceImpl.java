@@ -101,8 +101,10 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public UserResponseDto updateRoles(@NonNull Long id, @NonNull Set<Role> roles) {
         User user = entityUtil.getUserById(id);
+
         checkUserIsNotOwner(user, "Owner's roles are not allowed to be changed.");
-        if (roles.contains(roleRepository.findByRoleType(RoleType.OWNER).get())) {
+
+        if (roles.contains(getOwnerRole())) {
             throw new UnsupportedOperationException("OWNER role cannot be assigned.");
         }
         user.setRoles(roles);
@@ -114,12 +116,19 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public UserResponseDto updateUserDetails(@NonNull User user, 
             @NonNull UserUpdateDetailsRequestDto requestDto) {
-        user.setUsername(requestDto.getUsername());
-        user.setEmail(requestDto.getEmail());
-        if (requestDto.getPassword() != null) {
-            user.setPassword(passwordEncoder.encode(requestDto.getPassword()));
+        final User userFromDb = entityUtil.getUserById(user.getId());
+        
+        if (!requestDto.getVersion().equals(userFromDb.getVersion())) {
+            throw new StateCollisionException("Can't update user " + userFromDb.getUsername()
+                    + ", because the version does not match.", ErrorType.USER_OPTIMISTIC_LOCK);
         }
-        return userMapper.toDto(userRepository.save(user));
+        userFromDb.setUsername(requestDto.getUsername());
+        userFromDb.setEmail(requestDto.getEmail());
+        if (requestDto.getPassword() != null) {
+            userFromDb.setPassword(passwordEncoder.encode(requestDto.getPassword()));
+        }
+        userRepository.flush();
+        return userMapper.toDto(userFromDb);
     }
 
     @NonNull
@@ -203,7 +212,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public UserResponseDto lockUserById(@NonNull Long id) {
-        User user = entityUtil.getUserById(id);
+        final User user = entityUtil.getUserById(id);
 
         checkUserIsNotOwner(user, "Owner cannot be locked.");
         user.setLocked(!user.isLocked());
@@ -211,12 +220,15 @@ public class UserServiceImpl implements UserService {
     }
 
     private void checkUserIsNotOwner(User user, String errorMsg) {
+        if (user.getRoles().contains(getOwnerRole())) {
+            throw new UnsupportedOperationException(errorMsg);
+        }
+    }
+
+    private Role getOwnerRole() {
         if (ownerRole == null) {
             ownerRole = roleRepository.findByRoleType(RoleType.OWNER).get();
         }
-
-        if (user.getRoles().contains(ownerRole)) {
-            throw new UnsupportedOperationException(errorMsg);
-        }
+        return ownerRole;
     }
 }

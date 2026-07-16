@@ -35,4 +35,6 @@ public class ProjectResponseDto {
 
     @JsonProperty("isCalendarConnected")
     private boolean isCalendarConnected;
+
+    private Long version;
 }

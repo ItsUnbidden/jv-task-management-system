@@ -27,4 +27,7 @@ public class UpdateTaskRequestDto {
     private Long newAssigneeId;
 
     private Set<Long> labelIds;
+
+    @NotNull
+    private Long version;
 }

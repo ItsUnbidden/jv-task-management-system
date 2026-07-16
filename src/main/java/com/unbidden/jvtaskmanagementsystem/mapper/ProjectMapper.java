@@ -28,6 +28,7 @@ public interface ProjectMapper {
     @Mapping(target = "projectCalendar", ignore = true)
     @Mapping(target = "progress", ignore = true)
     @Mapping(target = "deleted", ignore = true)
+    @Mapping(target = "version", ignore = true)
     Project toProject(CreateProjectRequestDto requestDto);
 
     @Mapping(target = "userId", source = "user.id")

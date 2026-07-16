@@ -9,6 +9,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.Data;
 
 @Entity
@@ -28,4 +29,8 @@ public class Subtask {
 
     @Column(columnDefinition = "TINYINT(1)")
     private boolean isCompleted;
+
+    @Version
+    @Column(nullable = false)
+    private Long version;
 }

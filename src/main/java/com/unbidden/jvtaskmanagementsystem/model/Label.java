@@ -15,6 +15,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -46,4 +47,8 @@ public class Label {
 
     @Column(nullable = false, columnDefinition = "TINYINT(1)")
     private boolean isDeleted;
+
+    @Version
+    @Column(nullable = false)
+    private Long version;
 }

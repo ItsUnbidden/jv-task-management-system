@@ -31,6 +31,7 @@ public interface TaskMapper {
     @Mapping(target = "assignee", ignore = true)
     @Mapping(target = "progress", ignore = true)
     @Mapping(target = "deleted", ignore = true)
+    @Mapping(target = "version", ignore = true)
     Task toModel(CreateTaskRequestDto requestDto);
 
     default Long lablesToLabelIds(Label label) {

@@ -26,6 +26,7 @@ import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.ProjectConnect
 import com.unbidden.jvtaskmanagementsystem.exception.EntityNotFoundException;
 import com.unbidden.jvtaskmanagementsystem.exception.ErrorType;
 import com.unbidden.jvtaskmanagementsystem.exception.InconsistentDataException;
+import com.unbidden.jvtaskmanagementsystem.exception.StateCollisionException;
 import com.unbidden.jvtaskmanagementsystem.model.Project;
 import com.unbidden.jvtaskmanagementsystem.model.Project.ProjectStatus;
 import com.unbidden.jvtaskmanagementsystem.model.ProjectRole;
@@ -127,6 +128,11 @@ public class ProjectServiceImpl implements ProjectService {
     public Project updateProject(@NonNull Long projectId,
             @NonNull UpdateProjectRequestDto requestDto) {
         final Project project = entityUtil.getProjectById(projectId);
+
+        if (!requestDto.getVersion().equals(project.getVersion())) {
+            throw new StateCollisionException("Can't update project " + project.getName()
+                    + ", because the version does not match.", ErrorType.PROJECT_OPTIMISTIC_LOCK);
+        }
         
         project.setName(requestDto.getName());
         project.setDescription(requestDto.getDescription());

@@ -20,6 +20,7 @@ public interface UserMapper {
     @Mapping(target = "authorities", ignore = true)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "roles", ignore = true)
+    @Mapping(target = "version", ignore = true)
     User toModel(RegistrationRequest registrationRequest);
 
     default RoleType rolesToRoleTypes(Role role) {

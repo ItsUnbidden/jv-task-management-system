@@ -12,6 +12,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.unbidden.jvtaskmanagementsystem.dto.label.CreateLabelRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.label.LabelResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.label.UpdateLabelRequestDto;
+import com.unbidden.jvtaskmanagementsystem.exception.ErrorType;
+import com.unbidden.jvtaskmanagementsystem.exception.StateCollisionException;
 import com.unbidden.jvtaskmanagementsystem.mapper.LabelMapper;
 import com.unbidden.jvtaskmanagementsystem.model.Label;
 import com.unbidden.jvtaskmanagementsystem.model.Project;
@@ -88,6 +90,11 @@ public class LabelServiceImpl implements LabelService {
     public LabelResponseDto updateLabel(@NonNull User user, @NonNull Long labelId,
             @NonNull UpdateLabelRequestDto requestDto) {
         final Label label = entityUtil.getLabelById(labelId);
+
+        if (!requestDto.getVersion().equals(label.getVersion())) {
+            throw new StateCollisionException("Can't update label " + label.getName()
+                    + ", because the version does not match.", ErrorType.LABEL_OPTIMISTIC_LOCK);
+        }
         
         label.setName(requestDto.getName());
         label.setColor(requestDto.getColor());
@@ -100,8 +107,9 @@ public class LabelServiceImpl implements LabelService {
         }
         tasksFromRequest.forEach(t -> t.getLabels().add(label));
         label.setTasks(new HashSet<>(tasksFromRequest));
+        labelRepository.flush();
         
-        return labelMapper.toDto(labelRepository.save(label));
+        return labelMapper.toDto(label);
     }
 
     @Override

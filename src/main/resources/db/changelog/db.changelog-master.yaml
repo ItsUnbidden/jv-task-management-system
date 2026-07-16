@@ -43,3 +43,5 @@ databaseChangeLog:
       file: /db/changelog/changes/21-edit-projects-tasks-add-progress.yaml
   - include:
       file: /db/changelog/changes/22-edit-authorized-clients-add-external-id-nonnull-constraint.yaml
+  - include:
+      file: /db/changelog/changes/23-add-optimistic-locking.yaml

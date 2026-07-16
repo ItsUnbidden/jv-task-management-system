@@ -25,4 +25,7 @@ public class UpdateProjectRequestDto {
 
     @JsonProperty("isPrivate")
     private boolean isPrivate;
+
+    @NotNull
+    private Long version;
 }
