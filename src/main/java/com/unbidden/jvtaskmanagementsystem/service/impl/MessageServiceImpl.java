@@ -2,7 +2,9 @@ package com.unbidden.jvtaskmanagementsystem.service.impl;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -11,11 +13,16 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.unbidden.jvtaskmanagementsystem.dto.internal.NumberOfRepliesInCommentDto;
+import com.unbidden.jvtaskmanagementsystem.dto.internal.PartialReplyDto;
 import com.unbidden.jvtaskmanagementsystem.dto.message.CommentResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.message.CommentWithTaskIdResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.message.CreateMessageRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.message.MessageResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.message.ReplyResponseDto;
+import com.unbidden.jvtaskmanagementsystem.dto.message.ReplyWithCommentIdResponseDto;
+import com.unbidden.jvtaskmanagementsystem.exception.EntityNotFoundException;
+import com.unbidden.jvtaskmanagementsystem.exception.ErrorType;
 import com.unbidden.jvtaskmanagementsystem.mapper.MessageMapper;
 import com.unbidden.jvtaskmanagementsystem.model.Comment;
 import com.unbidden.jvtaskmanagementsystem.model.Message;
@@ -52,8 +59,12 @@ public class MessageServiceImpl implements MessageService {
             entityIdClass = Task.class)
     public Page<CommentResponseDto> getCommentsForTask(@NonNull User user, @NonNull Long taskId,
             Pageable pageable) {
-        return commentRepository.findByTaskId(taskId, pageable)
+        final Page<CommentResponseDto> commentDtos = commentRepository.findByTaskId(taskId, pageable)
                 .map(messageMapper::toCommentDto);
+        final List<NumberOfRepliesInCommentDto> countDtos = (!commentDtos.isEmpty())
+                ? replyRepository.countRepliesInCommentsForTask(taskId) : List.of();
+
+        return mapCountDtosToComments(commentDtos, countDtos);
     }
 
     @NonNull
@@ -62,8 +73,11 @@ public class MessageServiceImpl implements MessageService {
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true)
     public Page<CommentWithTaskIdResponseDto> getCommentsForProject(@NonNull User user,
             @NonNull Long projectId, Pageable pageable) {
-        return commentRepository.findByProjectId(projectId, pageable)
+        final Page<CommentWithTaskIdResponseDto> commentDtos = commentRepository.findByTaskProjectId(projectId, pageable)
                 .map(messageMapper::toCommentWithTaskIdDto);
+        final List<NumberOfRepliesInCommentDto> countDtos = (!commentDtos.isEmpty())
+                ? replyRepository.countRepliesInCommentsForProject(projectId) : List.of();
+        return mapCountDtosToComments(commentDtos, countDtos);
     }
 
     @NonNull
@@ -74,7 +88,10 @@ public class MessageServiceImpl implements MessageService {
     public CommentWithTaskIdResponseDto getCommentById(@NonNull User user,
             @NonNull Long commentId) {
         final Comment comment = entityUtil.getMessageById(commentId, Comment.class);
-        return messageMapper.toCommentWithTaskIdDto(comment);
+        final CommentWithTaskIdResponseDto dto = messageMapper.toCommentWithTaskIdDto(comment);
+
+        dto.setNumberOfReplies(replyRepository.countByCommentId(commentId));
+        return dto;
     }
 
     @NonNull
@@ -82,10 +99,9 @@ public class MessageServiceImpl implements MessageService {
     @Transactional(readOnly = true)
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true,
             entityIdClass = Message.class, entityIdParamName = "commentId")
-    public Page<ReplyResponseDto> getRepliesForComment(@NonNull User user,
-            @NonNull Long commentId, Pageable pageable) {
-        return replyRepository.findByParentId(commentId, pageable)
-                .map(messageMapper::toReplyDto);
+    public List<ReplyResponseDto> getRepliesForComment(@NonNull User user,
+            @NonNull Long commentId) {
+        return buildReplyDtoTree(replyRepository.findByCommentIdOrderByTimestampAsc(commentId));
     }
 
     @NonNull
@@ -93,10 +109,17 @@ public class MessageServiceImpl implements MessageService {
     @Transactional(readOnly = true)
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true,
             entityIdClass = Message.class, entityIdParamName = "replyId")
-    public ReplyResponseDto getReplyById(@NonNull User user, @NonNull Long replyId) {
-        final Reply reply = entityUtil.getMessageById(replyId, Reply.class);
+    public ReplyWithCommentIdResponseDto getReplyById(@NonNull User user, @NonNull Long replyId) {
+        final List<PartialReplyDto> repliesFromDb = replyRepository.findByIdWithRecursion(replyId);
 
-        return messageMapper.toReplyDto(reply);
+        final List<ReplyResponseDto> dtos = buildReplyDtoTree(repliesFromDb
+                .stream().map(messageMapper::toReplyFromPartial).toList());
+
+        if (dtos.isEmpty()) throw new EntityNotFoundException("Reply with ID " + replyId
+                + " does not exist.", ErrorType.MESSAGE_REPLY_NOT_FOUND);
+        final Long commentId = repliesFromDb.get(0).getCommentId();
+
+        return new ReplyWithCommentIdResponseDto(dtos.get(0), commentId);
     }
 
     @NonNull
@@ -108,16 +131,18 @@ public class MessageServiceImpl implements MessageService {
             @NonNull CreateMessageRequestDto requestDto) {
         final Task task = entityUtil.getTaskById(taskId);
 
-        Comment comment = new Comment();
+        final Comment comment = new Comment();
         comment.setTask(task);
         comment.setUser(user);
         comment.setText(requestDto.getText());
         comment.setTimestamp(LocalDateTime.now());
-        comment.setAmountOfReplies(0);
-        task.setAmountOfMessages(task.getAmountOfMessages() + 1);
+        comment.setIsDeleted(false);
         
         taskRepository.save(task);
-        return messageMapper.toCommentWithTaskIdDto(commentRepository.save(comment));
+        final CommentResponseDto dto = messageMapper.toCommentWithTaskIdDto(commentRepository.save(comment));
+
+        dto.setNumberOfReplies(0L);
+        return dto;
     }
 
     @NonNull
@@ -129,39 +154,27 @@ public class MessageServiceImpl implements MessageService {
             @NonNull CreateMessageRequestDto requestDto) {
         final Message message = entityUtil.getMessageById(messageId);
 
-        Reply reply = new Reply();
+        final Reply reply = new Reply();
         reply.setReplies(new ArrayList<>());
         reply.setText(requestDto.getText());
         reply.setTimestamp(LocalDateTime.now());
         reply.setUser(user);
+        reply.setIsDeleted(false);
 
-        if (message instanceof Comment comment) {
-            final Task task = comment.getTask();
-            task.setAmountOfMessages(task.getAmountOfMessages() + 1);
-
-            comment.setAmountOfReplies(comment.getAmountOfReplies() + 1);
-            
+        if (message instanceof final Comment comment) {
             reply.setParent(comment);
+            reply.setComment(comment);
 
-            commentRepository.save(comment);
-            taskRepository.save(task);
             return messageMapper.toReplyDto(replyRepository.save(reply));
         }
 
-        Reply parent = (Reply)message;
-        
-        Comment superParentComment = entityUtil.getSuperParent(parent);
-        superParentComment.setAmountOfReplies(superParentComment.getAmountOfReplies() + 1);
+        final Reply parent = (Reply)message;
+
         parent.getReplies().add(reply);
         reply.setParent(parent);
-
-        final Task task = superParentComment.getTask();
-        task.setAmountOfMessages(task.getAmountOfMessages() + 1);
+        reply.setComment(parent.getComment());
 
         replyRepository.save(reply);
-        replyRepository.save(parent);
-        commentRepository.save(superParentComment);
-        taskRepository.save(task);
         return messageMapper.toReplyDto(reply);
     }
 
@@ -179,8 +192,11 @@ public class MessageServiceImpl implements MessageService {
         message.setText(requestDto.getText());
         message.setLastUpdated(LocalDateTime.now());
 
-        if (message instanceof Comment comment) {
-            return messageMapper.toCommentWithTaskIdDto(commentRepository.save(comment));
+        if (message instanceof final Comment comment) {
+            final CommentResponseDto dto = messageMapper.toCommentWithTaskIdDto(commentRepository.save(comment));
+
+            dto.setNumberOfReplies(replyRepository.countByCommentId(messageId));
+            return dto;
         }
         return messageMapper.toReplyDto(replyRepository.save((Reply)message));
     }
@@ -194,36 +210,13 @@ public class MessageServiceImpl implements MessageService {
 
         checkMessageBelongsToUser(user, message);
 
-        if (message instanceof Comment comment) {
-            Page<Reply> replies = replyRepository.findByParentId(messageId, null);
+        if (message instanceof final Comment comment) {
+            replyRepository.deleteByCommentId(messageId);
 
-            replyRepository.deleteAll(replies);
-            final Task task = comment.getTask();
-            task.setAmountOfMessages(task.getAmountOfMessages()
-                    - comment.getAmountOfReplies() - 1);
-            
             commentRepository.delete(comment);
-            taskRepository.save(task);
             return;
         }
-        Reply reply = (Reply)message;
-        Comment superParent;
-        if (reply.getParent() instanceof Comment comment) {
-            superParent = comment;
-        } else {
-            superParent = entityUtil.getSuperParent(reply);
-        }
-        
-        int amountOfDeletedReplies = unwindReplies(reply).size();
-
-        superParent.setAmountOfReplies(superParent.getAmountOfReplies()
-                - amountOfDeletedReplies);
-        final Task task = superParent.getTask();
-        task.setAmountOfMessages(task.getAmountOfMessages() - amountOfDeletedReplies);
-
-        taskRepository.save(task);
-        commentRepository.save(superParent);
-        replyRepository.delete(reply);
+        replyRepository.delete((Reply)message);
     }
 
     private void checkMessageBelongsToUser(User user, Message message) {
@@ -233,14 +226,41 @@ public class MessageServiceImpl implements MessageService {
         }
     }
 
-    private List<Reply> unwindReplies(Reply reply) {
-        List<Reply> replies = new ArrayList<>();
+    private List<ReplyResponseDto> buildReplyDtoTree(List<Reply> replies) {
+        final Map<Long, List<ReplyResponseDto>> replyDtoMap = new HashMap<>();
+        final List<ReplyResponseDto> topReplies = new ArrayList<>();
 
-        replies.add(reply);
-        for (Reply innerReply : reply.getReplies()) {
-            replies.addAll(unwindReplies(innerReply));
-            
+        for (final Reply reply : replies) {
+            replyDtoMap.put(reply.getId(), new ArrayList<>());
         }
-        return replies;
+        for (final Reply reply : replies) {
+            final List<ReplyResponseDto> parentReplyDtos = replyDtoMap.get(reply.getParent().getId());
+            final ReplyResponseDto dto = messageMapper.toReplyDto(reply);
+
+            dto.setReplyDtos(replyDtoMap.get(reply.getId()));
+            if (parentReplyDtos == null) {
+                topReplies.add(dto);
+            } else {
+                parentReplyDtos.add(dto);
+            }
+        }
+        return topReplies;
+    }
+
+    private <T extends CommentResponseDto> Page<T> mapCountDtosToComments(Page<T> commentDtos,
+            List<NumberOfRepliesInCommentDto> countDtos) {
+        final Map<Long, Long> countMap = new HashMap<>();
+
+        for (NumberOfRepliesInCommentDto dto : countDtos) {
+            countMap.put(dto.commentId(), dto.numberOfReplies());
+        }
+
+        commentDtos.forEach(c -> {
+            final Long numberOfReplies = countMap.get(c.getId());
+
+            c.setNumberOfReplies(numberOfReplies != null ? numberOfReplies : 0);
+        });
+
+        return commentDtos;
     }
 }

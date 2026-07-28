@@ -1,12 +1,10 @@
 package com.unbidden.jvtaskmanagementsystem.controller;
 
-import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Optional;
 import java.util.Set;
 
-import javax.crypto.SecretKey;
 import javax.sql.DataSource;
 
 import org.junit.jupiter.api.AfterAll;
@@ -37,7 +35,6 @@ import com.unbidden.jvtaskmanagementsystem.model.User;
 import com.unbidden.jvtaskmanagementsystem.repository.RoleRepository;
 import com.unbidden.jvtaskmanagementsystem.repository.UserRepository;
 
-import io.jsonwebtoken.security.Keys;
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 public class AuthControllerTest {
@@ -50,8 +47,6 @@ public class AuthControllerTest {
     private static PasswordEncoder passwordEncoder;
 
     private static User user;
-
-    private static SecretKey secret;
 
     @Value("${jwt.expiration}")
     private Long expiration;
@@ -69,8 +64,6 @@ public class AuthControllerTest {
         userRepository = applicationContext.getBean(UserRepository.class);
         roleRepository = applicationContext.getBean(RoleRepository.class);
         passwordEncoder = applicationContext.getBean(PasswordEncoder.class);
-
-        secret = Keys.hmacShaKeyFor(secretString.getBytes(StandardCharsets.UTF_8));
 
         user = new User();
         user.setEmail("testUser@tms.com");

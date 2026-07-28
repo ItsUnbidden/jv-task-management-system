@@ -45,3 +45,11 @@ databaseChangeLog:
       file: /db/changelog/changes/22-edit-authorized-clients-add-external-id-nonnull-constraint.yaml
   - include:
       file: /db/changelog/changes/23-add-optimistic-locking.yaml
+  - include:
+      file: /db/changelog/changes/24-add-primary-keys-to-join-tables.yaml
+  - include:
+      file: /db/changelog/changes/25-edit-messages-add-comment-column.yaml
+  - include:
+      file: /db/changelog/changes/26-edit-projects-add-is-calendar-connected-column.yaml
+  - include:
+      file: /db/changelog/changes/27-edit-messages-drop-amount-of-replies.yaml

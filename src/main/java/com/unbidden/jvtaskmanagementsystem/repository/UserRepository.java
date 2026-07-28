@@ -26,6 +26,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @EntityGraph(attributePaths = "roles")
     Optional<User> findByEmail(@NonNull String email);
 
+    boolean existsByUsername(@NonNull String username);
+
+    boolean existsByEmail(@NonNull String email);
+
     @NonNull
     @Query("from User u where u.username like %?1%")
     Page<User> searchByUsername(@NonNull String username, Pageable pageable);

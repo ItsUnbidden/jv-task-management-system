@@ -2,6 +2,7 @@ package com.unbidden.jvtaskmanagementsystem.model;
 
 import java.util.Set;
 
+import org.hibernate.Hibernate;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 
@@ -16,14 +17,19 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
-import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.ToString;
 
 @Entity
-@Data
+@Getter
+@Setter
+@RequiredArgsConstructor
+@EqualsAndHashCode
 @Table(name = "labels")
-@SQLDelete(sql = "UPDATE labels SET is_deleted = true WHERE id = ?")
+@SQLDelete(sql = "UPDATE labels SET is_deleted = true, version = version + 1 WHERE id = ? AND version = ?")
 @SQLRestriction("is_deleted <> true")
 public class Label {
     @Id
@@ -51,4 +57,12 @@ public class Label {
     @Version
     @Column(nullable = false)
     private Long version;
+
+    @Override
+    public String toString() {
+        return "Label(id=" + id + ", name=" + name + ", color=" + color
+                + (Hibernate.isInitialized(project) ? ", projectId=" + project.getId() : ", projectId=LAZY")
+                + (Hibernate.isInitialized(tasks) ? ", taskIds=" + tasks.stream().map(t -> t.getId()).toList() : ", taskIds=LAZY")
+                + ", version=" + version + ")";
+    }
 }

@@ -25,7 +25,7 @@ public interface ProjectMapper {
     @Mapping(target = "tasks", ignore = true)
     @Mapping(target = "dropboxProjectFolderId", ignore = true)
     @Mapping(target = "dropboxProjectSharedFolderId", ignore = true)
-    @Mapping(target = "projectCalendar", ignore = true)
+    @Mapping(target = "calendarConnected", ignore = true)
     @Mapping(target = "progress", ignore = true)
     @Mapping(target = "deleted", ignore = true)
     @Mapping(target = "version", ignore = true)

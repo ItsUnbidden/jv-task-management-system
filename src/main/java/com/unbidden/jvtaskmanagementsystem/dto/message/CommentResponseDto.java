@@ -6,5 +6,5 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class CommentResponseDto extends MessageResponseDto {
-    private Integer amountOfReplies;
+    private Long numberOfReplies;
 }

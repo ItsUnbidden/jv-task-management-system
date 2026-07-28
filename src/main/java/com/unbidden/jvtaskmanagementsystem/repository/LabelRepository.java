@@ -18,7 +18,7 @@ public interface LabelRepository extends JpaRepository<Label, Long> {
     Optional<Label> findById(@NonNull Long id);
 
     @NonNull
-    @EntityGraph(attributePaths = {"project", "tasks"})
+    @EntityGraph(attributePaths = {"tasks"})
     Page<Label> findByProjectId(@NonNull Long projectId, @NonNull Pageable pageable);
 
     @NonNull

@@ -1,0 +1,16 @@
+databaseChangeLog:
+  - changeSet:
+      id: edit-projects-add-is-calendar-connected-column
+      author: Unbidden
+      changes:
+        - addColumn:
+            tableName: projects
+            columns:
+              - column:
+                  name: is_calendar_connected
+                  type: boolean
+                  defaultValue: false
+        - addNotNullConstraint:
+            tableName: projects
+            columnName: is_calendar_connected
+            columnDataType: boolean

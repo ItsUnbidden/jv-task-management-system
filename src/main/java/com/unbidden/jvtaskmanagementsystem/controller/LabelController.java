@@ -1,7 +1,6 @@
 package com.unbidden.jvtaskmanagementsystem.controller;
 
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.lang.NonNull;
 import org.springframework.security.core.Authentication;
@@ -65,13 +64,9 @@ public class LabelController {
             @Parameter(
                 description = "Project id"
             )
-            @NonNull @PathVariable Long projectId,
-            @Parameter(
-                description = "Pagination and sorting"
-            )
-            Pageable pageable) {
+            @NonNull @PathVariable Long projectId) {
         return labelService.getLablesForProject((User)authentication.getPrincipal(),
-                projectId, pageable);
+                projectId);
     }
     
     @GetMapping("/{labelId}")

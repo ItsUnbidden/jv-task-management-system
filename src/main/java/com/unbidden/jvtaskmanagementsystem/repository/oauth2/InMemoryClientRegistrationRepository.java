@@ -32,7 +32,7 @@ public class InMemoryClientRegistrationRepository implements ClientRegistrationR
     }
 
     private void initializeClientRegistrations(Environment environment) {
-        LOGGER.info("Attempting to initialize client registrations.");
+        LOGGER.debug("Attempting to initialize client registrations.");
         String providersStr = environment.getProperty("oauth2.providers");
 
         if (providersStr != null && !providersStr.isEmpty()) {
@@ -53,7 +53,7 @@ public class InMemoryClientRegistrationRepository implements ClientRegistrationR
             String provider) {
         final String basePath = "oauth2." + provider + ".";
 
-        LOGGER.info("Initiating properties mapping for " + provider);
+        LOGGER.debug("Initiating properties mapping for " + provider);
         ClientRegistration clientRegistration = new ClientRegistration();
         clientRegistration.setClientName(provider);
 
@@ -62,28 +62,28 @@ public class InMemoryClientRegistrationRepository implements ClientRegistrationR
             throw new OAuth2PropertiesParsingException("Client id cannot be null.", null);
         }
         clientRegistration.setClientId(clientId);
-        LOGGER.info("Client id for " + provider + " is set to " + clientId);
+        LOGGER.debug("Client id for " + provider + " is set to " + clientId);
         
         String clientSecret = environment.getProperty(basePath + "client-secret");
         if (clientSecret == null) {
             throw new OAuth2PropertiesParsingException("Client secret cannot be null.", null);
         }
         clientRegistration.setClientSecret(clientSecret);
-        LOGGER.info("Client secret for " + provider + " is set.");
+        LOGGER.debug("Client secret for " + provider + " is set.");
 
         String redirectUri = environment.getProperty(basePath + "redirect-uri");
         if (redirectUri == null) {
             throw new OAuth2PropertiesParsingException("Redirect URI cannot be null.", null);
         }
         clientRegistration.setRedirectUri(redirectUri);
-        LOGGER.info("Redirect URI for " + provider + " is set to " + redirectUri);
+        LOGGER.debug("Redirect URI for " + provider + " is set to " + redirectUri);
 
         String tokenUri = environment.getProperty(basePath + "token-uri");
         if (tokenUri == null) {
             throw new OAuth2PropertiesParsingException("Token URI cannot be null.", null);
         }
         clientRegistration.setTokenUri(tokenUri);
-        LOGGER.info("Token URI for " + provider + " is set to " + tokenUri);
+        LOGGER.debug("Token URI for " + provider + " is set to " + tokenUri);
 
         String authorizationUri = environment.getProperty(basePath + "authorization-uri");
         if (authorizationUri == null) {
@@ -91,7 +91,7 @@ public class InMemoryClientRegistrationRepository implements ClientRegistrationR
                     + "cannot be null.", null);
         }
         clientRegistration.setAuthorizationUri(authorizationUri);
-        LOGGER.info("Authorization URI for " + provider + " is set to " + authorizationUri);
+        LOGGER.debug("Authorization URI for " + provider + " is set to " + authorizationUri);
 
         String scope = environment.getProperty(basePath + "scope");
         if (scope == null) {
@@ -99,11 +99,11 @@ public class InMemoryClientRegistrationRepository implements ClientRegistrationR
                     + "cannot be null.", null);
         }
         clientRegistration.setScope(scope);
-        LOGGER.info("Scope for " + provider + " is set to " + scope);
+        LOGGER.debug("Scope for " + provider + " is set to " + scope);
         
         clientRegistration.setUseRefreshTokens(Boolean.valueOf(environment.getProperty(
                 basePath + "use-refresh-tokens")));
-        LOGGER.info("Use refresh tokens for " + provider + " is set to "
+        LOGGER.debug("Use refresh tokens for " + provider + " is set to "
                 + clientRegistration.getUseRefreshTokens());
 
         return clientRegistration;

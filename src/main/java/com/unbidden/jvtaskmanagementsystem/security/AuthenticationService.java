@@ -62,7 +62,7 @@ public class AuthenticationService {
         final Authentication authentication = authManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                 requestDto.getUsername(), requestDto.getPassword()));
-        LOGGER.debug("User " + requestDto.getUsername() + " has been authenticatied. Generating refresh token...");
+        LOGGER.debug("User " + requestDto.getUsername() + " has been authenticated. Generating refresh token...");
 
         final String refreshToken = authUtil.generateRefreshToken();
         refreshJwtRepository.save(createRefreshTokenForUser(requestDto.getUsername(), refreshToken));
@@ -93,15 +93,14 @@ public class AuthenticationService {
         if (refreshJwtOpt.get().getRevokedAt() != null) {
             LOGGER.warn("Revoked refresh token. Possible token reuse attack. Revoking all refresh tokens for user "
                     + refreshJwtOpt.get().getUser().getUsername() + "...");
-            refreshJwtRepository.deleteAllByUserId(refreshJwtOpt.get().getUser().getId());
-            LOGGER.debug("All refresh tokens for user "
-                    + refreshJwtOpt.get().getUser().getUsername() + " have been revoked.");
+            final int tokensDeleted = refreshJwtRepository.deleteAllByUserId(refreshJwtOpt.get().getUser().getId());
+            LOGGER.debug("Deleted " + tokensDeleted + " refresh tokens for user "
+                    + refreshJwtOpt.get().getUser().getUsername() + ".");
             writeHttpResponse(response, ErrorType.AUTH_REVOKED_REFRESH_TOKEN, "The refresh token has already been revoked.");
             return;
         }
         response.addCookie(authUtil.getAccessTokenCookie(authUtil.generateToken(refreshJwtOpt.get().getUser().getUsername())));
         refreshJwtOpt.get().setRevokedAt(LocalDateTime.now());
-        refreshJwtRepository.save(refreshJwtOpt.get());
 
         final String newRefreshTokenStr = authUtil.generateRefreshToken();
         refreshJwtRepository.save(createRefreshTokenForUser(refreshJwtOpt.get().getUser().getUsername(), newRefreshTokenStr));
@@ -122,7 +121,7 @@ public class AuthenticationService {
     @Transactional
     public void cleanUpRefreshTokens() {
         LOGGER.info("Cleaning up old refresh tokens...");
-        final int numberOfDeletions = refreshJwtRepository.deleteByExpiryDateBefore(
+        final int numberOfDeletions = refreshJwtRepository.deleteAllByExpiryDateBefore(
                 LocalDateTime.now().minusDays(refreshTokenMaxAgeDays));
 
         LOGGER.info("Cleaned up " + numberOfDeletions + " outdated tokens.");

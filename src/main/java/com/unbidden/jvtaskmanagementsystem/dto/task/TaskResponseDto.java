@@ -1,7 +1,6 @@
 package com.unbidden.jvtaskmanagementsystem.dto.task;
 
 import java.time.LocalDate;
-import java.util.Set;
 
 import com.unbidden.jvtaskmanagementsystem.model.Task.TaskPriority;
 import com.unbidden.jvtaskmanagementsystem.model.Task.TaskStatus;
@@ -30,11 +29,9 @@ public class TaskResponseDto {
 
     private String assigneeUsername;
 
-    private Integer amountOfMessages;
+    private Long numberOfMessages;
 
     private Integer progress;
-
-    private Set<Long> labelIds;
 
     private Long version;
 }

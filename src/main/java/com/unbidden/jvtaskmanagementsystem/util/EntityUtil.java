@@ -2,7 +2,6 @@ package com.unbidden.jvtaskmanagementsystem.util;
 
 import java.util.Optional;
 
-import org.hibernate.proxy.HibernateProxy;
 import org.springframework.lang.NonNull;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.GrantedAuthority;
@@ -168,25 +167,6 @@ public class EntityUtil {
         return false;
     }
 
-    /**
-     * This method returns the {@link Comment} this {@link Reply} ultimately belongs to.
-     * @param reply for which is needed to find comment
-     * @return {@link Comment}
-     */
-    @NonNull
-    public Comment getSuperParent(@NonNull Reply reply) {
-        Message superParent = unproxyMessage(reply.getParent());
-
-        while (superParent instanceof Reply) {
-            superParent = unproxyMessage(((Reply)superParent).getParent());
-        }
-
-        if (superParent == null) throw new EntityNotFoundException(
-                "The ultimate parent not found for a reply.", ErrorType.INTERNAL);
-
-        return (Comment)superParent;
-    }
-
     @NonNull
     public User getProjectOwner(@NonNull Project project) {
         ProjectRole ownerProjectRole = project.getProjectRoles()
@@ -202,12 +182,5 @@ public class EntityUtil {
                 projectId, userId);
 
         return roleOpt.isPresent() && roleOpt.get().getRoleType() == ProjectRoleType.CREATOR;
-    }
-
-    private Message unproxyMessage(Message message) {
-        if (message instanceof HibernateProxy proxy) {
-            return (Message)proxy.getHibernateLazyInitializer().getImplementation();
-        }
-        return message;
     }
 }

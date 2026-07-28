@@ -25,23 +25,23 @@ public class ProjectSecurityAspect {
 
     @Before("@annotation(com.unbidden.jvtaskmanagementsystem.security.project.ProjectSecurity)")
     public void projectAccessAdvice(JoinPoint joinPoint) {
-        LOGGER.info("Project security aspect commencing...");
+        LOGGER.debug("Project security aspect commencing...");
         ProjectSecurityDto dataFromJoinPoint = dataParser.parse(joinPoint);
 
         if (dataFromJoinPoint.isBypassIfPublic()
                 && !dataFromJoinPoint.getProject().isPrivate()) {
-            LOGGER.info("Project " + dataFromJoinPoint.getProject().getId()
+            LOGGER.debug("Project " + dataFromJoinPoint.getProject().getId()
                     + " is public. Security is unnecessary.");
             return;
         }
         if (entityUtil.isManager(dataFromJoinPoint.getUser())) {
-            LOGGER.warn("User " + dataFromJoinPoint.getUser().getId()
+            LOGGER.info("User " + dataFromJoinPoint.getUser().getId()
                     + " is an application manager. Security bypassed.");
             return;
         }
 
         checkUserAccess(dataFromJoinPoint);
-        LOGGER.info("Access granted to user " + dataFromJoinPoint.getUser().getId()
+        LOGGER.debug("Access granted to user " + dataFromJoinPoint.getUser().getId()
                 + " for project " + dataFromJoinPoint.getProject().getId());
     }
 

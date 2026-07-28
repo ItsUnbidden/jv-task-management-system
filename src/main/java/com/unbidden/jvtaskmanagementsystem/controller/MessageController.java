@@ -5,6 +5,7 @@ import com.unbidden.jvtaskmanagementsystem.dto.message.CommentWithTaskIdResponse
 import com.unbidden.jvtaskmanagementsystem.dto.message.CreateMessageRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.message.MessageResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.message.ReplyResponseDto;
+import com.unbidden.jvtaskmanagementsystem.dto.message.ReplyWithCommentIdResponseDto;
 import com.unbidden.jvtaskmanagementsystem.model.User;
 import com.unbidden.jvtaskmanagementsystem.service.MessageService;
 
@@ -15,6 +16,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+
+import java.util.List;
 
 import org.springframework.data.domain.Page;
 
@@ -171,7 +174,7 @@ public class MessageController {
                     description = "Forbidden. Possible only if project is private")
             }
     )
-    public ReplyResponseDto getReplyById(Authentication authentication,
+    public ReplyWithCommentIdResponseDto getReplyById(Authentication authentication,
             @Parameter(
                 description = "Reply id"
             )
@@ -203,17 +206,13 @@ public class MessageController {
                     description = "Forbidden. Possible only if project is private")
             }
     )
-    public Page<ReplyResponseDto> getRepliesForComment(Authentication authentication,
+    public List<ReplyResponseDto> getRepliesForComment(Authentication authentication,
             @Parameter(
                 description = "Comment id"
             )
-            @NonNull @PathVariable Long commentId,
-            @Parameter(
-                description = "Pagination and sorting"
-            )
-            Pageable pageable) {
+            @NonNull @PathVariable Long commentId) {
         return messageService.getRepliesForComment((User)authentication.getPrincipal(),
-                commentId, pageable);
+                commentId);
     }
     
     @PostMapping("/comments/tasks/{taskId}")

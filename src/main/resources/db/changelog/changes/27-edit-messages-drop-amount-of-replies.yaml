@@ -1,0 +1,11 @@
+databaseChangeLog:
+  - changeSet:
+      id: edit-messages-tasks-drop-amount-of-replies
+      author: Unbidden
+      changes:
+        - dropColumn:
+            tableName: messages
+            columnName: amount_of_replies
+        - dropColumn:
+            tableName: tasks
+            columnName: amount_of_messages

@@ -8,6 +8,7 @@ import org.hibernate.annotations.SQLRestriction;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -16,10 +17,14 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
-@Data
+@Getter
+@Setter
+@EqualsAndHashCode
 @Table(name = "project_calendars")
 @SQLDelete(sql = "UPDATE project_calendars SET is_deleted = true WHERE id = ?")
 @SQLRestriction("is_deleted <> true")
@@ -37,11 +42,11 @@ public class ProjectCalendar {
     @Column(length = 1000)
     private String endEventId;
 
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id", nullable = false)
     private Project project;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "creator_id", nullable = false)
     private User creator;
 
@@ -50,6 +55,11 @@ public class ProjectCalendar {
 
     @Column(nullable = false, columnDefinition = "TINYINT(1)")
     private boolean isDeleted;
+
+    @Override
+    public String toString() {
+        return "ProjectCalendar(id=" + id + ")";
+    }
 
     public ProjectCalendar() {
     }

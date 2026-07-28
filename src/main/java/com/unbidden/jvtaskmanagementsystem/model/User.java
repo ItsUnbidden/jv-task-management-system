@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.hibernate.Hibernate;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 import org.springframework.security.core.GrantedAuthority;
@@ -14,6 +15,7 @@ import com.unbidden.jvtaskmanagementsystem.model.Role.RoleType;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -22,13 +24,18 @@ import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
-import lombok.Data;
-import lombok.ToString;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 
 @Entity
-@Data
+@Getter
+@Setter
+@RequiredArgsConstructor
+@EqualsAndHashCode
 @Table(name = "users")
-@SQLDelete(sql = "UPDATE users SET is_deleted = true WHERE id = ?")
+@SQLDelete(sql = "UPDATE users SET is_deleted = true, version = version + 1 WHERE id = ? AND version = ?")
 @SQLRestriction("is_deleted <> true")
 public class User implements UserDetails {
     @Id
@@ -38,7 +45,6 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private String username;
 
-    @ToString.Exclude
     @Column(nullable = false)
     private String password;
 
@@ -51,7 +57,7 @@ public class User implements UserDetails {
     @Column(nullable = false, columnDefinition = "TINYINT(1)")
     private boolean isDeleted;
 
-    @ManyToMany()
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "users_roles", 
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id")
@@ -103,5 +109,14 @@ public class User implements UserDetails {
     @Override
     public boolean isEnabled() {
         return !isDeleted;
+    }
+
+    @Override
+    public String toString() {
+        String base = "User(id=" + id + ", username=" + username + ", email=" + email + ", isLocked="
+                + isLocked + ", isDeleted=" + isDeleted + ", version=" + version
+                + (Hibernate.isInitialized(roles) ? ", roles=" + roles : ", roles=LAZY") + ")";
+        
+        return base;
     }
 }

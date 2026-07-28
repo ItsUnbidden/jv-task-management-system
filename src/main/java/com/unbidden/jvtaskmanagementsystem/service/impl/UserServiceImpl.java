@@ -73,17 +73,18 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public UserResponseDto register(@NonNull RegistrationRequest request) {
-        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+        if (userRepository.existsByEmail(request.getEmail())) {
             throw new StateCollisionException(
-                    "Cannot register user because user with this email is already registred.",
+                    "Cannot register the user because a user with this email is already registred.",
                     ErrorType.REGISTRATION_EMAIL_TAKEN);
-        } else if (userRepository.findByUsername(request.getUsername()).isPresent()) {
+        } else if (userRepository.existsByUsername(request.getUsername())) {
             throw new StateCollisionException(
-                "Cannot register user because this username has already been used.",
+                "Cannot register the user because this username has already been used by someone else.",
                 ErrorType.REGISTRATION_USERNAME_TAKEN);
         }
-        Role role = roleRepository.findByRoleType(RoleType.USER).get();
-        User user = userMapper.toModel(request);
+        final Role role = roleRepository.findByRoleType(RoleType.USER).get();
+        final User user = userMapper.toModel(request);
+        
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setRoles(Set.of(role));
         userRepository.save(user);
@@ -217,6 +218,18 @@ public class UserServiceImpl implements UserService {
         checkUserIsNotOwner(user, "Owner cannot be locked.");
         user.setLocked(!user.isLocked());
         return userMapper.toDto(userRepository.save(user));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean isUsernameAvailable(String username) {
+        return userRepository.existsByUsername(username);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean isEmailAvailable(String email) {
+        return userRepository.existsByEmail(email);
     }
 
     private void checkUserIsNotOwner(User user, String errorMsg) {

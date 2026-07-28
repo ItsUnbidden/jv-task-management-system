@@ -2,6 +2,7 @@ package com.unbidden.jvtaskmanagementsystem.model;
 
 import java.time.LocalDateTime;
 
+import org.hibernate.Hibernate;
 import org.hibernate.annotations.SQLRestriction;
 
 import jakarta.persistence.Column;
@@ -16,10 +17,16 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 
 @Entity
-@Data
+@Getter
+@Setter
+@RequiredArgsConstructor
+@EqualsAndHashCode
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @Table(name = "messages")
 @SQLRestriction("is_deleted <> true")
@@ -41,9 +48,16 @@ public abstract class Message {
     private LocalDateTime lastUpdated;
 
     @Column(nullable = false, columnDefinition = "TINYINT(1)")
-    private boolean isDeleted;
+    private Boolean isDeleted;
 
     @Version
     @Column(nullable = false)
     private Long version;
+
+    @Override
+    public String toString() {
+        return "Message(id=" + id + (Hibernate.isInitialized(user) ? ", user=" + user : ", user=LAZY")
+                + ", text=" + text + ", timestamp=" + timestamp + ", lastUpdated=" + lastUpdated
+                + ", version=" + version + ")";
+    }
 }

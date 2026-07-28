@@ -1,5 +1,6 @@
 package com.unbidden.jvtaskmanagementsystem.controller;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.lang.NonNull;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -25,6 +26,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
+
 
 
 @RestController
@@ -65,6 +69,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void login(
             @NonNull HttpServletResponse response,
             @Parameter(
@@ -75,6 +80,7 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void refreshAccessToken(
             @NonNull HttpServletRequest request, @NonNull HttpServletResponse response) {
         authService.refreshToken(request, response);
@@ -95,5 +101,15 @@ public class AuthController {
     @GetMapping("/csrf/refresh")
     public CsrfToken refreshCsrfToken(HttpServletRequest request, HttpServletResponse response) {
         return authService.refreshCsrfToken(request, response);
+    }
+
+    @GetMapping("/available/username")
+    public boolean isUsernameAvailable(@NonNull @RequestParam String username) {
+        return userService.isUsernameAvailable(username);
+    }
+
+    @GetMapping("/available/email")
+    public boolean isEmailAvailable(@NonNull @RequestParam String email) {
+        return userService.isEmailAvailable(email);
     }
 }

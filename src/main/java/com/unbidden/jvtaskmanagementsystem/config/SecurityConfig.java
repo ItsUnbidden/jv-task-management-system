@@ -16,6 +16,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.security.web.context.NullSecurityContextRepository;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
+import org.springframework.security.web.savedrequest.NullRequestCache;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -63,6 +64,7 @@ public class SecurityConfig {
                         "/api/auth/refresh",
                         "/api/auth/csrf",
                         "/api/auth/csrf/refresh",
+                        "/api/auth/available/**",
                         "/api/oauth2/connect/code",
                         "/api/v3/api-docs/**",
                         "/api/swagger-ui/**",
@@ -74,6 +76,7 @@ public class SecurityConfig {
                 )
                 .securityContext(context -> context
                     .securityContextRepository(new NullSecurityContextRepository()))
+                .requestCache(cache -> cache.requestCache(new NullRequestCache()))
                 .addFilterBefore(jwtAuthenticationFilter, 
                     UsernamePasswordAuthenticationFilter.class)
                 .build();
