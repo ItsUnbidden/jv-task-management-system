@@ -43,9 +43,9 @@ public class LabelServiceImpl implements LabelService {
     @Override
     @Transactional(readOnly = true)
     @ProjectSecurity(securityLevel = ProjectRoleType.CONTRIBUTOR, bypassIfPublic = true)
-    public Page<LabelResponseDto> getLablesForProject(@NonNull User user, @NonNull Long projectId,
-            Pageable pageable) {
-        return labelRepository.findByProjectId(projectId, Pageable.unpaged()).map(labelMapper::toDto);
+    public Page<LabelResponseDto> getLablesForProject(@NonNull User user, @NonNull Long projectId) {
+        return labelRepository.findByProjectId(projectId, Pageable.unpaged())
+                .map(l -> labelMapper.toDtoWithProjectId(l, projectId));
     }
 
     @NonNull

@@ -4,7 +4,6 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -174,7 +173,6 @@ public class TaskControllerTest {
         task1.setPriority(TaskPriority.MEDIUM);
         task1.setStatus(TaskStatus.NOT_STARTED);
         task1.setProject(projectA);
-        task1.setAmountOfMessages(0);
         tasks.add(taskRepository.save(task1));
         
         Task task2 = new Task();
@@ -186,7 +184,6 @@ public class TaskControllerTest {
         task2.setPriority(TaskPriority.MEDIUM);
         task2.setStatus(TaskStatus.NOT_STARTED);
         task2.setProject(projectA);
-        task2.setAmountOfMessages(0);
         tasks.add(taskRepository.save(task2));
         taskDtos = tasks.stream().map(t -> mapToDto(t)).toList();
     }
@@ -412,10 +409,8 @@ public class TaskControllerTest {
         dto.setDueDate(task.getDueDate());
         dto.setProjectId(task.getProject().getId());
         dto.setProjectName(task.getProject().getName());
-        dto.setLabelIds(new HashSet<>(task.getLabels().stream().map(l -> l.getId()).toList()));
         dto.setStatus(task.getStatus());
         dto.setPriority(task.getPriority());
-        dto.setAmountOfMessages(task.getAmountOfMessages());
         return dto;
     }
 
@@ -429,7 +424,6 @@ public class TaskControllerTest {
         task.setPriority(TaskPriority.MEDIUM);
         task.setStatus(TaskStatus.NOT_STARTED);
         task.setProject(projects.get(1));
-        task.setAmountOfMessages(0);
         return taskRepository.save(task);
     }
 }

@@ -14,6 +14,8 @@ public class TaskFilterDto {
 
     private List<Long> labelIds;
 
+    private boolean isAnyLabels;
+
     private LocalDate dueDateFrom;
 
     private LocalDate dueDateTo;

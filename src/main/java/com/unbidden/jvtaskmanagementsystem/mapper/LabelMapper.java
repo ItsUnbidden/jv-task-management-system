@@ -15,6 +15,9 @@ public interface LabelMapper {
     @Mapping(target = "taskIds", source = "tasks")
     LabelResponseDto toDto(Label label);
 
+    @Mapping(target = "taskIds", source = "label.tasks")
+    LabelResponseDto toDtoWithProjectId(Label label, Long projectId);
+
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "project", ignore = true)
     @Mapping(target = "tasks", ignore = true)

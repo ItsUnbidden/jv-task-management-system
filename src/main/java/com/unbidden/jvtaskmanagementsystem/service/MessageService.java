@@ -1,5 +1,7 @@
 package com.unbidden.jvtaskmanagementsystem.service;
 
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.lang.NonNull;
@@ -9,6 +11,7 @@ import com.unbidden.jvtaskmanagementsystem.dto.message.CommentWithTaskIdResponse
 import com.unbidden.jvtaskmanagementsystem.dto.message.CreateMessageRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.message.MessageResponseDto;
 import com.unbidden.jvtaskmanagementsystem.dto.message.ReplyResponseDto;
+import com.unbidden.jvtaskmanagementsystem.dto.message.ReplyWithCommentIdResponseDto;
 import com.unbidden.jvtaskmanagementsystem.model.User;
 
 public interface MessageService {
@@ -21,10 +24,9 @@ public interface MessageService {
 
     CommentWithTaskIdResponseDto getCommentById(@NonNull User user, @NonNull Long commentId);
 
-    Page<ReplyResponseDto> getRepliesForComment(@NonNull User user, @NonNull Long commentId,
-            Pageable pageable);
+    List<ReplyResponseDto> getRepliesForComment(@NonNull User user, @NonNull Long commentId);
 
-    ReplyResponseDto getReplyById(@NonNull User user, @NonNull Long replyId);
+    ReplyWithCommentIdResponseDto getReplyById(@NonNull User user, @NonNull Long replyId);
 
     CommentResponseDto leaveComment(@NonNull User user, @NonNull Long taskId,
             @NonNull CreateMessageRequestDto requestDto);

@@ -1,0 +1,22 @@
+databaseChangeLog:
+  - changeSet:
+      id: edit-messages-add-comment-column
+      author: Unbidden
+      changes:
+        - addColumn:
+            tableName: messages
+            columns:
+              - column:
+                  name: comment_id
+                  type: BIGINT
+                  defaultValue: null
+        - addForeignKeyConstraint:
+            baseTableName: messages
+            baseColumnNames: comment_id
+            referencedTableName: messages
+            referencedColumnNames: id
+            constraintName: fk_replies_comments
+        - addNotNullConstraint:
+            tableName: messages
+            columnName: amount_of_replies
+            columnDataType: int

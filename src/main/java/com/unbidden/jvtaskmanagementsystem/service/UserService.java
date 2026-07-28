@@ -44,4 +44,8 @@ public interface UserService {
 
     @NonNull
     UserResponseDto lockUserById(@NonNull Long id);
+
+    boolean isUsernameAvailable(@NonNull String username);
+
+    boolean isEmailAvailable(@NonNull String email);
 }

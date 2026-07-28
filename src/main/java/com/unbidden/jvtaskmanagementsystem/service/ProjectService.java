@@ -8,6 +8,7 @@ import com.unbidden.jvtaskmanagementsystem.dto.internal.TaskProgressUpdated;
 import com.unbidden.jvtaskmanagementsystem.dto.project.UpdateProjectRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.project.UpdateProjectStatusRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.projectrole.UpdateProjectRoleRequestDto;
+import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.calendar.CalendarOperationResult;
 import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.AddUserToProjectFolderResult;
 import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.CreatedProjectFolderResult;
 import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.ProjectConnectedToDropboxResult;
@@ -60,6 +61,10 @@ public interface ProjectService {
     @NonNull
     Project connectProjectToDropbox(@NonNull Long projectId,
             @NonNull ProjectConnectedToDropboxResult dropboxResult);
+
+    @NonNull
+    Project connectProjectToCalendar(@NonNull Long projectId,
+            @NonNull CalendarOperationResult calendarResult);
 
     @NonNull
     Project disconnectDropbox(@NonNull Long projectId);

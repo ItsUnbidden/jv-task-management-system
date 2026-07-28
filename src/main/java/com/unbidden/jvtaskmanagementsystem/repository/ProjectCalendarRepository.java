@@ -9,9 +9,10 @@ import org.springframework.lang.NonNull;
 
 public interface ProjectCalendarRepository extends JpaRepository<ProjectCalendar, Long> {
     @NonNull
+    @EntityGraph(attributePaths = {"project", "creator"})
     Optional<ProjectCalendar> findByProjectId(@NonNull Long projectId);
 
     @NonNull
-    @EntityGraph(attributePaths = "project")
+    @EntityGraph(attributePaths = {"project", "creator"})
     List<ProjectCalendar> findByCreatorId(@NonNull Long creatorId);
 }

@@ -6,6 +6,7 @@ import com.unbidden.jvtaskmanagementsystem.util.EntityUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @RequiredArgsConstructor
@@ -14,6 +15,7 @@ public class ProjectFromAttachmentIdProvider implements ProjectProvider {
 
     @NonNull
     @Override
+    @Transactional(readOnly = true)
     public Project getProject(@NonNull Long id) {
         return entityUtil.getAttachmentById(id).getTask().getProject();
     }

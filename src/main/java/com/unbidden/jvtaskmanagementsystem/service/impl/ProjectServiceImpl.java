@@ -19,6 +19,7 @@ import com.unbidden.jvtaskmanagementsystem.dto.project.UpdateProjectRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.project.UpdateProjectStatusRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.projectrole.UpdateProjectRoleRequestDto;
 import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.ThirdPartyOperationResult.ThirdPartyOperationStatus;
+import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.calendar.CalendarOperationResult;
 import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.AddUserToProjectFolderResult;
 import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.CreatedProjectFolderResult;
 import com.unbidden.jvtaskmanagementsystem.dto.thirdparty.dropbox.DropboxOperationResult.DropboxErrorTag;
@@ -251,7 +252,7 @@ public class ProjectServiceImpl implements ProjectService {
             @NonNull ProjectConnectedToDropboxResult dropboxResult) {
         final Project project = entityUtil.getProjectById(projectId);
 
-        if (dropboxResult.getStatus().equals(ThirdPartyOperationStatus.SUCCESS)) {
+        if (dropboxResult.getStatus() == ThirdPartyOperationStatus.SUCCESS) {
             project.setDropboxProjectFolderId(dropboxResult.getProjectFolderResult().getProjectFolderId());
             project.setDropboxProjectSharedFolderId(dropboxResult.getProjectFolderResult().getProjectSharedFolderId());
 
@@ -262,6 +263,18 @@ public class ProjectServiceImpl implements ProjectService {
                     pr.setDropboxConnected(true);
                 }
             });
+        }
+        return project;
+    }
+
+    @NonNull
+    @Override
+    @Transactional
+    public Project connectProjectToCalendar(@NonNull Long projectId, @NonNull CalendarOperationResult calendarResult) {
+        final Project project = entityUtil.getProjectById(projectId);
+
+        if (calendarResult.getStatus() == ThirdPartyOperationStatus.SUCCESS) {
+            project.setCalendarConnected(true);
         }
         return project;
     }
@@ -287,7 +300,7 @@ public class ProjectServiceImpl implements ProjectService {
     public Project disconnectCalendar(@NonNull Long projectId) {
         final Project project = entityUtil.getProjectById(projectId);
 
-        project.setProjectCalendar(null);
+        project.setCalendarConnected(false);
 
         return project;
     }

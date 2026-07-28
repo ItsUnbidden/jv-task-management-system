@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-primary-keys-to-join-tables
+      author: Unbidden
+      changes:
+        - addPrimaryKey:
+            tableName: users_roles
+            columnNames: user_id, role_id
+            constraintName: pk_users_roles
+        - addPrimaryKey:
+            tableName: tasks_labels
+            columnNames: task_id, label_id
+            constraintName: pk_tasks_labels

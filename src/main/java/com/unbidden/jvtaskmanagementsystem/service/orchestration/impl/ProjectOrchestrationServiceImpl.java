@@ -261,9 +261,9 @@ public class ProjectOrchestrationServiceImpl implements ProjectOrchestrationServ
         final Project project = entityUtil.getProjectById(projectId);
         final User authorizedUser = (entityUtil.isManager(user))
                 ? entityUtil.getProjectOwner(project) : user;
-        
-        calendarService.connectProjectToCalendar(authorizedUser, project);
-        return projectMapper.toProjectDto(project);
+
+        return projectMapper.toProjectDto(projectService.connectProjectToCalendar(
+                projectId, calendarService.connectProjectToCalendar(authorizedUser, project)));
     }
 
     @NonNull

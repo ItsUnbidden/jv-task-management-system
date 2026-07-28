@@ -4,6 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.unbidden.jvtaskmanagementsystem.model.Comment;
 import com.unbidden.jvtaskmanagementsystem.model.Message;
@@ -22,8 +23,9 @@ public class ProjectFromMessageIdProvider implements ProjectProvider {
 
     @NonNull
     @Override
+    @Transactional(readOnly = true)
     public Project getProject(@NonNull Long id) {
-        LOGGER.warn("Message id that was provided: " + id);
+        LOGGER.trace("Message id that was provided: " + id);
         final Message message = entityUtil.getMessageById(id);
         
         if (message instanceof Comment comment) {
@@ -43,8 +45,6 @@ public class ProjectFromMessageIdProvider implements ProjectProvider {
     }
 
     private Project getFromReply(Reply reply) {
-        Comment superParent = entityUtil.getSuperParent(reply);
-        LOGGER.warn("Super parent of this reply: " + superParent.toString());
-        return superParent.getTask().getProject();
+        return reply.getComment().getTask().getProject();
     }
 }

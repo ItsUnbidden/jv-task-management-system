@@ -33,7 +33,7 @@ public class ProjectSecurityDataParserImpl implements ProjectSecurityDataParser 
         int entityIdIndex = -1;
         int userIndex = -1;
 
-        LOGGER.info("Parsing of join point from security aspect is commencing.");
+        LOGGER.trace("Parsing of join point from security aspect is commencing.");
         final Class<?> entityIdClass = annotation.entityIdClass();
         final String entityParamName = (annotation.entityIdParamName().isBlank())
                 ? StringUtils.uncapitalize(annotation.entityIdClass().getSimpleName()) + "Id"
@@ -72,7 +72,7 @@ public class ProjectSecurityDataParserImpl implements ProjectSecurityDataParser 
         if (entityArg instanceof Long argLong) {
             project = projectProviderManager.getProvider(entityIdClass)
                     .getProject(argLong);
-            LOGGER.info("Project " + project.getId() + " has been aquired.");
+            LOGGER.trace("Project " + project.getId() + " has been aquired.");
         } else {
             throw new ProjectSecurityDataParsingException(
                     "Entity id class type must be " + Long.class.getName()
@@ -84,11 +84,11 @@ public class ProjectSecurityDataParserImpl implements ProjectSecurityDataParser 
         switch (userArg) {
             case User castUser -> {
                 user = castUser;
-                LOGGER.info("User " + user.getId() + " has been aquired.");
+                LOGGER.trace("User " + user.getId() + " has been aquired.");
             }
             case Authentication auth -> {
                 user = (User)auth.getPrincipal();
-                LOGGER.info("User " + user.getId() + " has been aquired from authentication object.");
+                LOGGER.trace("User " + user.getId() + " has been aquired from authentication object.");
             }
             default -> throw new ProjectSecurityDataParsingException(
                     "User class type must be either " + User.class.getName()
@@ -96,7 +96,7 @@ public class ProjectSecurityDataParserImpl implements ProjectSecurityDataParser 
                             + data.getArgs()[userIndex].getClass().getName(), null);
         }
 
-        LOGGER.info("Data successfuly parsed. User id: " + user.getId()
+        LOGGER.trace("Data successfuly parsed. User id: " + user.getId()
                 + "; project id " + project.getId());
         return new ProjectSecurityDto(project, user, annotation.securityLevel(),
                 annotation.bypassIfPublic());

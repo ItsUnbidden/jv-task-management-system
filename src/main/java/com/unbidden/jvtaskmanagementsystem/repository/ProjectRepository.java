@@ -14,20 +14,18 @@ import com.unbidden.jvtaskmanagementsystem.model.Project;
 public interface ProjectRepository extends JpaRepository<Project, Long> {
     @NonNull
     @Override
-    @EntityGraph(attributePaths = {"projectRoles", "tasks", "projectCalendar"})
+    @EntityGraph(attributePaths = {"projectRoles", "projectRoles.user"})
     Optional<Project> findById(@NonNull Long id);
 
     @NonNull
-    @Query("from Project p left join fetch p.projectCalendar pc "
-            + "where exists(select 1 from p.projectRoles pr2 where pr2.user.id = ?1) and p.name like %?2%")
+    @Query("from Project p where exists(select 1 from p.projectRoles pr where pr.user.id = ?1) and p.name like %?2%")
     Page<Project> findProjectsForUserAndSearchByName(@NonNull Long userId, @NonNull String name, Pageable pageable);
 
     @NonNull
-    @EntityGraph(attributePaths = {"projectCalendar"})
     Page<Project> findByNameContainsAllIgnoreCase(String name, Pageable pageable);
 
     @NonNull
-    @Query("from Project p left join p.projectRoles pr left join pr.user u left join fetch p.projectCalendar pc "
+    @Query("from Project p left join p.projectRoles pr left join pr.user u "
             + "where (p.isPrivate = false or u.id = ?1) and p.name like %?2%")
     Page<Project> findPublicByNameContainsAllIgnoreCase(Long userId,
             String name, Pageable pageable);

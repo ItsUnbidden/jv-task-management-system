@@ -3,6 +3,7 @@ package com.unbidden.jvtaskmanagementsystem.model;
 import java.time.LocalDate;
 import java.util.List;
 
+import org.hibernate.Hibernate;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 
@@ -17,13 +18,20 @@ import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import jakarta.persistence.Version;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 
 @Entity
-@Data
+@Getter
+@Setter
+@RequiredArgsConstructor
+@EqualsAndHashCode
 @Table(name = "tasks")
-@SQLDelete(sql = "UPDATE tasks SET is_deleted = true WHERE id = ?")
+@SQLDelete(sql = "UPDATE tasks SET is_deleted = true, version = version + 1 WHERE id = ? AND version = ?")
 @SQLRestriction("is_deleted <> true")
 public class Task {
     @Id
@@ -45,8 +53,6 @@ public class Task {
     private LocalDate dueDate;
 
     private String dropboxTaskFolderId;
-
-    private Integer amountOfMessages;
 
     @Column(nullable = false)
     private Integer progress;
@@ -71,6 +77,19 @@ public class Task {
     @Version
     @Column(nullable = false)
     private Long version;
+
+    @Transient
+    private Long numberOfMessages;
+
+    @Override
+    public String toString() {
+        return "Task(id=" + id + ", name=" + name + ", description=" + description + ", priority=" + priority
+                + ", status=" + status + ", dueDate=" + dueDate + ", progress=" + progress
+                + (Hibernate.isInitialized(project) ? ", projectId=" + project.getId() : ", projectId=LAZY")
+                + (Hibernate.isInitialized(assignee) ? ", assignee=" + assignee : ", assignee=LAZY")
+                + (Hibernate.isInitialized(labels) ? ", labels=" + labels : ", labels=LAZY")
+                + ", numberOfMessages=" + numberOfMessages + ", version=" + version + ")";
+    }
 
     public static enum TaskStatus {
         NOT_STARTED,

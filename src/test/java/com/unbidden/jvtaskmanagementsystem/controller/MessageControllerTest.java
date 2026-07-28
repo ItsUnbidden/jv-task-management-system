@@ -163,7 +163,6 @@ public class MessageControllerTest {
         task1.setPriority(TaskPriority.MEDIUM);
         task1.setStatus(TaskStatus.NOT_STARTED);
         task1.setProject(projectA);
-        task1.setAmountOfMessages(3);
         tasks.add(taskRepository.save(task1));
 
         Task task2 = new Task();
@@ -175,7 +174,6 @@ public class MessageControllerTest {
         task2.setPriority(TaskPriority.LOW);
         task2.setStatus(TaskStatus.NOT_STARTED);
         task2.setProject(projectA);
-        task2.setAmountOfMessages(1);
         tasks.add(taskRepository.save(task2));
 
         Task task3 = new Task();
@@ -187,7 +185,6 @@ public class MessageControllerTest {
         task3.setPriority(TaskPriority.HIGH);
         task3.setStatus(TaskStatus.NOT_STARTED);
         task3.setProject(projectB);
-        task3.setAmountOfMessages(0);
         tasks.add(taskRepository.save(task3));
 
         Comment comment1 = new Comment();
@@ -195,7 +192,6 @@ public class MessageControllerTest {
         comment1.setTimestamp(LocalDateTime.now());
         comment1.setUser(user2);
         comment1.setText("Comment on task 1 from bob.");
-        comment1.setAmountOfReplies(2);
         messages.add(commentRepository.save(comment1));
 
         Comment comment2 = new Comment();
@@ -391,8 +387,6 @@ public class MessageControllerTest {
         Assertions.assertTrue(potentialReply.isPresent());
         assertMessageDtosEqual(mapReplyToDto(potentialReply.get()), actual);
         Assertions.assertEquals(requestDto.getText(), actual.getText());
-        Comment commentFromDb = commentRepository.findById(newComment.getId()).get();
-        Assertions.assertEquals(2, commentFromDb.getAmountOfReplies());
     }
 
     @Test
@@ -442,8 +436,6 @@ public class MessageControllerTest {
 
         Optional<Reply> potentialReply = replyRepository.findById(newComment.getId());
         Assertions.assertFalse(potentialReply.isPresent());
-        Assertions.assertEquals(0,
-                commentRepository.findById(newComment.getId()).get().getAmountOfReplies());
     }
 
     @AfterAll
@@ -469,7 +461,6 @@ public class MessageControllerTest {
         dto.setTimestamp(comment.getTimestamp());
         dto.setUserId(comment.getUser().getId());
         dto.setUsername(comment.getUser().getUsername());
-        dto.setAmountOfReplies(comment.getAmountOfReplies());
         return dto;
     }
 
@@ -480,7 +471,6 @@ public class MessageControllerTest {
         dto.setTimestamp(comment.getTimestamp());
         dto.setUserId(comment.getUser().getId());
         dto.setUsername(comment.getUser().getUsername());
-        dto.setAmountOfReplies(comment.getAmountOfReplies());
         dto.setTaskId(comment.getTask().getId());
         return dto;
     }
@@ -504,7 +494,6 @@ public class MessageControllerTest {
         newComment.setTimestamp(LocalDateTime.now());
         newComment.setUser(users.get(0));
         newComment.setText("New comment.");
-        newComment.setAmountOfReplies(0);
         return commentRepository.save(newComment);
     }
 
@@ -515,7 +504,6 @@ public class MessageControllerTest {
         reply.setTimestamp(LocalDateTime.now());
         reply.setUser(users.get(0));
         reply.setReplies(new ArrayList<>());
-        comment.setAmountOfReplies(comment.getAmountOfReplies() + 1);
         commentRepository.save(comment);
         replyRepository.save(reply);
         return reply;
@@ -530,8 +518,8 @@ public class MessageControllerTest {
         if (dto1 instanceof CommentResponseDto) {
             CommentResponseDto dto1Comment = (CommentResponseDto)dto1;
             CommentResponseDto dto2Comment = (CommentResponseDto)dto2;
-            Assertions.assertEquals(dto1Comment.getAmountOfReplies(),
-                    dto2Comment.getAmountOfReplies());
+            Assertions.assertEquals(dto1Comment.getNumberOfReplies(),
+                    dto2Comment.getNumberOfReplies());
             if (dto1 instanceof CommentWithTaskIdResponseDto) {
                 CommentWithTaskIdResponseDto dto1CommentWithTask =
                         (CommentWithTaskIdResponseDto)dto1;

@@ -1,7 +1,11 @@
 package com.unbidden.jvtaskmanagementsystem.service.impl;
 
 import java.time.LocalDate;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
@@ -15,6 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
+import com.unbidden.jvtaskmanagementsystem.dto.internal.NumberOfCommentsInTaskDto;
+import com.unbidden.jvtaskmanagementsystem.dto.internal.NumberOfRepliesInTaskDto;
 import com.unbidden.jvtaskmanagementsystem.dto.internal.SubtasksChanged;
 import com.unbidden.jvtaskmanagementsystem.dto.internal.TaskProgressUpdated;
 import com.unbidden.jvtaskmanagementsystem.dto.task.UpdateTaskRequestDto;
@@ -30,14 +36,18 @@ import com.unbidden.jvtaskmanagementsystem.model.Task;
 import com.unbidden.jvtaskmanagementsystem.model.Task.TaskPriority;
 import com.unbidden.jvtaskmanagementsystem.model.Task.TaskStatus;
 import com.unbidden.jvtaskmanagementsystem.model.User;
+import com.unbidden.jvtaskmanagementsystem.repository.CommentRepository;
 import com.unbidden.jvtaskmanagementsystem.repository.LabelRepository;
 import com.unbidden.jvtaskmanagementsystem.repository.ProjectRepository;
+import com.unbidden.jvtaskmanagementsystem.repository.ReplyRepository;
 import com.unbidden.jvtaskmanagementsystem.repository.SubtaskRepository;
 import com.unbidden.jvtaskmanagementsystem.repository.TaskRepository;
 import com.unbidden.jvtaskmanagementsystem.service.TaskService;
 import com.unbidden.jvtaskmanagementsystem.util.EntityUtil;
 
 import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -53,6 +63,10 @@ public class TaskServiceImpl implements TaskService {
 
     private final LabelRepository labelRepository;
 
+    private final CommentRepository commentRepository;
+
+    private final ReplyRepository replyRepository;
+
     private final EntityUtil entityUtil;
 
     @NonNull
@@ -60,13 +74,10 @@ public class TaskServiceImpl implements TaskService {
     @Transactional
     public Page<Task> getTasksForUserAndSearchByTaskName(@NonNull User user, @NonNull String name,
             @NonNull Pageable pageable) {
-        Page<Task> tasks = taskRepository.findByAssigneeIdAndSearchByTaskName(user.getId(), name, pageable);
-
-        tasks.forEach(t -> {
-            updateTaskStatusAccordingToDate(t);
-            t.setLabels(labelRepository.findByTaskId(t.getId(), Pageable.unpaged()).getContent()); // TODO: N + 1. Consider removing the labels field from the task entity entirely, since it's not really used that much.
-        });
-        return tasks;
+        final Page<Task> tasks = taskRepository.findByAssigneeIdAndSearchByTaskName(user.getId(), name, pageable);
+        
+        tasks.forEach(t -> updateTaskStatusAccordingToDate(t));
+        return fetchAndMapNumberOfMessagesForTasks(tasks);
     }
 
     @NonNull
@@ -74,10 +85,10 @@ public class TaskServiceImpl implements TaskService {
     @Transactional
     public Page<Task> getProjectTasks(@NonNull User user, @NonNull Long projectId,
             @NonNull Pageable pageable) {
-        Page<Task> tasks = taskRepository.findByProjectId(projectId, pageable);
+        final Page<Task> tasks = taskRepository.findByProjectId(projectId, pageable);
 
         tasks.forEach(t -> updateTaskStatusAccordingToDate(t));
-        return tasks;
+        return fetchAndMapNumberOfMessagesForTasks(tasks);
     }
 
     @NonNull
@@ -85,19 +96,21 @@ public class TaskServiceImpl implements TaskService {
     @Transactional
     public Page<Task> getTasksForUserInProjectById(@NonNull User user,
             @NonNull Long projectId, @NonNull Long userId, @NonNull Pageable pageable) {
-        Page<Task> tasks = taskRepository
+        final Page<Task> tasks = taskRepository
                 .findByAssigneeIdAndByProjectId(userId, projectId, pageable);
         
         tasks.forEach(t -> updateTaskStatusAccordingToDate(t));
-        return tasks;
+        return fetchAndMapNumberOfMessagesForTasks(tasks);
     }
 
     @NonNull
     @Override
     @Transactional
     public Task getTaskById(@NonNull User user, @NonNull Long taskId) {
-        Task task = entityUtil.getTaskById(taskId);
+        final Task task = entityUtil.getTaskById(taskId);
 
+        task.setNumberOfMessages(commentRepository.countByTaskId(taskId)
+                + replyRepository.countByCommentTaskId(taskId));
         updateTaskStatusAccordingToDate(task);
         return task;
     }
@@ -107,10 +120,10 @@ public class TaskServiceImpl implements TaskService {
     @Transactional
     public Page<Task> getTasksByLabelId(@NonNull User user, @NonNull Long labelId,
             @NonNull Pageable pageable) {
-        Page<Task> tasks = taskRepository.findByLabelId(labelId, pageable);
+        final Page<Task> tasks = taskRepository.findByLabelId(labelId, pageable);
 
         tasks.forEach(t -> updateTaskStatusAccordingToDate(t));
-        return tasks;
+        return fetchAndMapNumberOfMessagesForTasks(tasks);
     }
 
     @NonNull 
@@ -126,10 +139,13 @@ public class TaskServiceImpl implements TaskService {
                 .and(TaskSpecifications.hasPriority(filterDto.getPriority()))
                 .and(TaskSpecifications.isAfterDueDate(filterDto.getDueDateFrom()))
                 .and(TaskSpecifications.isBeforeDueDate(filterDto.getDueDateTo()))
-                .and(TaskSpecifications.hasAnyLabels(filterDto.getLabelIds()));        
+                .and(filterDto.isAnyLabels()
+                        ? TaskSpecifications.hasAnyLabels(filterDto.getLabelIds())
+                        : TaskSpecifications.hasAllLabels(filterDto.getLabelIds()));        
         final Page<Task> tasks = taskRepository.findAll(specification, pageable);
+        
         tasks.forEach(t -> updateTaskStatusAccordingToDate(t));
-        return tasks;
+        return fetchAndMapNumberOfMessagesForTasks(tasks);
     }
 
     @NonNull
@@ -142,10 +158,11 @@ public class TaskServiceImpl implements TaskService {
         project.getTasks().add(task);
         task.setProject(project);
         task.setStatus(TaskStatus.NOT_STARTED);
-        task.setAmountOfMessages(0);
         task.setProgress(0);
         checkDateIsLegit(task);
         updateTaskStatusAccordingToDate(task);
+
+        task.setNumberOfMessages(0L);
             
         eventPublisher.publishEvent(new TaskProgressUpdated(project.getId()));
 
@@ -173,6 +190,9 @@ public class TaskServiceImpl implements TaskService {
 
         if (requestDto.getNewAssigneeId() != null) taskFromDb.setAssignee(entityUtil.getUserById(requestDto.getNewAssigneeId()));
         if (requestDto.getLabelIds() != null) taskFromDb.setLabels(labelRepository.findAllById(requestDto.getLabelIds()));
+
+        taskFromDb.setNumberOfMessages(commentRepository.countByTaskId(taskId)
+                + replyRepository.countByCommentTaskId(taskId));
         
         updateTaskStatusAccordingToDate(taskFromDb);
         return taskFromDb;
@@ -203,6 +223,9 @@ public class TaskServiceImpl implements TaskService {
         task.setStatus(requestDto.getNewStatus());
         
         updateTaskProgress(task);
+
+        task.setNumberOfMessages(commentRepository.countByTaskId(taskId)
+                + replyRepository.countByCommentTaskId(taskId));
         
         updateTaskStatusAccordingToDate(task);
 
@@ -293,6 +316,37 @@ public class TaskServiceImpl implements TaskService {
         }
     }
 
+    private Page<Task> fetchAndMapNumberOfMessagesForTasks(Page<Task> tasks) {
+        if (tasks.isEmpty()) return tasks;
+        
+        final List<NumberOfCommentsInTaskDto> commentCountDtos = commentRepository
+                .countCommentsForTasks(tasks.stream().map(t -> t.getId()).toList());
+        final List<NumberOfRepliesInTaskDto> replyCountDtos = replyRepository
+                .countRepliesForTasks(tasks.stream().map(t -> t.getId()).toList());
+        final Map<Long, Long> countMap = new HashMap<>();
+
+        for (NumberOfCommentsInTaskDto dto : commentCountDtos) {
+            countMap.put(dto.taskId(), dto.numberOfComments());
+        }
+        for (NumberOfRepliesInTaskDto dto : replyCountDtos) {
+            final Long existingValue = countMap.get(dto.taskId());
+
+            Long newValue = dto.numberOfReplies();
+            if (existingValue != null) {
+                newValue += existingValue;
+            }
+            countMap.put(dto.taskId(), newValue);
+        }
+
+        tasks.forEach(c -> {
+            final Long numberOfMessages = countMap.get(c.getId());
+
+            c.setNumberOfMessages(numberOfMessages != null ? numberOfMessages : 0);
+        });
+
+        return tasks;
+    }
+
     private static class TaskSpecifications {
         public static Specification<Task> isAssignedTo(Long userId) {
             return (root, query, cb) -> (userId == null) ? null : cb.equal(root.get("assignee").get("id"), userId);
@@ -320,11 +374,31 @@ public class TaskServiceImpl implements TaskService {
 
         public static Specification<Task> hasAnyLabels(List<Long> labelIds) {
             return (root, query, cb) -> {
-                if (labelIds == null) return null;
+                if (labelIds == null || labelIds.isEmpty()) return null;
 
                 query.distinct(true);
                 final Join<Task, Label> labelsJoin = root.join("labels");
                 return labelsJoin.get("id").in(labelIds);
+            };
+        }
+
+        public static Specification<Task> hasAllLabels(List<Long> labelIds) {
+            return (root, query, cb) -> {
+                if (labelIds == null || labelIds.isEmpty()) return null;
+
+                final Set<Long> distinctIds = new HashSet<>(labelIds);
+
+                final Subquery<Long> subquery = query.subquery(Long.class);
+                final Root<Task> subTaskRoot = subquery.from(Task.class);
+                final Join<Task, Label> subLabelsJoin = subTaskRoot.join("labels");
+
+                subquery.select(subTaskRoot.get("id"));
+                subquery.where(cb.and(cb.equal(root.get("id"), subTaskRoot.get("id")),
+                        subLabelsJoin.get("id").in(distinctIds)));
+                subquery.groupBy(subTaskRoot.get("id"));
+                subquery.having(cb.equal(cb.countDistinct(subLabelsJoin.get("id")), distinctIds.size()));
+
+                return cb.exists(subquery);
             };
         }
     }
